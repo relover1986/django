@@ -1,0 +1,88 @@
+{% extends "home.html" %} {% block content %}
+
+<br />
+<br />
+<br />
+<br />
+
+<div class="container">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">
+        <span class="glyphicon glyphicon-th-list"></span>
+        {{ title }}
+      </h3>
+    </div>
+  </div>
+
+    <div class="d-flex gap-2 mb-3">  <!-- 新增按钮容器 -->
+    <a class="btn btn-success btn-sm" href="/home/{{ title }}_add">
+      <i class="bi bi-plus-lg me-2"></i>创建
+    </a>
+    <!-- 上传拼图按钮 -->
+    <button class="btn btn-info btn-sm" onclick="document.getElementById('uploadInput').click();">
+      <i class="bi bi-image me-2"></i>上传拼图
+    </button>
+    <form id="uploadForm" action="/home/idcard_batch_upload/" method="post" enctype="multipart/form-data" style="display:none;">
+      {% csrf_token %}
+      <input type="file" id="uploadInput" name="image" accept="image/*" onchange="document.getElementById('uploadForm').submit();">
+    </form>
+    <a href="{{ export_url }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-file-zip me-2"></i>导出全部
+    </a>
+  </div>
+
+  
+  <div class="container">
+    <div class="panel-body">
+      <div class="table-responsive">
+        <table class="table table-hover table-layout-fixed">  <!-- 添加Bootstrap 5的固定布局类 -->
+          <thead>
+            {% for col in cols %}
+            <th class="text-center" style="white-space: nowrap;">{{ col.verbose_name }}</th>
+            {% endfor %}
+        </thead>
+        <tbody>
+          {% for obj in data %}
+          <tr>
+            {% for key, cell in obj.items %}
+            {% if key == 'created_at' %}
+                <td class="text-center">{{ cell|date:"Y-m-d H:i:s" }}</td>
+
+                {% elif key == 'image' %}
+                <td class="text-center">{{ cell|date:"Y-m-d" }}</td>
+
+                {% elif key == 'contract_file' %}
+                <td class="text-center">
+                  <a href="/media/{{cell}}">{{cell}}</a>
+                </td>
+                
+                {% elif 'image' in key %}
+                <td class="text-center">
+                  <a href="/media/{{cell}}" target="_blank">
+                    <img src="/media/{{cell}}" class="img-thumbnail" style="max-width: 100px;">
+                  </a>
+                </td>
+
+      
+
+            {% else %}
+            <td class="text-center">{{cell}}</td>
+            {% endif %} 
+            {% endfor %}
+
+            <!-- 删除按钮保持原样 -->
+            <td class="text-center">
+              <a class="btn btn-danger btn-xs" 
+                 href="/home/{{ title }}_delete?id={{ obj.id }}">删除</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% endblock %}
+</div>

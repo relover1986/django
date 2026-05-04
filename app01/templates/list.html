@@ -1,0 +1,61 @@
+{% extends "home.html" %} {% block content %}
+
+<br />
+<br />
+<br />
+<br />
+
+<div class="container">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">
+        <span class="glyphicon glyphicon-th-list"></span>
+        {{ 标题 }}
+    </div>
+  </div>
+
+  <a class="btn btn-success btn-sm" href="/home/{{ 数据库 }}_create">创建</a>
+  <div class="container">
+    <div class="panel-body">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            {% for col in cols %}
+            <th class="text-center">{{ col.age }}</th>
+            {% endfor %}
+            <th class="text-center">操作</th>
+
+
+
+          </thead>
+          <tbody>
+            {% for obj in data %}
+            <tr>
+              {% for cell in obj.values %}
+              <td class="text-center"><a href="{{ item.pdf_file.url }}"></a>{{ item.pdf_file.url }}{{ cell|safe }}</td>
+
+
+
+              {% endfor %}
+              <td class="text-center">
+                <a
+                  class="btn btn-primary btn-xs"
+                  href="/home/{{ 数据库 }}_edit?id={{ obj.id }}"
+                  >编辑</a
+                >
+                <a
+                  class="btn btn-danger btn-xs"
+                  href="/home/{{ 数据库 }}_delete?id={{ obj.id }}"
+                  >删除</a
+                >
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% endblock %}
+</div>

@@ -1,0 +1,64 @@
+{% extends "home.html" %} {% block content %}
+
+<br />
+<br />
+<br />
+<br />
+
+<div class="container">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">
+        <span class="glyphicon glyphicon-th-list"></span>
+        {{ title }}
+      </h3>
+    </div>
+  </div>
+
+  <a class="btn btn-success btn-sm" href="/home/{{ title }}_add">创建</a>
+  <div class="container">
+    <div class="panel-body">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            {% for col in cols %}
+            <th class="text-center">{{ col.age }}</th>
+            {% endfor %}
+          </thead>
+          <tbody>
+            {% for obj in data %}
+            <tr>
+              
+              
+              {% for key, cell in obj.items %}
+              {% if key == 'pdf_file' %}
+         
+              <td class="text-center">
+                <a href="/media/{{cell}}">{{cell}}</a>
+              </td>
+              {% else %}
+              <td class="text-center">{{cell}}</td>
+              {% endif %} 
+              
+             {% endfor %}
+
+              <td class="text-center">
+                <a
+                  class="btn btn-danger btn-xs"
+                  href="/home/{{ title }}_delete?id={{ obj.id }}"
+                  >删除</a
+                >
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  
+</div>
+{% endblock %}
+
+

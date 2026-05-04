@@ -1,0 +1,27 @@
+{% extends "home.html" %}
+
+{% block content %}
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <!-- 下拉菜单，显示 Django 模型中的表名 -->
+    <label for="model_select">选择模型表:</label>
+    <select id="model_select" name="model_name">
+        {% for model_name in model_names %}
+            <option value="{{ model_name }}">{{ model_name }}</option>
+        {% endfor %}
+    </select>
+    <br><br>
+    <!-- 文件上传输入框，只允许上传 .xlsx 文件 -->
+    <label for="file_upload">上传 .xlsx 文件:</label>
+    <input type="file" id="file_upload" name="file" accept=".xlsx">
+    <br><br>
+    <!-- 上传按钮 -->
+    <input type="submit" value="上传">
+</form>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "home.html" %} {% block content %}
+
+<br />
+<br />
+<br />
+<br />
+
+<div class="container">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">
+        <span class="glyphicon glyphicon-th-list"></span>
+        {{ title }}{{数据库}}
+      </h3>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 mb-3">  <!-- 新增按钮容器 -->
+    <a class="btn btn-success btn-sm" href="/home/{{ title }}_add">
+      <i class="bi bi-plus-lg me-2"></i>创建
+    </a>
+    <a href="{{ export_xlsx_url}}" class="btn btn-primary btn-sm">
+      <i class="bi bi-file-zip me-2"></i>导出excel
+    </a>
+  </div>
+  
+  <div class="container">
+    <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover w-100">  <!-- 添加 w-100 类实现全宽 -->
+            <thead class="table-light">  <!-- Bootstrap 5 新的表头样式 -->
+              <tr>
+                {% for col in cols %}
+                <th class="text-center align-middle">{{ col.verbose_name }}</th>
+                {% endfor %}
+          
+              </tr>
+            </thead>
+            <tbody class="table-group-divider">  <!-- Bootstrap 5 分割线 -->
+              {% for obj in data %}
+              <tr class="align-middle">  <!-- 垂直居中 -->
+              
+              
+              {% for key, cell in obj.items %}
+              {% if key == 'date' %}
+                  <td class="text-center">{{ cell|date:"Y-m-d" }}</td>
+              {% elif '/' in cell %}
+              <td class="text-center">
+                <a href="/media/{{cell}}" target="_blank">
+                  <img src="/media/{{cell}}" class="img-thumbnail" style="max-width: 100px;">
+                </a>
+              </td>
+              {% else %}
+              <td class="text-center">{{cell}}</td>
+              {% endif %} 
+              
+              
+ 
+              
+              
+              
+              
+              
+              
+              
+              {% endfor %}
+
+              <td class="text-center">
+                <a
+                  class="btn btn-danger btn-sm"
+                  href="/home/{{ title }}_delete?id={{ obj.id }}"
+                  >删除</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% endblock %}
+</div>

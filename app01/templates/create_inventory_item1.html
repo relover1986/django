@@ -1,0 +1,23 @@
+
+{% extends "home.html" %}
+
+{% block content %}
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<head>
+    <meta charset="UTF-8">
+    <title>民用爆炸物品上传</title>
+</head>
+<body>
+    <h1>民用爆炸物品上传</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Submit</button>
+    </form>
+</body>
+{% endblock %}

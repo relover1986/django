@@ -1,0 +1,71 @@
+{% extends 'home.html' %}
+{% block content %}
+
+<meta http-equiv="refresh" content="6000">
+
+
+<div class="container">
+    <div class="panel-body">
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token%}
+  
+          {% for field in form %}
+          <div class="form-group">
+            <label>              
+            {% if field.label == 'Mp3' %}
+            mp3
+            {% else %}
+            {{field.label}}
+            {% endif %}
+            </label>
+            {{field|safe}}
+            {{field.errors}}          
+          </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary ">提交</button>
+          <a class="btn btn-primary btn-xs" href="/home/{{title}}_add?ident={{request.session.info.ident}}">{{title}}新建</a>
+        </form>
+      </div>
+
+    <div classs="container">
+        <h1>{{title}}</h1>
+    </div>
+<br>
+<br>
+<br>
+<br>
+<div class="row">
+    <div class="col-8">
+        <div class="panel panel-default">
+            <div class="panel-heading">{{title}}表格</div>
+            <div class="panel-body">
+                <div class="chart-container" style="width: 500px; height: 300px;">
+                    {{myechart1|safe}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">{{title}}图</div>
+            <div class="panel-body">
+                <div class="chart-container" style="width: 100%;">
+                    {{myechart2|safe}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+    {% endblock %}

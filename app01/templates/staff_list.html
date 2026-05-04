@@ -1,0 +1,63 @@
+{% extends "home.html" %}
+
+{% block content %}
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<div class="panel-body">
+    <p>
+        {{ title }}
+        <form method="get" class="filter-form row g-3">
+            <div class="col-auto">
+            {{ filter.form.as_p }}
+            <button type="submit" class="btn btn-primary">筛选</button>
+            </div>
+        </form>
+    </p>
+    <a class="btn btn-success btn-sm" href="/staff_add">创建</a>
+    <table class="table table-bordered">
+        <thead>
+            {% for col in cols %}
+                <th class="text-center" align="center">{{ col.col_name }}</th>
+            {% endfor %}
+            {% comment %} <th class="text-center" align="center">图片</th>
+            <th class="text-center" align="center">操作</th>
+            <th class="text-center" align="center">证件</th> {% endcomment %}
+        </thead>
+        <tbody>
+            {% for obj in data %}
+                <tr>
+                    <td class="text-center align-middle" bgcolor="" align="center" width="20%">{{ obj.id }}</td>
+                    <td class="text-center align-middle" bgcolor="" align="center" width="20%">{{ obj.ident }}</td>
+                    <td class="text-center align-middle" bgcolor="" align="center" width="20%">{{ obj.username }}</td>
+                    <td class="text-center align-middle" bgcolor="" align="center" width="20%">{{ obj.role }}</td>
+                    <td class="text-center align-middle" bgcolor="" align="center" width="20%">{{ obj.department }}</td>
+                    <td class="text-center align-middle" bgcolor="" align="center" width="20%">{{ obj.password }}</td>
+                    
+                    <td class="text-center align-middle" bgcolor="" align="center" width="50%">
+                        <a href="/media/{{ obj.avatar}}">
+                            <img src="/media/{{ obj.avatar}}" alt="" width="52" height="72">
+                        </a>
+                    </td>
+
+                    <td class="text-center" bgcolor="" align="center" width="50%">
+
+                        <div class="d-flex justify-content-between">
+                            <a class="btn btn-primary btn-sm" href="/staff_edit?id={{ obj.id }}">编辑</a>
+                            <a class="btn btn-danger btn-sm" href="/staff_delete/?id={{ obj.id }}">删除</a>
+                        </div>
+                    </td>
+                    <td class="text-center align-middle" bgcolor="" align="center" width="50%">
+                        <a href="/static/img/{{ obj.身份 }}_{{ obj.username }}.png">
+                            <img src="/static/img/{{ obj.身份 }}_{{ obj.username }}.png" alt="" width="52" height="72">
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

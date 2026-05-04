@@ -1,0 +1,114 @@
+{% extends "home.html" %}
+
+{% block content %}
+<br />
+<br />
+<br />
+<br />
+<br />
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    <h2>人员信息上传</h2>
+    
+    <!-- 在表单顶部添加验证提示 -->
+    <div id="zip-notice" style="display: none; color: #666; margin-bottom: 15px;">
+        * 已选择批量上传，无需填写下方单个文件字段
+    </div>
+    <strong>手机号：</strong><br>
+    <input type="tel" name="mobile" 
+           pattern="[0-9]{11}" 
+           title="请输入11位手机号码"
+           required>
+    
+    <br><br>
+
+    <strong>银行卡号：</strong><br>
+    <input type="text" name="bank_card_number" 
+           pattern="[0-9]{16}|[0-9]{19}" 
+           title="请输入16或19位银行卡号">
+    
+    <br><br>
+
+
+
+    
+    <strong>身份证人像面：</strong><br>
+    <input type="file" name="front" required accept="image/*">
+    
+    <br><br>
+    
+    <strong>身份证国徽面：</strong><br>
+    <input type="file" name="back" required accept="image/*">
+    
+    <br><br>
+
+    <strong>1寸证件照：</strong><br>
+    <input type="file" name="photo" accept="image/*">
+    
+    <br><br>
+
+    <strong>无犯罪证明：</strong><br>
+    <input type="file" name="no_crime" accept="image/*">
+    
+    <br><br>
+    
+    <!-- 新增毕业证上传 -->
+    <strong>毕业证：</strong><br>
+    <input type="file" name="graduation" accept="image/*">
+    
+    <br><br>
+
+   <!-- 批量上传分割线 -->
+   <hr style="border-color: #666; margin: 20px 0;">
+    
+   {% comment %} <div class="form-group"> {% endcomment %}
+       {% comment %} <strong>批量上传ZIP压缩包：</strong><br>
+       <input type="file" name="zip_file" id="zip_input" accept=".zip">
+        <div style="color: #666; margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 4px;">
+            <div>压缩包结构要求：</div>
+            <div style="margin-left: 20px;">
+                <div>├── 姓名_身份证号/</div>
+                <div style="margin-left: 20px;">
+                    <div>├── 人像.jpg　　　 # 身份证正面</div>
+                    <div>├── 国徽.jpg　　　 # 身份证反面</div>
+                    <div>├── 证件照.jpg　　 # 1寸证件照</div>
+                    <div>├── 无犯罪证明.jpg</div>
+                    <div>└── 毕业证.jpg</div>
+                </div>
+                <div>└── 李四_230103199901011234/</div>
+                <div style="margin-left: 20px;">└── ...（同上结构）</div>
+            </div>
+        </div>
+    </div> {% endcomment %}
+
+    <br><br>
+    
+    <button type="submit">提交信息</button>
+</form>
+
+<!-- 添加JavaScript控制逻辑 -->
+<script>
+document.getElementById('zip_input').addEventListener('change', function(e) {
+    const singleInputs = document.querySelectorAll('input[type="file"]:not([name="zip_file"])');
+    const notice = document.getElementById('zip-notice');
+    
+    if (this.files.length > 0) {
+        // 当选择ZIP文件时
+        singleInputs.forEach(input => {
+            input.removeAttribute('required');
+            input.disabled = true;
+        });
+        notice.style.display = 'block';
+    } else {
+        // 当取消ZIP选择时
+        singleInputs.forEach(input => {
+            input.setAttribute('required', '');
+            input.disabled = false;
+        });
+        notice.style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

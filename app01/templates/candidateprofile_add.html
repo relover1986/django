@@ -1,0 +1,24 @@
+
+
+{% extends "home.html" %}
+
+{% block content %}
+<br>
+<br>
+
+<br>
+<br>
+<div class="container">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">也可以找个纯白背景墙拍一寸照,请端正拍照,面试通过办证用</h3>
+      </div>
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <button type="submit">登入</button>
+      </form>
+    </div>
+</body>
+{% endblock %}

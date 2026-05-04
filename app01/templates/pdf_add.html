@@ -1,0 +1,38 @@
+{% extends "home.html" %}
+<!-- 继承自名为 "home.html" 的基础模板 -->
+
+{% block content %}
+<!-- 开始定义名为 "content" 的块，用于在基础模板中插入内容 -->
+<br />
+<!-- 插入一个换行符 -->
+<br />
+<!-- 插入一个换行符 -->
+<br />
+<!-- 插入一个换行符 -->
+<br />
+<!-- 插入一个换行符 -->
+<br />
+<!-- 插入一个换行符 -->
+<form method="post" enctype="multipart/form-data">
+  <!-- 创建一个表单，使用 POST 方法提交数据，并设置 enctype 为 "multipart/form-data" 以支持文件上传 -->
+  {% csrf_token %}
+  <!-- 插入 Django 的跨站请求伪造保护令牌 -->
+  <!-- 下拉菜单，显示 Django 模型中的表名 -->
+  <!-- 此处应添加下拉菜单的代码 -->
+  <!-- 文件上传输入框，只允许上传 .xlsx 文件 -->
+  <input type="text" id="file_upload" name="model_name" />
+
+  <label for="file_upload">上传.pdf文件:</label>
+  <!-- 创建一个标签，用于描述文件上传输入框 -->
+  <input type="file" id="file_upload" name="file" accept=".pdf" multiple />
+  <!-- 创建一个文件上传输入框，设置 id 为 "file_upload"，name 为 "file"，accept 属性限制只能上传 .pdf 文件，并允许选择多个文件 -->
+  <br />
+  <br />
+  <!-- 插入两个换行符 -->
+  <!-- 上传按钮 -->
+  <input type="submit" value="上传" />
+  <!-- 创建一个提交按钮，显示文本为 "上传" -->
+</form>
+<!-- 结束表单定义 -->
+{% endblock %}
+<!-- 结束名为 "content" 的块定义 -->

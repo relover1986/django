@@ -1,0 +1,23 @@
+{% extends "home.html" %}
+{% block content %}
+<br><br>
+<div style="margin: 20px;">
+    <h4>上传说明：</h4>
+    <p>1. 请同时上传Excel花名册(.xlsx)和Word合同模板(.docx)</p>
+    <p>2. 文件命名无限制，但需确保包含以下内容：</p>
+    <p style="margin-left: 30px">- 花名册：包含姓名、身份证号等字段的Excel文件</p>
+    <p style="margin-left: 30px">- 模板：包含合同条款的Word文档</p>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    <div style="margin: 20px;">
+        <input type="file" id="file_upload" name="file" multiple 
+               accept=".xlsx,.docx" 
+               style="display: block; margin: 20px 0;">
+        <input type="submit" value="开始上传" 
+               style="padding: 10px 20px; background: #007bff; color: white; border: none;">
+    </div>
+</form>
+{% endblock %}
