@@ -1,24 +1,31 @@
 # Python
 __pycache__/
 *.py[cod]
+*$py.class
 *.so
 *.egg-info/
 dist/
 build/
-.eggs/
 *.egg
-.Python
-env/
+
+# Virtualenv
 venv/
 .venv/
+env/
+ENV/
 
-# Django
-*.sqlite3
+# Database
 *.sqlite
+*.sqlite3
+*.db
+
+# Media / Uploads
 media/
+uploads/
+
+# Static files
 staticfiles/
 static/
-local_settings.py
 
 # IDE
 .idea/
@@ -26,11 +33,13 @@ local_settings.py
 *.swp
 *.swo
 *~
-.DS_Store
+.history/
 
 # OS
+.DS_Store
 Thumbs.db
 Desktop.ini
+._*
 
 # Logs
 *.log
@@ -39,6 +48,43 @@ logs/
 # Environment
 .env
 .env.local
+.env.*
+local_settings.py
+
+# Images - do not upload
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.bmp
+*.svg
+*.ico
+*.tiff
+*.raw
+*.psd
+*.ai
+
+# Documents
+*.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.pptx
+*.numbers
+*.pages
+*.key
+
+# Other binaries
+*.dmg
+*.exe
+*.msi
+*.zip
+*.tar.gz
+*.rar
+*.7z
+*.iso
 
 # Git
 .git/
