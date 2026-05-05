@@ -9,8 +9,8 @@ class M1(MiddlewareMixin):
         print('Session keys:', list(request.session.keys()))
         print('Session info:', request.session.get("info"))
         
-        if request.path_info == '/login/':
-            print('Path is login, returning')
+        if request.path_info == '/login/' or request.path_info.startswith('/api/'):
+            print('Path is login or api, returning')
             return
 
         info_dict = request.session.get("info")

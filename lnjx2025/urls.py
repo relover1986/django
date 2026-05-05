@@ -191,6 +191,7 @@ urlpatterns = [
     path('home/categorycontent_delete', views.categorycontent_delete),
     path('home/categorycontent_edit', views.categorycontent_edit),
 
+    path('api/', include('app01.api_urls')),
     path('',include('app01.urls')),
     
     
