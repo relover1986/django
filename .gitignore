@@ -88,3 +88,9 @@ local_settings.py
 
 # Git
 .git/
+
+# Temp test files
+test_*.py
+*.bak
+*_new.py
+patch_*.py
