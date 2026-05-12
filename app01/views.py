@@ -2665,3 +2665,23 @@ def blasting_register_detail(request, pk):
         'record': record,
         'work_list': work_list
     })
+
+
+@csrf_exempt
+def work_point_add(request):
+    """作业点登记页面"""
+    if request.method == 'POST':
+        manager = request.POST.get('manager', '')
+        work_point = request.POST.get('work_point', '')
+        models.WorkPoint.objects.create(
+            manager=manager,
+            work_point=work_point
+        )
+        return redirect('/home/work_point_list/')
+    return render(request, 'work_point_add.html')
+
+
+def work_point_list(request):
+    """作业点列表"""
+    records = models.WorkPoint.objects.all().order_by('-created_at')
+    return render(request, 'work_point_list.html', {'records': records})

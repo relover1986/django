@@ -474,6 +474,18 @@ class BlastingRegistration(models.Model):
         verbose_name = '爆破作业登记'
         verbose_name_plural = '爆破作业登记'
 
+
+class WorkPoint(models.Model):
+    """作业点负责人登记表"""
+    manager = models.CharField(max_length=50, verbose_name='作业点负责人')
+    work_point = models.CharField(max_length=100, verbose_name='作业点')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='提交时间')
+
+    class Meta:
+        verbose_name = '作业点登记'
+        verbose_name_plural = '作业点登记'
+
+
 class BlastingCertificate(models.Model):
     """爆破作业人员证书模型"""
     certificate_number = models.CharField(

@@ -109,8 +109,12 @@ urlpatterns = [
     path('home/blasting_register/', views.blasting_register, name='blasting_register'),
     path('home/blasting_register_list/', views.blasting_register_list, name='blasting_register_list'),
     path('home/blasting_register_detail/<int:pk>/', views.blasting_register_detail, name='blasting_register_detail'),
-    
-    path('home/idcard_add/', views.idcard_add),  
+
+    # 作业点
+    path('home/work_point_add/', views.work_point_add, name='work_point_add'),
+    path('home/work_point_list/', views.work_point_list, name='work_point_list'),
+
+    path('home/idcard_add/', views.idcard_add),
     path('home/idcard_delete/', views.idcard_delete),
     path('home/idcard_list/', views.idcard_list),
     path('home/idcard_batch_upload/', views.idcard_batch_upload),
