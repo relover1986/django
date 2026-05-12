@@ -2634,9 +2634,20 @@ def blasting_register(request):
 
 
 def blasting_register_list(request):
-    """爆破作业登记列表"""
-    records = models.BlastingRegistration.objects.all().order_by('-created_at')
+    """爆破作业登记列表 - 按班次+爆破员分组，只展示每组最新一条"""
+    from django.db.models import OuterRef, Subquery
     import json
+
+    # 子查询：取每组(shift, blaster)最新一条的id
+    latest_id = models.BlastingRegistration.objects.filter(
+        shift=OuterRef('shift'),
+        blaster=OuterRef('blaster')
+    ).order_by('-created_at').values('pk')[:1]
+
+    records = models.BlastingRegistration.objects.filter(
+        pk=Subquery(latest_id)
+    ).order_by('-created_at')
+
     for r in records:
         try:
             r.work_count = len(json.loads(r.work_data))
