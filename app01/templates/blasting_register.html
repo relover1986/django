@@ -50,34 +50,22 @@
                 </div>
             </div>
 
-            <!-- 第二行：作业点 + 耗材 -->
+            <!-- 第二行：作业点 + 耗材（从数据库动态读取） -->
             <div class="mt-4">
                 <h6>作业点及耗材登记</h6>
                 <div class="border p-3 rounded bg-white">
-                    <div class="row align-items-center mb-3">
+                    {% for wp in work_points %}
+                    <div class="row align-items-center {% if not forloop.last %}mb-3{% endif %}">
                         <div class="col-3">
-                            <label><input type="checkbox" class="work-check" value="一号作业点负责人"> 一号作业点负责人</label>
+                            <label><input type="checkbox" class="work-check" value="{{ wp.work_point }} - {{ wp.manager }}"> {{ wp.work_point }} - {{ wp.manager }}</label>
                         </div>
                         <div class="col-3"><input type="number" class="form-control lei-guan" placeholder="雷管数"></div>
                         <div class="col-3"><input type="number" class="form-control ru-hua" placeholder="乳化炸药数"></div>
                         <div class="col-3"><input type="number" class="form-control fen-zhuang" placeholder="粉状炸药数"></div>
                     </div>
-                    <div class="row align-items-center mb-3">
-                        <div class="col-3">
-                            <label><input type="checkbox" class="work-check" value="二号作业点负责人"> 二号作业点负责人</label>
-                        </div>
-                        <div class="col-3"><input type="number" class="form-control lei-guan" placeholder="雷管数"></div>
-                        <div class="col-3"><input type="number" class="form-control ru-hua" placeholder="乳化炸药数"></div>
-                        <div class="col-3"><input type="number" class="form-control fen-zhuang" placeholder="粉状炸药数"></div>
-                    </div>
-                    <div class="row align-items-center">
-                        <div class="col-3">
-                            <label><input type="checkbox" class="work-check" value="三号作业点负责人"> 三号作业点负责人</label>
-                        </div>
-                        <div class="col-3"><input type="number" class="form-control lei-guan" placeholder="雷管数"></div>
-                        <div class="col-3"><input type="number" class="form-control ru-hua" placeholder="乳化炸药数"></div>
-                        <div class="col-3"><input type="number" class="form-control fen-zhuang" placeholder="粉状炸药数"></div>
-                    </div>
+                    {% empty %}
+                    <p class="text-muted mb-0">暂无作业点数据，请先在「作业点列表」中添加</p>
+                    {% endfor %}
                 </div>
             </div>
 

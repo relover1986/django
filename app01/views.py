@@ -2620,6 +2620,7 @@ def idcard_batch_upload(request):
 @csrf_exempt
 def blasting_register(request):
     """爆破作业登记页面"""
+    work_points = models.WorkPoint.objects.all().order_by('-created_at')
     if request.method == 'POST':
         shift = request.POST.get('shift', '')
         blaster = request.POST.get('blaster', '')
@@ -2629,8 +2630,12 @@ def blasting_register(request):
             blaster=blaster,
             work_data=work_list
         )
-        return redirect('/home/blasting_register_list/')
-    return render(request, 'blasting_register.html')
+        return render(request, 'blasting_register.html', {
+            'work_points': work_points,
+            'success': True,
+            'message': '登记成功'
+        })
+    return render(request, 'blasting_register.html', {'work_points': work_points})
 
 
 def blasting_register_list(request):
