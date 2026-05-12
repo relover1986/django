@@ -462,8 +462,20 @@ class WeighingRecord(models.Model):
 
 # ... 其他模型保持不变 ...
 
+class BlastingRegistration(models.Model):
+    """爆破作业登记表"""
+    shift = models.CharField(max_length=10, verbose_name='班次')
+    blaster = models.CharField(max_length=50, verbose_name='爆破员')
+    work_data = models.TextField(verbose_name='作业点数据(JSON)')
+    date = models.DateField(auto_now_add=True, verbose_name='日期')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+
+    class Meta:
+        verbose_name = '爆破作业登记'
+        verbose_name_plural = '爆破作业登记'
+
 class BlastingCertificate(models.Model):
-    """爆破员证书信息"""
+    """爆破作业人员证书模型"""
     certificate_number = models.CharField(
         max_length=13,  # 修改长度为13
         verbose_name='证书编号',

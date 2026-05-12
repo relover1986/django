@@ -2615,3 +2615,22 @@ def idcard_batch_upload(request):
     finally:
         import shutil
         shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+@csrf_exempt
+def blasting_register(request):
+    """爆破作业登记页面"""
+    if request.method == 'POST':
+        shift = request.POST.get('shift', '')
+        blaster = request.POST.get('blaster', '')
+        work_list = request.POST.get('work_list', '[]')
+        models.BlastingRegistration.objects.create(
+            shift=shift,
+            blaster=blaster,
+            work_data=work_list
+        )
+        return render(request, 'blasting_register.html', {
+            'success': True,
+            'message': '登记成功'
+        })
+    return render(request, 'blasting_register.html')

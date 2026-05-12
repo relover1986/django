@@ -105,6 +105,9 @@ urlpatterns = [
     path('home/blastingcertificate_export_zip/', views.blastingcertificate_export_zip, name='blastingcertificate_export_zip'),
     path('home/blastingcertificate_export_xlsx/', views.blastingcertificate_export_xlsx, name='blastingcertificate_export_xlsx'),
     
+    # 爆破作业登记
+    path('home/blasting_register/', views.blasting_register, name='blasting_register'),
+    
     path('home/idcard_add/', views.idcard_add),  
     path('home/idcard_delete/', views.idcard_delete),
     path('home/idcard_list/', views.idcard_list),
