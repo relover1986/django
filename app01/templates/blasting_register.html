@@ -106,6 +106,7 @@
                             <th>班次</th>
                             <th>爆破员</th>
                             <th>作业点</th>
+                            <th>使用日期</th>
                             <th>雷管</th>
                             <th>乳化炸药</th>
                             <th>粉状炸药</th>
@@ -120,6 +121,7 @@
                             <td>{{ r.shift }}</td>
                             <td>{{ r.blaster }}</td>
                             <td>{{ w.work_name }}</td>
+                            <td>{{ r.usage_date|date:"Y-m-d" }}</td>
                             <td>{{ w.lei_guan }}</td>
                             <td>{{ w.ru_hua }}</td>
                             <td>{{ w.fen_zhuang }}</td>
@@ -128,7 +130,7 @@
                         </tr>
                         {% endfor %}
                         {% empty %}
-                        <tr><td colspan="8" class="text-center text-muted">暂无记录</td></tr>
+                        <tr><td colspan="9" class="text-center text-muted">暂无记录</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
