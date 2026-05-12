@@ -467,7 +467,8 @@ class BlastingRegistration(models.Model):
     shift = models.CharField(max_length=10, verbose_name='班次')
     blaster = models.CharField(max_length=50, verbose_name='爆破员')
     work_data = models.TextField(verbose_name='作业点数据(JSON)')
-    date = models.DateField(verbose_name='作业日期')
+    date = models.DateField(auto_now_add=True, verbose_name='日期')
+    usage_date = models.DateField(null=True, blank=True, verbose_name='使用日期')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
 
     class Meta:

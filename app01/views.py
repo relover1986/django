@@ -2643,10 +2643,10 @@ def blasting_register(request):
             shift=shift,
             blaster=blaster,
             work_data=work_list,
-            date=work_date
+            usage_date=work_date
         )
 
-        records = models.BlastingRegistration.objects.filter(date=work_date, shift=shift).order_by('-created_at')
+        records = models.BlastingRegistration.objects.filter(usage_date=work_date, shift=shift).order_by('-created_at')
         for r in records:
             try:
                 r.parsed_work = json.loads(r.work_data)
@@ -2662,7 +2662,7 @@ def blasting_register(request):
 
     # GET 默认显示今日记录
     today = date.today()
-    records = models.BlastingRegistration.objects.filter(date=today).order_by('-created_at')
+    records = models.BlastingRegistration.objects.filter(usage_date=today).order_by('-created_at')
     for r in records:
         try:
             r.parsed_work = json.loads(r.work_data)
