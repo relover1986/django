@@ -110,6 +110,7 @@ urlpatterns = [
     path('home/blasting_register_list/', views.blasting_register_list, name='blasting_register_list'),
     path('home/blasting_stats/', views.blasting_stats, name='blasting_stats'),
     path('home/blasting_register_detail/<int:pk>/', views.blasting_register_detail, name='blasting_register_detail'),
+    path('home/blasting_register_delete/<int:pk>/', views.blasting_register_delete, name='blasting_register_delete'),
 
     # 作业点
     # 爆破员列表

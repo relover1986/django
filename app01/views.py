@@ -2731,6 +2731,14 @@ def blasting_register_detail(request, pk):
     })
 
 
+def blasting_register_delete(request, pk):
+    """删除爆破登记记录"""
+    from django.shortcuts import redirect
+    from app01 import models
+    models.BlastingRegistration.objects.filter(pk=pk).delete()
+    return redirect('/home/blasting_register_list/')
+
+
 @csrf_exempt
 def work_point_add(request):
     """作业点登记页面"""
@@ -2776,26 +2784,34 @@ def work_point_delete(request, pk):
     return redirect('/home/work_point_list/')
 
 def blasting_stats(request):
-    """爆破登记统计：按班次+爆破员+使用日期分组，求和"""
+    """爆破登记统计：按班次+爆破员+使用日期分组，求和，末尾显示班次合计"""
     from django.shortcuts import render
     from app01 import models
     from collections import defaultdict
 
     records = models.BlastingRegistration.objects.filter(usage_date__isnull=False).order_by('usage_date', 'shift')
     
-    # 分组聚合
+    # 按(日期, 班次, 爆破员)分组
     groups = defaultdict(lambda: {'lei_guan': 0, 'ru_hua': 0, 'fen_zhuang': 0, 'count': 0})
+    # 按(日期, 班次)汇总
+    shift_totals = defaultdict(lambda: {'lei_guan': 0, 'ru_hua': 0, 'fen_zhuang': 0})
+    
     for r in records:
-        key = (r.usage_date, r.shift, r.blaster)
         try:
             work_list = json.loads(r.work_data)
         except:
             work_list = []
         for w in work_list:
-            groups[key]['lei_guan'] += int(w.get('lei_guan', 0) or 0)
-            groups[key]['ru_hua'] += int(w.get('ru_hua', 0) or 0)
-            groups[key]['fen_zhuang'] += int(w.get('fen_zhuang', 0) or 0)
-        groups[key]['count'] += 1
+            lg = int(w.get('lei_guan', 0) or 0)
+            rh = int(w.get('ru_hua', 0) or 0)
+            fz = int(w.get('fen_zhuang', 0) or 0)
+            groups[(r.usage_date, r.shift, r.blaster)]['lei_guan'] += lg
+            groups[(r.usage_date, r.shift, r.blaster)]['ru_hua'] += rh
+            groups[(r.usage_date, r.shift, r.blaster)]['fen_zhuang'] += fz
+            shift_totals[(r.usage_date, r.shift)]['lei_guan'] += lg
+            shift_totals[(r.usage_date, r.shift)]['ru_hua'] += rh
+            shift_totals[(r.usage_date, r.shift)]['fen_zhuang'] += fz
+        groups[(r.usage_date, r.shift, r.blaster)]['count'] += 1
 
     rows = []
     for (usage_date, shift, blaster), vals in sorted(groups.items()):
@@ -2815,5 +2831,45 @@ def blasting_stats(request):
             'fen_zhuang_bags': fen_zhuang_bags,
         })
 
-    return render(request, 'blasting_stats.html', {'rows': rows})
+    # 构建展示列表，按(日期,班次)排序，每组末尾插合计行
+    display_rows = []
+    prev_key = None
+    for r in rows:
+        cur_key = (r['usage_date'], r['shift'])
+        # 前一组结束，插入合计
+        if prev_key and prev_key != cur_key:
+            totals = shift_totals[prev_key]
+            rh_b, rh_p, _ = utils.kg_to_box_package(totals['ru_hua'])
+            fz_b, fz_p, _ = utils.kg_to_box_package(totals['fen_zhuang'])
+            display_rows.append({
+                'is_summary': True,
+                'usage_date': prev_key[0],
+                'shift': prev_key[1],
+                'blaster': '合计',
+                'lei_guan': totals['lei_guan'],
+                'ru_hua': totals['ru_hua'],
+                'ru_hua_boxes': rh_b, 'ru_hua_bags': rh_p,
+                'fen_zhuang': totals['fen_zhuang'],
+                'fen_zhuang_boxes': fz_b, 'fen_zhuang_bags': fz_p,
+            })
+        display_rows.append(r)
+        prev_key = cur_key
+    # 最后一组合计
+    if prev_key:
+        totals = shift_totals[prev_key]
+        rh_b, rh_p, _ = utils.kg_to_box_package(totals['ru_hua'])
+        fz_b, fz_p, _ = utils.kg_to_box_package(totals['fen_zhuang'])
+        display_rows.append({
+            'is_summary': True,
+            'usage_date': prev_key[0],
+            'shift': prev_key[1],
+            'blaster': '合计',
+            'lei_guan': totals['lei_guan'],
+            'ru_hua': totals['ru_hua'],
+            'ru_hua_boxes': rh_b, 'ru_hua_bags': rh_p,
+            'fen_zhuang': totals['fen_zhuang'],
+            'fen_zhuang_boxes': fz_b, 'fen_zhuang_bags': fz_p,
+        })
+
+    return render(request, 'blasting_stats.html', {'rows': display_rows})
 
