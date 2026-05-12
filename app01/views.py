@@ -34,6 +34,12 @@ from django.core.validators import MinLengthValidator, MaxLengthValidator, Regex
 from django.conf import settings
 import uuid
 import json
+import sys
+sys.path.insert(0, "/root/django")
+import utils
+import sys
+sys.path.insert(0, "/root/django")
+import utils
 
 from openpyxl import Workbook
 from django.http import HttpResponse
@@ -2623,42 +2629,54 @@ def blasting_register(request):
     from datetime import date, timedelta
     from django.db.models import OuterRef, Subquery
     import json
-
-    # 获取所有作业点（去重取最新）
     latest_wp_id = models.WorkPoint.objects.filter(
-        work_point=OuterRef('work_point')
+        manager=OuterRef('manager')
     ).order_by('-created_at').values('pk')[:1]
     work_points = models.WorkPoint.objects.filter(
         pk=Subquery(latest_wp_id)
     ).order_by('-created_at')
 
     if request.method == 'POST':
-        shift = request.POST.get('shift', '')
-        blaster = request.POST.get('blaster', '')
+        shift = request.POST.get('shift', '').strip()
+        blaster = request.POST.get('blaster', '').strip()
         work_list = request.POST.get('work_list', '[]')
         date_type = request.POST.get('date_type', '今日')
         work_date = date.today() if date_type == '今日' else date.today() + timedelta(days=1)
 
-        models.BlastingRegistration.objects.create(
-            shift=shift,
-            blaster=blaster,
-            work_data=work_list,
-            usage_date=work_date
-        )
+        errors = {}
+        if not shift:
+            errors['shift'] = '请选择班次'
+        if not blaster:
+            errors['blaster'] = '请选择爆破员'
 
-        records = models.BlastingRegistration.objects.filter(usage_date=work_date, shift=shift).order_by('-created_at')
+        if not errors:
+            models.BlastingRegistration.objects.create(
+                shift=shift,
+                blaster=blaster,
+                work_data=work_list,
+                usage_date=work_date
+            )
+
+        records = models.BlastingRegistration.objects.filter(usage_date=work_date, shift=shift if shift else '').order_by('-created_at')
         for r in records:
             try:
                 r.parsed_work = json.loads(r.work_data)
             except:
                 r.parsed_work = []
-        return render(request, 'blasting_register.html', {
+        ctx = {
             'work_points': work_points,
             'records': records,
             'current_date_type': date_type,
-            'success': True,
-            'message': '登记成功'
-        })
+            'shift_val': shift,
+            'blaster_val': blaster,
+            'blasters': models.Blaster.objects.all().order_by('-created_at'),
+        }
+        if errors:
+            ctx['errors'] = errors
+        else:
+            ctx['success'] = True
+            ctx['message'] = '登记成功'
+        return render(request, 'blasting_register.html', ctx)
 
     # GET 默认显示今日记录
     today = date.today()
@@ -2671,7 +2689,8 @@ def blasting_register(request):
     return render(request, 'blasting_register.html', {
         'work_points': work_points,
         'records': records,
-        'current_date_type': '今日'
+        'current_date_type': '今日',
+        'blasters': models.Blaster.objects.all().order_by('-created_at'),
     })
 
 
@@ -2702,7 +2721,10 @@ def blasting_register_detail(request, pk):
     """爆破作业登记详情"""
     record = models.BlastingRegistration.objects.get(id=pk)
     import json
-    work_list = json.loads(record.work_data)
+    try:
+        work_list = json.loads(record.work_data)
+    except:
+        work_list = []
     return render(request, 'blasting_register_detail.html', {
         'record': record,
         'work_list': work_list
@@ -2727,3 +2749,71 @@ def work_point_list(request):
     """作业点列表"""
     records = models.WorkPoint.objects.all().order_by('-created_at')
     return render(request, 'work_point_list.html', {'records': records})
+
+def blaster_list(request):
+    """爆破员列表"""
+    records = models.Blaster.objects.all().order_by('-created_at')
+    return render(request, 'blaster_list.html', {'records': records})
+
+def blaster_add(request):
+    """爆破员添加"""
+    from django.shortcuts import render, redirect
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        if name:
+            from app01.models import Blaster
+            Blaster.objects.create(name=name)
+            return redirect('/home/blaster_list/')
+        else:
+            return render(request, 'blaster_add.html', {'error': '请输入爆破员姓名'})
+    return render(request, 'blaster_add.html')
+
+def work_point_delete(request, pk):
+    """删除作业点"""
+    from django.shortcuts import redirect
+    from app01 import models
+    models.WorkPoint.objects.filter(pk=pk).delete()
+    return redirect('/home/work_point_list/')
+
+def blasting_stats(request):
+    """爆破登记统计：按班次+爆破员+使用日期分组，求和"""
+    from django.shortcuts import render
+    from app01 import models
+    from collections import defaultdict
+
+    records = models.BlastingRegistration.objects.filter(usage_date__isnull=False).order_by('usage_date', 'shift')
+    
+    # 分组聚合
+    groups = defaultdict(lambda: {'lei_guan': 0, 'ru_hua': 0, 'fen_zhuang': 0, 'count': 0})
+    for r in records:
+        key = (r.usage_date, r.shift, r.blaster)
+        try:
+            work_list = json.loads(r.work_data)
+        except:
+            work_list = []
+        for w in work_list:
+            groups[key]['lei_guan'] += int(w.get('lei_guan', 0) or 0)
+            groups[key]['ru_hua'] += int(w.get('ru_hua', 0) or 0)
+            groups[key]['fen_zhuang'] += int(w.get('fen_zhuang', 0) or 0)
+        groups[key]['count'] += 1
+
+    rows = []
+    for (usage_date, shift, blaster), vals in sorted(groups.items()):
+        ru_hua_boxes, ru_hua_bags, _ = utils.kg_to_box_package(vals['ru_hua'])
+        fen_zhuang_boxes, fen_zhuang_bags, _ = utils.kg_to_box_package(vals['fen_zhuang'])
+        rows.append({
+            'usage_date': usage_date,
+            'shift': shift,
+            'blaster': blaster,
+            'lei_guan': vals['lei_guan'],
+            'ru_hua': vals['ru_hua'],
+            'fen_zhuang': vals['fen_zhuang'],
+            'count': vals['count'],
+            'ru_hua_boxes': ru_hua_boxes,
+            'ru_hua_bags': ru_hua_bags,
+            'fen_zhuang_boxes': fen_zhuang_boxes,
+            'fen_zhuang_bags': fen_zhuang_bags,
+        })
+
+    return render(request, 'blasting_stats.html', {'rows': rows})
+

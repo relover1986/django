@@ -22,7 +22,6 @@
                         <th>爆破员</th>
                         <th>作业点数</th>
                         <th>使用日期</th>
-                        <th>提交时间</th>
                         <th>操作</th>
                     </tr>
                 </thead>
@@ -34,7 +33,6 @@
                         <td>{{ r.blaster }}</td>
                         <td>{{ r.work_count }}</td>
                         <td>{{ r.usage_date|date:"Y-m-d" }}</td>
-                        <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
                         <td><a href="/home/blasting_register_detail/{{ r.id }}/" class="btn btn-sm btn-outline-info">查看</a></td>
                     </tr>
                     {% empty %}
@@ -45,6 +43,7 @@
         </div>
         <a href="/home/blasting_register/" class="btn btn-outline-secondary">返回登记</a>
         <a href="/home/" class="btn btn-danger">返回主页</a>
+        <a href="/home/blasting_stats/" class="btn btn-success">统计数据</a>
     </div>
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
 </body>

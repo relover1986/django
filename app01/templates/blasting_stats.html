@@ -1,0 +1,49 @@
+{% load static %}
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>爆破登记统计</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container py-4">
+        <h4 class="mb-3">爆破登记统计</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover bg-white">
+                <thead class="table-light">
+                    <tr>
+                        <th>使用日期</th>
+                        <th>班次</th>
+                        <th>爆破员</th>
+                        <th>雷管</th>
+                        <th>乳化炸药(kg)</th>
+                        <th>乳化(箱/包)</th>
+                        <th>粉状炸药(kg)</th>
+                        <th>粉状(箱/包)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rows %}
+                    <tr>
+                        <td>{{ r.usage_date|date:"Y-m-d" }}</td>
+                        <td>{{ r.shift }}</td>
+                        <td>{{ r.blaster }}</td>
+                        <td>{{ r.lei_guan }}</td>
+                        <td>{{ r.ru_hua }}</td>
+                        <td>{{ r.ru_hua_boxes }}箱{{ r.ru_hua_bags }}包</td>
+                        <td>{{ r.fen_zhuang }}</td>
+                        <td>{{ r.fen_zhuang_boxes }}箱{{ r.fen_zhuang_bags }}包</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="9" class="text-center text-muted">暂无数据</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <a href="/home/blasting_register_list/" class="btn btn-outline-secondary">返回</a>
+    </div>
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

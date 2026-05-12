@@ -14,7 +14,7 @@
         <table class="table table-bordered bg-white">
             <tr><th style="width:120px">班次</th><td>{{ record.shift }}</td></tr>
             <tr><th>爆破员</th><td>{{ record.blaster }}</td></tr>
-            <tr><th>提交时间</th><td>{{ record.created_at|date:"Y-m-d H:i:s" }}</td></tr>
+            <tr><th>使用日期</th><td>{{ record.usage_date|date:"Y-m-d" }}</td></tr>
         </table>
 
         <h6 class="mt-4">作业点明细</h6>

@@ -538,8 +538,17 @@ class BlastingCertificate(models.Model):
 #cd OneDrive\lnjx && python manage.py makemigrations
 
 #python manage.py makemigrations
-#python manage.py migrate   
+#python manage.py migrate
 
+class Blaster(models.Model):
+    """爆破员"""
+    name = models.CharField(max_length=50, verbose_name='爆破员')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='上传时间')
 
+    class Meta:
+        verbose_name = '爆破员'
+        verbose_name_plural = '爆破员'
 
+    def __str__(self):
+        return self.name
 

@@ -18,6 +18,18 @@
         </div>
         {% endif %}
 
+        {% if errors %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>提交失败：</strong>
+            <ul class="mb-0 mt-1">
+                {% for field, msg in errors.items %}
+                <li>{{ msg }}</li>
+                {% endfor %}
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+
         <form action="/home/blasting_register/" method="post" id="myForm">
             {% csrf_token %}
 
@@ -45,7 +57,7 @@
                 <div class="col-6">
                     <input type="hidden" name="shift" id="shiftVal">
                     <div class="dropdown w-100">
-                        <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle w-100{% if errors.shift %} border-danger{% endif %}" type="button" data-bs-toggle="dropdown">
                             选择班次
                         </button>
                         <ul class="dropdown-menu w-100">
@@ -57,13 +69,13 @@
                 <div class="col-6">
                     <input type="hidden" name="blaster" id="blasterVal">
                     <div class="dropdown w-100">
-                        <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle w-100{% if errors.blaster %} border-danger{% endif %}" type="button" data-bs-toggle="dropdown">
                             选择爆破员
                         </button>
                         <ul class="dropdown-menu w-100">
-                            <li><a class="dropdown-item blaster-item" data-val="张三">张三</a></li>
-                            <li><a class="dropdown-item blaster-item" data-val="李四">李四</a></li>
-                            <li><a class="dropdown-item blaster-item" data-val="王五">王五</a></li>
+                            {% for b in blasters %}
+                            <li><a class="dropdown-item blaster-item" data-val="{{ b.name }}">{{ b.name }}</a></li>
+                            {% endfor %}
                         </ul>
                     </div>
                 </div>
