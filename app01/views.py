@@ -2620,28 +2620,59 @@ def idcard_batch_upload(request):
 @csrf_exempt
 def blasting_register(request):
     """爆破作业登记页面"""
+    from datetime import date, timedelta
     from django.db.models import OuterRef, Subquery
-    latest_id = models.WorkPoint.objects.filter(
+    import json
+
+    # 获取所有作业点（去重取最新）
+    latest_wp_id = models.WorkPoint.objects.filter(
         work_point=OuterRef('work_point')
     ).order_by('-created_at').values('pk')[:1]
     work_points = models.WorkPoint.objects.filter(
-        pk=Subquery(latest_id)
+        pk=Subquery(latest_wp_id)
     ).order_by('-created_at')
+
     if request.method == 'POST':
         shift = request.POST.get('shift', '')
         blaster = request.POST.get('blaster', '')
         work_list = request.POST.get('work_list', '[]')
+        date_type = request.POST.get('date_type', '今日')
+        work_date = date.today() if date_type == '今日' else date.today() + timedelta(days=1)
+
         models.BlastingRegistration.objects.create(
             shift=shift,
             blaster=blaster,
-            work_data=work_list
+            work_data=work_list,
+            date=work_date
         )
+
+        records = models.BlastingRegistration.objects.filter(date=work_date, shift=shift).order_by('-created_at')
+        for r in records:
+            try:
+                r.parsed_work = json.loads(r.work_data)
+            except:
+                r.parsed_work = []
         return render(request, 'blasting_register.html', {
             'work_points': work_points,
+            'records': records,
+            'current_date_type': date_type,
             'success': True,
             'message': '登记成功'
         })
-    return render(request, 'blasting_register.html', {'work_points': work_points})
+
+    # GET 默认显示今日记录
+    today = date.today()
+    records = models.BlastingRegistration.objects.filter(date=today).order_by('-created_at')
+    for r in records:
+        try:
+            r.parsed_work = json.loads(r.work_data)
+        except:
+            r.parsed_work = []
+    return render(request, 'blasting_register.html', {
+        'work_points': work_points,
+        'records': records,
+        'current_date_type': '今日'
+    })
 
 
 def blasting_register_list(request):

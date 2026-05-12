@@ -8,7 +8,7 @@
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
 </head>
 <body class="bg-light">
-    <div class="container py-4" style="max-width: 800px;">
+    <div class="container py-4" style="max-width: 960px;">
         <h4 class="mb-4">爆破作业登记</h4>
 
         {% if success %}
@@ -21,8 +21,27 @@
         <form action="/home/blasting_register/" method="post" id="myForm">
             {% csrf_token %}
 
-            <!-- 第一行：班次 + 爆破员 -->
+            <!-- 日期选择：今日/明日 -->
             <div class="row mt-4 g-3">
+                <div class="col-6">
+                    <input type="hidden" name="date_type" id="dateTypeVal" value="{{ current_date_type|default:'今日' }}">
+                    <div class="dropdown w-100">
+                        <button class="btn btn-outline-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
+                            {{ current_date_type|default:'今日' }}
+                        </button>
+                        <ul class="dropdown-menu w-100">
+                            <li><a class="dropdown-item date-type-item" data-val="今日">今日</a></li>
+                            <li><a class="dropdown-item date-type-item" data-val="明日">明日</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <span id="dateDisplay" class="form-control-plaintext text-muted" style="line-height:38px;"></span>
+                </div>
+            </div>
+
+            <!-- 第一行：班次 + 爆破员 -->
+            <div class="row g-3">
                 <div class="col-6">
                     <input type="hidden" name="shift" id="shiftVal">
                     <div class="dropdown w-100">
@@ -50,7 +69,7 @@
                 </div>
             </div>
 
-            <!-- 第二行：作业点 + 耗材（从数据库动态读取） -->
+            <!-- 第二行：作业点 + 耗材 -->
             <div class="mt-4">
                 <h6>作业点及耗材登记</h6>
                 <div class="border p-3 rounded bg-white">
@@ -76,10 +95,66 @@
                 <a href="/home/" class="btn btn-outline-secondary ms-2">返回主页</a>
             </div>
         </form>
+
+        <!-- 已提交记录（按日期+班次+作业点去重） -->
+        <div class="mt-5">
+            <h5>已提交记录（{{ current_date_type|default:'今日' }}）</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover bg-white table-sm">
+                    <thead class="table-light">
+                        <tr>
+                            <th>班次</th>
+                            <th>爆破员</th>
+                            <th>作业点</th>
+                            <th>雷管</th>
+                            <th>乳化炸药</th>
+                            <th>粉状炸药</th>
+                            <th>提交时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in records %}
+                        {% for w in r.parsed_work %}
+                        <tr>
+                            <td>{{ r.shift }}</td>
+                            <td>{{ r.blaster }}</td>
+                            <td>{{ w.work_name }}</td>
+                            <td>{{ w.lei_guan }}</td>
+                            <td>{{ w.ru_hua }}</td>
+                            <td>{{ w.fen_zhuang }}</td>
+                            <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
+                            <td><a href="/home/blasting_register_detail/{{ r.id }}/" class="btn btn-sm btn-outline-info">查看</a></td>
+                        </tr>
+                        {% endfor %}
+                        {% empty %}
+                        <tr><td colspan="8" class="text-center text-muted">暂无记录</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
     <script>
+    // 显示当前日期
+    function updateDateDisplay() {
+        var val = document.getElementById('dateTypeVal').value;
+        var d = new Date();
+        if (val === '明日') d.setDate(d.getDate() + 1);
+        document.getElementById('dateDisplay').innerText = d.toLocaleDateString('zh-CN', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+    }
+    updateDateDisplay();
+
+    document.querySelectorAll('.date-type-item').forEach(item => {
+        item.addEventListener('click', function(e){
+            e.preventDefault();
+            document.getElementById('dateTypeVal').value = this.dataset.val;
+            this.closest('.dropdown').querySelector('button').innerText = this.innerText;
+            updateDateDisplay();
+        });
+    });
     document.querySelectorAll('.shift-item').forEach(item => {
         item.addEventListener('click', function(e){
             e.preventDefault();
