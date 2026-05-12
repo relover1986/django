@@ -21,6 +21,7 @@
                         <th>班次</th>
                         <th>爆破员</th>
                         <th>作业点数</th>
+                        <th>使用日期</th>
                         <th>提交时间</th>
                         <th>操作</th>
                     </tr>
@@ -32,6 +33,7 @@
                         <td>{{ r.shift }}</td>
                         <td>{{ r.blaster }}</td>
                         <td>{{ r.work_count }}</td>
+                        <td>{{ r.usage_date|date:"Y-m-d" }}</td>
                         <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
                         <td><a href="/home/blasting_register_detail/{{ r.id }}/" class="btn btn-sm btn-outline-info">查看</a></td>
                     </tr>
