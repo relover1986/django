@@ -2629,8 +2629,28 @@ def blasting_register(request):
             blaster=blaster,
             work_data=work_list
         )
-        return render(request, 'blasting_register.html', {
-            'success': True,
-            'message': '登记成功'
-        })
+        return redirect('/home/blasting_register_list/')
     return render(request, 'blasting_register.html')
+
+
+def blasting_register_list(request):
+    """爆破作业登记列表"""
+    records = models.BlastingRegistration.objects.all().order_by('-created_at')
+    import json
+    for r in records:
+        try:
+            r.work_count = len(json.loads(r.work_data))
+        except:
+            r.work_count = 0
+    return render(request, 'blasting_register_list.html', {'records': records})
+
+
+def blasting_register_detail(request, pk):
+    """爆破作业登记详情"""
+    record = models.BlastingRegistration.objects.get(id=pk)
+    import json
+    work_list = json.loads(record.work_data)
+    return render(request, 'blasting_register_detail.html', {
+        'record': record,
+        'work_list': work_list
+    })
