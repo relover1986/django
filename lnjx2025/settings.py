@@ -1,3 +1,5 @@
+import os
+os.environ['DJANGO_ALLOW_ASYNC_UNSAFE'] = 'true'
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
