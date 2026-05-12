@@ -2620,7 +2620,13 @@ def idcard_batch_upload(request):
 @csrf_exempt
 def blasting_register(request):
     """爆破作业登记页面"""
-    work_points = models.WorkPoint.objects.all().order_by('-created_at')
+    from django.db.models import OuterRef, Subquery
+    latest_id = models.WorkPoint.objects.filter(
+        work_point=OuterRef('work_point')
+    ).order_by('-created_at').values('pk')[:1]
+    work_points = models.WorkPoint.objects.filter(
+        pk=Subquery(latest_id)
+    ).order_by('-created_at')
     if request.method == 'POST':
         shift = request.POST.get('shift', '')
         blaster = request.POST.get('blaster', '')
