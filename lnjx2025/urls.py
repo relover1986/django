@@ -106,19 +106,16 @@ urlpatterns = [
     path('home/blastingcertificate_export_xlsx/', views.blastingcertificate_export_xlsx, name='blastingcertificate_export_xlsx'),
     
     # 爆破作业登记
-    path('home/blasting_register/', views.blasting_register, name='blasting_register'),
-    path('home/blasting_register_list/', views.blasting_register_list, name='blasting_register_list'),
-    path('home/blasting_stats/', views.blasting_stats, name='blasting_stats'),
-    path('home/blasting_register_detail/<int:pk>/', views.blasting_register_detail, name='blasting_register_detail'),
-    path('home/blasting_register_delete/<int:pk>/', views.blasting_register_delete, name='blasting_register_delete'),
 
     # 作业点
     # 爆破员列表
     path('home/blaster_list/', views.blaster_list, name='blaster_list'),
     path('home/blaster_add/', views.blaster_add, name='blaster_add'),
-    path('home/work_point_add/', views.work_point_add, name='work_point_add'),
-    path('home/work_point_list/', views.work_point_list, name='work_point_list'),
-    path('home/work_point_delete/<int:pk>/', views.work_point_delete, name='work_point_delete'),
+    path('home/blasting_summary_list/', views.blasting_summary_list, name='blasting_summary_list'),
+    path('home/blasting_summary_add/', views.blasting_summary_add, name='blasting_summary_add'),
+    path('home/blasting_summary_delete/<int:pk>/', views.blasting_summary_delete, name='blasting_summary_delete'),
+    path('home/blasting_summary_assign_blaster/', views.blasting_summary_assign_blaster, name='blasting_summary_assign_blaster'),
+    path('home/blasting_stats/', views.blasting_stats, name='blasting_stats'),
 
     path('home/idcard_add/', views.idcard_add),
     path('home/idcard_delete/', views.idcard_delete),

@@ -2624,144 +2624,92 @@ def idcard_batch_upload(request):
 
 
 @csrf_exempt
-def blasting_register(request):
-    """爆破作业登记页面"""
-    from datetime import date, timedelta
-    from django.db.models import OuterRef, Subquery
-    import json
-    latest_wp_id = models.WorkPoint.objects.filter(
-        manager=OuterRef('manager')
-    ).order_by('-created_at').values('pk')[:1]
-    work_points = models.WorkPoint.objects.filter(
-        pk=Subquery(latest_wp_id)
-    ).order_by('-created_at')
-
-    if request.method == 'POST':
-        shift = request.POST.get('shift', '').strip()
-        blaster = request.POST.get('blaster', '').strip()
-        work_list = request.POST.get('work_list', '[]')
-        date_type = request.POST.get('date_type', '今日')
-        work_date = date.today() if date_type == '今日' else date.today() + timedelta(days=1)
-
-        errors = {}
-        if not shift:
-            errors['shift'] = '请选择班次'
-        if not blaster:
-            errors['blaster'] = '请选择爆破员'
-
-        if not errors:
-            models.BlastingRegistration.objects.create(
-                shift=shift,
-                blaster=blaster,
-                work_data=work_list,
-                usage_date=work_date
-            )
-
-        records = models.BlastingRegistration.objects.filter(usage_date=work_date, shift=shift if shift else '').order_by('-created_at')
-        for r in records:
-            try:
-                r.parsed_work = json.loads(r.work_data)
-            except:
-                r.parsed_work = []
-        ctx = {
-            'work_points': work_points,
-            'records': records,
-            'current_date_type': date_type,
-            'shift_val': shift,
-            'blaster_val': blaster,
-            'blasters': models.Blaster.objects.all().order_by('-created_at'),
-        }
-        if errors:
-            ctx['errors'] = errors
-        else:
-            ctx['success'] = True
-            ctx['message'] = '登记成功'
-        return render(request, 'blasting_register.html', ctx)
-
-    # GET 默认显示今日记录
-    today = date.today()
-    records = models.BlastingRegistration.objects.filter(usage_date=today).order_by('-created_at')
-    for r in records:
-        try:
-            r.parsed_work = json.loads(r.work_data)
-        except:
-            r.parsed_work = []
-    return render(request, 'blasting_register.html', {
-        'work_points': work_points,
-        'records': records,
-        'current_date_type': '今日',
-        'blasters': models.Blaster.objects.all().order_by('-created_at'),
-    })
 
 
-def blasting_register_list(request):
-    """爆破作业登记列表 - 按班次+爆破员分组，只展示每组最新一条"""
-    from django.db.models import OuterRef, Subquery
-    import json
-
-    # 子查询：取每组(shift, blaster)最新一条的id
-    latest_id = models.BlastingRegistration.objects.filter(
-        shift=OuterRef('shift'),
-        blaster=OuterRef('blaster')
-    ).order_by('-created_at').values('pk')[:1]
-
-    records = models.BlastingRegistration.objects.filter(
-        pk=Subquery(latest_id)
-    ).order_by('-created_at')
-
-    for r in records:
-        try:
-            r.work_count = len(json.loads(r.work_data))
-        except:
-            r.work_count = 0
-    return render(request, 'blasting_register_list.html', {'records': records})
-
-
-def blasting_register_detail(request, pk):
-    """爆破作业登记详情"""
-    record = models.BlastingRegistration.objects.get(id=pk)
-    import json
-    try:
-        work_list = json.loads(record.work_data)
-    except:
-        work_list = []
-    return render(request, 'blasting_register_detail.html', {
-        'record': record,
-        'work_list': work_list
-    })
-
-
-def blasting_register_delete(request, pk):
-    """删除爆破登记记录"""
-    from django.shortcuts import redirect
+def blasting_stats(request):
+    """雷管炸药台帐统计：按日期+班次+爆破员分组，班次合计"""
+    from django.shortcuts import render
     from app01 import models
-    models.BlastingRegistration.objects.filter(pk=pk).delete()
-    return redirect('/home/blasting_register_list/')
+    from collections import defaultdict
+    sys.path.insert(0, '/root/django')
+    from utils import kg_to_box_package
 
+    records = models.BlastingSummary.objects.all()
 
-@csrf_exempt
-def work_point_add(request):
-    """作业点登记页面"""
-    if request.method == 'POST':
-        manager = request.POST.get('manager', '')
-        work_point = request.POST.get('work_point', '')
-        models.WorkPoint.objects.create(
-            manager=manager,
-            work_point=work_point
-        )
-        return redirect('/home/work_point_list/')
-    return render(request, 'work_point_add.html')
+    # 按(日期, 班次, 爆破员)分组
+    groups = defaultdict(lambda: {'detonator': 0, 'explosive': 0, 'count': 0})
+    shift_totals = defaultdict(lambda: {'detonator': 0, 'explosive': 0})
 
+    for r in records:
+        blaster = r.blaster or r.person or '未知'
+        key = (r.date, r.shift or '—', blaster)
+        groups[key]['detonator'] += r.detonator_count
+        groups[key]['explosive'] += r.explosive_count
+        groups[key]['count'] += 1
+        sk = (r.date, r.shift or '—')
+        shift_totals[sk]['detonator'] += r.detonator_count
+        shift_totals[sk]['explosive'] += r.explosive_count
 
-def work_point_list(request):
-    """作业点列表"""
-    records = models.WorkPoint.objects.all().order_by('-created_at')
-    return render(request, 'work_point_list.html', {'records': records})
+    rows = []
+    for (date, shift, blaster), vals in sorted(groups.items(), key=lambda x: (-int(x[0][0].replace('年','').replace('月','').replace('日','')) if '年' in x[0][0] else 0, x[0][1], x[0][2])):
+        boxes, bags, _ = kg_to_box_package(vals['explosive'])
+        rows.append({
+            'date': date,
+            'shift': shift,
+            'blaster': blaster,
+            'detonator': vals['detonator'],
+            'explosive': vals['explosive'],
+            'explosive_boxes': boxes,
+            'explosive_bags': bags,
+            'count': vals['count'],
+        })
+
+    # 每组(日期,班次)末尾插合计行
+    display_rows = []
+    prev_key = None
+    for r in rows:
+        cur_key = (r['date'], r['shift'])
+        if prev_key and prev_key != cur_key:
+            t = shift_totals[prev_key]
+            sboxes, sbags, _ = kg_to_box_package(t['explosive'])
+            display_rows.append({
+                'is_summary': True, 'date': prev_key[0], 'shift': prev_key[1],
+                'blaster': '合计', 'detonator': t['detonator'], 'explosive': t['explosive'],
+                'explosive_boxes': sboxes, 'explosive_bags': sbags,
+            })
+        display_rows.append(r)
+        prev_key = cur_key
+    if prev_key:
+        t = shift_totals[prev_key]
+        sboxes, sbags, _ = kg_to_box_package(t['explosive'])
+        display_rows.append({
+            'is_summary': True, 'date': prev_key[0], 'shift': prev_key[1],
+            'blaster': '合计', 'detonator': t['detonator'], 'explosive': t['explosive'],
+            'explosive_boxes': sboxes, 'explosive_bags': sbags,
+            })
+
+    # 日期合并单元格
+    date_counts = {}
+    for r in display_rows:
+        d = r['date']
+        date_counts[d] = date_counts.get(d, 0) + 1
+    date_done = set()
+    for r in display_rows:
+        d = r['date']
+        if d not in date_done:
+            r['date_rowspan'] = date_counts[d]
+            date_done.add(d)
+        else:
+            r['date_rowspan'] = 0
+
+    return render(request, 'blasting_stats.html', {'rows': display_rows})
+
 
 def blaster_list(request):
     """爆破员列表"""
     records = models.Blaster.objects.all().order_by('-created_at')
     return render(request, 'blaster_list.html', {'records': records})
+
 
 def blaster_add(request):
     """爆破员添加"""
@@ -2776,114 +2724,138 @@ def blaster_add(request):
             return render(request, 'blaster_add.html', {'error': '请输入爆破员姓名'})
     return render(request, 'blaster_add.html')
 
-def work_point_delete(request, pk):
-    """删除作业点"""
-    from django.shortcuts import redirect
-    from app01 import models
-    models.WorkPoint.objects.filter(pk=pk).delete()
-    return redirect('/home/work_point_list/')
 
-def blasting_stats(request):
-    """爆破登记统计：按班次+爆破员+使用日期分组，求和，末尾显示班次合计"""
+def blasting_summary_list(request):
+    """岩工报药列表"""
     from django.shortcuts import render
-    from app01 import models
-    from collections import defaultdict
-
-    records = models.BlastingRegistration.objects.filter(usage_date__isnull=False).order_by('-usage_date', 'shift')
-    
-    # 按(日期, 班次, 爆破员)分组
-    groups = defaultdict(lambda: {'lei_guan': 0, 'ru_hua': 0, 'fen_zhuang': 0, 'count': 0})
-    # 按(日期, 班次)汇总
-    shift_totals = defaultdict(lambda: {'lei_guan': 0, 'ru_hua': 0, 'fen_zhuang': 0})
-    
+    from datetime import date
+    all_records = models.BlastingSummary.objects.all().order_by('-created_at')
+    # 将segments_data转为排序后的列表 [(段号, 数量), ...]
+    for r in all_records:
+        sd = r.segments_data or {}
+        r.seg_list = sorted(sd.items(), key=lambda x: int(x[0]))
+    # 上半部分仅显示当日数据
+    today_str = date.today().strftime('%Y年%-m月%-d日')
+    records = all_records.filter(date=today_str)
     for r in records:
-        try:
-            work_list = json.loads(r.work_data)
-        except:
-            work_list = []
-        for w in work_list:
-            lg = int(w.get('lei_guan', 0) or 0)
-            rh = int(w.get('ru_hua', 0) or 0)
-            fz = int(w.get('fen_zhuang', 0) or 0)
-            groups[(r.usage_date, r.shift, r.blaster)]['lei_guan'] += lg
-            groups[(r.usage_date, r.shift, r.blaster)]['ru_hua'] += rh
-            groups[(r.usage_date, r.shift, r.blaster)]['fen_zhuang'] += fz
-            shift_totals[(r.usage_date, r.shift)]['lei_guan'] += lg
-            shift_totals[(r.usage_date, r.shift)]['ru_hua'] += rh
-            shift_totals[(r.usage_date, r.shift)]['fen_zhuang'] += fz
-        groups[(r.usage_date, r.shift, r.blaster)]['count'] += 1
+        sd = r.segments_data or {}
+        r.seg_list = sorted(sd.items(), key=lambda x: int(x[0]))
+    blasters = models.Blaster.objects.all().order_by('-created_at')
+    return render(request, 'blasting_summary_list.html', {'records': records, 'all_records': all_records, 'blasters': blasters})
+@csrf_exempt
+def blasting_summary_add(request):
+    """岩工报药添加 - 解析文本写入数据库，显示计算结果和核对状态"""
+    from django.shortcuts import render
+    from blasting_summary import parse_blasting_input
+    import re
 
-    rows = []
-    for (usage_date, shift, blaster), vals in sorted(groups.items(), key=lambda x: (-x[0][0].toordinal(), x[0][1], x[0][2])):
-        ru_hua_boxes, ru_hua_bags, _ = utils.kg_to_box_package(vals['ru_hua'])
-        fen_zhuang_boxes, fen_zhuang_bags, _ = utils.kg_to_box_package(vals['fen_zhuang'])
-        rows.append({
-            'usage_date': usage_date,
-            'shift': shift,
-            'blaster': blaster,
-            'lei_guan': vals['lei_guan'],
-            'ru_hua': vals['ru_hua'],
-            'fen_zhuang': vals['fen_zhuang'],
-            'count': vals['count'],
-            'ru_hua_boxes': ru_hua_boxes,
-            'ru_hua_bags': ru_hua_bags,
-            'fen_zhuang_boxes': fen_zhuang_boxes,
-            'fen_zhuang_bags': fen_zhuang_bags,
+    if request.method == 'POST':
+        text = request.POST.get('text', '').strip()
+        if not text:
+            return render(request, 'blasting_summary_add.html', {'error': '请输入台账文本'})
+
+        blocks = [b.strip() for b in text.split('\n\n') if b.strip()]
+        if not blocks:
+            blocks = [text]
+
+        results = []
+        success_count = 0
+        error_msgs = []
+        
+        for i, block in enumerate(blocks, 1):
+            try:
+                data = parse_blasting_input(block)
+                
+                missing_fields = []
+                if not data['人员']:
+                    missing_fields.append('人员')
+                if not data['地点']:
+                    missing_fields.append('地点')
+                if not data['日期']:
+                    missing_fields.append('日期')
+                
+                check_pass = data['雷管核对'] == '正确' and len(missing_fields) == 0
+                
+                result_item = {
+                    '序号': i,
+                    '班次': data.get('班次', '') or '—',
+                    '人员': data['人员'] or '未识别',
+                    '地点': data['地点'] or '未识别',
+                    '日期': data['日期'] or '未识别',
+                    '段号1_6': data['1-6段累加'],
+                    '段号7以上': data['7段以后累加'],
+                    '计算雷管': data['计算雷管总数'],
+                    '标签雷管': data['雷管'],
+                    '炸药': data['炸药'],
+                    '核对状态': data['雷管核对'],
+                    '核对通过': check_pass,
+                    '缺少字段': missing_fields
+                }
+                results.append(result_item)
+                
+                if check_pass:
+                    # 分段数据：优先用 parse_blasting_input 返回的 segments
+                    segments = data.get('segments', {})
+                    if not segments:
+                        # 兼容旧格式：从原文正则提取
+                        import re
+                        pat_seg = re.compile(r'(\d+)[/\-\—\一](\d+)')
+                        for match in pat_seg.finditer(block):
+                            seg_num = int(match.group(1))
+                            seg_cnt = int(match.group(2))
+                            segments[str(seg_num)] = seg_cnt
+                    models.BlastingSummary.objects.create(
+                        shift=data.get('班次', ''),
+                        person=data['人员'],
+                        location=data['地点'],
+                        date=data['日期'],
+                        detonator_count=data['雷管'],
+                        explosive_count=data['炸药'],
+                        segments_data=segments,
+                    )
+                    success_count += 1
+                else:
+                    errs = []
+                    if missing_fields:
+                        errs.append('缺少' + ','.join(missing_fields))
+                    if data['雷管核对'] != '正确':
+                        errs.append('雷管核对失败:计算' + str(data['计算雷管总数']) + 'vs标签' + str(data['雷管']))
+                    if not dyn_valid:
+                        errs.append('炸药' + str(dyn) + '不是3或6的倍数')
+                    error_msgs.append('第' + str(i) + '条:' + ';'.join(errs))
+                    
+            except Exception as e:
+                error_msgs.append('第' + str(i) + '条解析失败:' + str(e))
+                results.append({
+                    '序号': i,
+                    '人员': '解析失败',
+                    '核对通过': False
+                })
+
+        return render(request, 'blasting_summary_add.html', {
+            'results': results,
+            'success_count': success_count,
+            'total_count': len(blocks),
+            'error_msgs': error_msgs,
         })
 
-    # 构建展示列表，按(日期,班次)排序，每组末尾插合计行
-    display_rows = []
-    prev_key = None
-    for r in rows:
-        cur_key = (r['usage_date'], r['shift'])
-        # 前一组结束，插入合计
-        if prev_key and prev_key != cur_key:
-            totals = shift_totals[prev_key]
-            rh_b, rh_p, _ = utils.kg_to_box_package(totals['ru_hua'])
-            fz_b, fz_p, _ = utils.kg_to_box_package(totals['fen_zhuang'])
-            display_rows.append({
-                'is_summary': True,
-                'usage_date': prev_key[0],
-                'shift': prev_key[1],
-                'blaster': '合计',
-                'lei_guan': totals['lei_guan'],
-                'ru_hua': totals['ru_hua'],
-                'ru_hua_boxes': rh_b, 'ru_hua_bags': rh_p,
-                'fen_zhuang': totals['fen_zhuang'],
-                'fen_zhuang_boxes': fz_b, 'fen_zhuang_bags': fz_p,
-            })
-        display_rows.append(r)
-        prev_key = cur_key
-    # 最后一组合计
-    if prev_key:
-        totals = shift_totals[prev_key]
-        rh_b, rh_p, _ = utils.kg_to_box_package(totals['ru_hua'])
-        fz_b, fz_p, _ = utils.kg_to_box_package(totals['fen_zhuang'])
-        display_rows.append({
-            'is_summary': True,
-            'usage_date': prev_key[0],
-            'shift': prev_key[1],
-            'blaster': '合计',
-            'lei_guan': totals['lei_guan'],
-            'ru_hua': totals['ru_hua'],
-            'ru_hua_boxes': rh_b, 'ru_hua_bags': rh_p,
-            'fen_zhuang': totals['fen_zhuang'],
-            'fen_zhuang_boxes': fz_b, 'fen_zhuang_bags': fz_p,
-        })
+    return render(request, 'blasting_summary_add.html')
+def blasting_summary_delete(request, pk):
+    """删除雷管炸药台账记录"""
+    from app01 import models
+    models.BlastingSummary.objects.filter(pk=pk).delete()
+    return redirect('/home/blasting_summary_list/')
 
-    # 计算相同日期的行数，用于合并单元格
-    date_counts = {}
-    for r in display_rows:
-        d = r['usage_date']
-        date_counts[d] = date_counts.get(d, 0) + 1
-    date_done = set()
-    for r in display_rows:
-        d = r['usage_date']
-        if d not in date_done:
-            r['date_rowspan'] = date_counts[d]
-            date_done.add(d)
-        else:
-            r['date_rowspan'] = 0
 
-    return render(request, 'blasting_stats.html', {'rows': display_rows})
+def blasting_summary_assign_blaster(request):
+    """AJAX 分配爆破员"""
+    from django.http import JsonResponse
+    if request.method == 'POST':
+        import json
+        data = json.loads(request.body)
+        pk = data.get('pk')
+        blaster = data.get('blaster', '')
+        models.BlastingSummary.objects.filter(pk=pk).update(blaster=blaster)
+        return JsonResponse({'ok': True})
+    return JsonResponse({'ok': False}, status=400)
 

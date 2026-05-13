@@ -1,0 +1,98 @@
+{% load static %}
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>添加岩工报药</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <style>
+        .check-pass { background-color: #d4edda !important; }
+        .check-fail { background-color: #f8d7da !important; }
+        .result-table th, .result-table td { font-size: 14px; vertical-align: middle; }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-4">
+        <h4 class="mb-3">添加岩工报药</h4>
+
+        {% if error %}
+        <div class="alert alert-danger py-2">{{ error }}</div>
+        {% endif %}
+
+        {% if error_msgs %}
+        <div class="alert alert-warning py-2">
+            <strong>以下记录未通过核对，未入库：</strong>
+            {% for msg in error_msgs %}<div>{{ msg }}</div>{% endfor %}
+        </div>
+        {% endif %}
+
+        {% if results %}
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <span>解析结果（成功 {{ success_count }}/{{ total_count }} 条）</span>
+                {% if success_count > 0 %}
+                <a href="/home/blasting_summary_list/" class="btn btn-sm btn-success">查看列表</a>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-bordered table-hover result-table mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>序号</th>
+                            <th>班次</th>
+                            <th>人员</th>
+                            <th>地点</th>
+                            <th>日期</th>
+                            <th>段号1-6</th>
+                            <th>段号7+</th>
+                            <th>计算雷管</th>
+                            <th>标签雷管</th>
+                            <th>炸药(kg)</th>
+                            <th>核对状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in results %}
+                        <tr class="{% if r.核对通过 %}check-pass{% else %}check-fail{% endif %}">
+                            <td>{{ r.序号 }}</td>
+                            <td>{{ r.班次 }}</td>
+                            <td>{{ r.人员 }}</td>
+                            <td>{{ r.地点 }}</td>
+                            <td>{{ r.日期 }}</td>
+                            <td>{{ r.段号1_6 }}</td>
+                            <td>{{ r.段号7以上 }}</td>
+                            <td><strong>{{ r.计算雷管 }}</strong></td>
+                            <td>{{ r.标签雷管 }}</td>
+                            <td>{{ r.炸药 }}</td>
+                            <td>
+                                {% if r.核对通过 %}
+                                <span class="badge bg-success">通过</span>
+                                {% else %}
+                                <span class="badge bg-danger">{{ r.核对状态 }}</span>
+                                {% if r.缺少字段 %}
+                                <br><small class="text-danger">缺:{{ r.缺少字段|join:"," }}</small>
+                                {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">台账文本</label>
+                <textarea name="text" class="form-control" rows="10" required placeholder="粘贴雷管炸药台账文本，多条记录用空行分隔&#10;示例：白，张三，一号采区，5月10号&#10;1-6各一发&#10;7/20 8/30&#10;雷管56发 火药120公斤"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">解析并保存</button>
+            <a href="/home/blasting_summary_list/" class="btn btn-outline-secondary">返回列表</a>
+        </form>
+    </div>
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

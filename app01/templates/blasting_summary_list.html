@@ -1,0 +1,135 @@
+{% load static %}
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>岩工报药列表</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <style>
+        html, body { height: 100%; }
+        .page-wrap { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .top-section { flex: 0 0 auto; max-height: 45vh; overflow: auto; }
+        .bottom-section { flex: 1; overflow: auto; padding-top: 1rem; }
+        .seg-card { border: 1px solid #dee2e6; border-radius: .5rem; background: #fff; }
+        .seg-card-header {
+            border-bottom: 2px solid #0d6efd; padding: .35rem .5rem;
+            background: #f0f7ff; border-radius: .5rem .5rem 0 0;
+        }
+        .seg-card-header select { font-size: .8rem; padding: .1rem .2rem; max-width: 100%; }
+        .seg-table td { padding: .22rem .3rem; font-size: .8rem; }
+        .seg-table td+td { border-left: 1px solid #dee2e6; }
+        .seg-total td { border-top: 2px solid #ffc107 !important; background: #fffbe6 !important; }
+        .blaster-select { font-size: .78rem; padding: .1rem .15rem; max-width: 6rem; }
+    </style>
+</head>
+<body>
+<div class="page-wrap p-3">
+    <div class="top-section">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">岩工报药列表</h5>
+            <a href="/home/blasting_summary_add/" class="btn btn-primary btn-sm">添加</a>
+        </div>
+        <table class="table table-bordered table-hover table-sm bg-white mb-0 text-center align-middle small">
+            <thead class="table-light position-sticky top-0" style="z-index:2;">
+                <tr>
+                    <th style="width:3rem;">#</th>
+                    <th>班次</th>
+                    <th>人员</th>
+                    <th>地点</th>
+                    <th>日期</th>
+                    <th>雷管数</th>
+                    <th>炸药(公斤)</th>
+                    <th>爆破员</th>
+                    <th style="width:4rem;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in all_records %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ r.shift|default:"—" }}</td>
+                    <td>{{ r.person }}</td>
+                    <td>{{ r.location }}</td>
+                    <td>{{ r.date }}</td>
+                    <td>{{ r.detonator_count }}</td>
+                    <td>{{ r.explosive_count }}</td>
+                    <td>
+                        <select class="form-select form-select-sm blaster-select" data-pk="{{ r.id }}" onchange="assignBlaster(this)">
+                            <option value="">—</option>
+                            {% for b in blasters %}
+                            <option value="{{ b.name }}"{% if r.blaster == b.name %} selected{% endif %}>{{ b.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td><a href="/home/blasting_summary_delete/{{ r.id }}/" class="btn btn-sm btn-outline-danger py-0 px-1" onclick="return confirm('确认删除？')">删除</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="9" class="text-center text-muted py-3">暂无记录</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <hr style="border: none; border-top: 3px solid #0d6efd; opacity: 1; flex-shrink: 0;">
+
+    <div class="bottom-section">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <a href="/home/" class="btn btn-sm px-3" style="background:#E8F3FF;color:#165DFF;border:none;font-weight:500;">← 返回主页</a>
+            <a href="/home/blasting_stats/" class="btn btn-sm px-3" style="background:#FF7D00;color:#FFFFFF;border:none;font-weight:600;">统计数据</a>
+        </div>
+        <div class="row g-4">
+            {% for r in records %}
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
+                <div class="seg-card">
+                    <div class="seg-card-header text-center small fw-bold">
+                        {{ r.person }}
+                        <span class="text-muted fw-normal ms-1">{{ r.location }}</span>
+                        {% if r.shift %}<span class="badge bg-info ms-1">{{ r.shift }}</span>{% endif %}
+                    </div>
+                    <div class="seg-table">
+                        <table class="table table-sm table-striped text-center mb-0 small">
+                            <thead class="table-light">
+                                <tr><th style="width:50%;">段号</th><th>雷管数</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for seg, val in r.seg_list %}
+                                <tr><td>{{ seg }}段</td><td>{{ val }}</td></tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="seg-total fw-bold"><td>合计</td><td>{{ r.detonator_count }}</td></tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center text-muted py-4">暂无分段数据</div>
+            {% endfor %}
+        </div>
+
+    </div>
+</div>
+<script>
+function getCookie(n) {
+    var v = null;
+    if (document.cookie && document.cookie !== '') {
+        document.cookie.split(';').forEach(function(c) {
+            c = c.trim();
+            if (c.indexOf(n + '=') === 0) { v = decodeURIComponent(c.substring(n.length + 1)); }
+        });
+    }
+    return v;
+}
+function assignBlaster(el) {
+    fetch('/home/blasting_summary_assign_blaster/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+        body: JSON.stringify({pk: el.getAttribute('data-pk'), blaster: el.value})
+    });
+}
+</script>
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

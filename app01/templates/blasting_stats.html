@@ -10,7 +10,7 @@
         html, body { height: 100%; overflow: hidden; }
         .page-wrap { height: 100vh; display: flex; flex-direction: column; }
         .table-scroll { flex: 1; overflow: auto; }
-        .table-scroll thead { position: sticky; top: 0; z-index: 2; background: #f8f9fa; }
+        .table-scroll thead th { position: sticky; top: 0; z-index: 2; background: #0d6efd !important; color: #fff; font-weight: 600; border-bottom: 2px solid #0a58ca; white-space: nowrap; }
         .summary-row { background: #fff3cd !important; font-weight: bold; }
         .summary-row td { border-bottom: 2px solid #ffc107 !important; }
         .date-group-start { border-top: 3px solid #1a3a5c !important; }
@@ -19,44 +19,41 @@
 </head>
 <body class="bg-light">
     <div class="page-wrap p-3">
-        <h4 class="mb-3">爆破登记统计</h4>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <a href="/home/" class="btn btn-sm px-3" style="background:#E8F3FF;color:#165DFF;border:none;font-weight:500;">← 返回主页</a>
+            <span class="badge fs-6 px-3 py-2" style="background:#FF7D00;color:#FFFFFF;font-weight:600;">统计数据</span>
+        </div>
         <div class="table-scroll">
             <table class="table table-bordered table-hover bg-white">
-                <thead class="table-light">
-                    <tr>
-                        <th>使用日期</th>
+                <thead>
+                    <tr class="text-center">
+                        <th>日期</th>
                         <th>班次</th>
                         <th>爆破员</th>
-                        <th>雷管</th>
-                        <th>粉状炸药(kg)</th>
-                        <th>粉状(箱/包)</th>
-                        <th>乳化炸药(kg)</th>
-                        <th>乳化(箱/包)</th>
+                        <th>雷管数</th>
+                        <th>炸药(公斤)</th>
+                        <th>包装</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for r in rows %}
                     {% if r.date_rowspan %}<tr class="date-group-start">{% elif r.is_summary %}<tr class="summary-row">{% else %}<tr>{% endif %}
                         {% if r.date_rowspan %}
-                        <td class="date-cell" rowspan="{{ r.date_rowspan }}">{{ r.usage_date|date:"Y-m-d" }}</td>
+                        <td class="date-cell" rowspan="{{ r.date_rowspan }}">{{ r.date }}</td>
                         {% endif %}
                         <td>{{ r.shift }}</td>
                         <td>{% if r.is_summary %}<strong>{{ r.blaster }}</strong>{% else %}{{ r.blaster }}{% endif %}</td>
-                        <td>{{ r.lei_guan }}</td>
-                        <td>{{ r.fen_zhuang }}</td>
-                        <td>{{ r.fen_zhuang_boxes }}箱{{ r.fen_zhuang_bags }}包</td>
-                        <td>{{ r.ru_hua }}</td>
-                        <td>{{ r.ru_hua_boxes }}箱{{ r.ru_hua_bags }}包</td>
+                        <td>{{ r.detonator }}</td>
+                        <td>{{ r.explosive }}</td>
+                        <td>{{ r.explosive_boxes }}箱{{ r.explosive_bags }}包</td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="8" class="text-center text-muted">暂无数据</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted">暂无数据</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        <div class="mt-2">
-            <a href="/home/blasting_register_list/" class="btn btn-outline-secondary">返回</a>
-        </div>
+
     </div>
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
 </body>

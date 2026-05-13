@@ -8,8 +8,7 @@ class User(models.Model):
     """用户表"""
     username = models.CharField(max_length=32)
     password = models.CharField(max_length=64)
-    
-   
+
 class Admin(models.Model):
     # id = models.BigAutoField(primary_key=True)
     ident = models.CharField(max_length=32)
@@ -17,18 +16,11 @@ class Admin(models.Model):
     role = models.CharField(max_length=32, verbose_name='身份')  # 修改字段名称
     password = models.CharField(max_length=64)
     department = models.CharField(max_length=32, default='')
-    
+
     avatar = models.ImageField(upload_to='avatars/admin/',  # 存储路径
                             null=True,
                             blank=True,
                             default='avatars/admin/default_avatar.png')  # 默认路径
-    
-    
-
-    
-    
-    
-
 
 class QuestionType(models.Model):
     id = models.AutoField(primary_key=True)
@@ -38,7 +30,6 @@ class QuestionType(models.Model):
     options = models.CharField(max_length=200)
     correct_answer = models.CharField(max_length=20)
 
-
 class JskjgQuestion(models.Model):
     id = models.AutoField(primary_key=True)
     question_type = models.CharField(max_length=20)
@@ -47,9 +38,6 @@ class JskjgQuestion(models.Model):
     options = models.CharField(max_length=200)
     correct_answer = models.CharField(max_length=20)
 
-
-
-
 class WxpzxQuestion(models.Model):
     id = models.AutoField(primary_key=True)
     question_type = models.CharField(max_length=20)
@@ -57,17 +45,6 @@ class WxpzxQuestion(models.Model):
     question = models.TextField()  # 修改为TextField
     options = models.CharField(max_length=200)
     correct_answer = models.CharField(max_length=20)
-
-
-
-
-
-
-
-
-
-
-
 
 class UserAnswer(models.Model):
 
@@ -79,22 +56,10 @@ class UserAnswer(models.Model):
     # def __str__(self):
     #     return self.UserAnswer
 
-
-
-
-
-
 class Tihao(models.Model):
     题号=models.TextField(blank=False, null=False) 
-    
-
-
-
-
-
 
 class LoginRecords(models.Model):
-    
 
     ip = models.CharField(verbose_name='ip',max_length=32)
     time = models.DateTimeField(blank=False, null=False,auto_now_add=True)
@@ -110,18 +75,6 @@ class LoginRecords(models.Model):
     # def __str__(self):
     #     return self.name
 
-
-
-
-
-
-
-
-
-
-
-
-
 class ExplosiveInventoryItem(models.Model):
     """
     库存物品模型
@@ -135,14 +88,11 @@ class ExplosiveInventoryItem(models.Model):
     # 出入库单号
 
     blaster = models.CharField(max_length=100, verbose_name='爆破员', default='')
-    
 
-  
     detonating_device_quantity = models.IntegerField(default=0, verbose_name='起爆具(个)')
     # 导爆索长度(米)，默认值为0
     detonating_cord_length = models.IntegerField(default=0, verbose_name='导爆索(米)')
-    
-    
+
         # 新增字段
     # 32乳化数量(公斤)，默认值为0
     emulsion_explosive_32mm = models.IntegerField(default=0, verbose_name='32乳化(公斤)')
@@ -154,15 +104,9 @@ class ExplosiveInventoryItem(models.Model):
     electronic_detonator_5m = models.IntegerField(default=0, verbose_name='5米电子雷管(发)')
     # 15米电子雷管数量(发)，默认值为0
     electronic_detonator_15m = models.IntegerField(default=0, verbose_name='15米电子雷管(发)')
-    
 
-    
-    
     # 日期
     date = models.DateField(verbose_name='日期')
-
-
-
 
 class CategoryContent(models.Model):
     """
@@ -176,22 +120,15 @@ class CategoryContent(models.Model):
     def __str__(self):
         return f"{self.category} - {self.content}"
 
-
 class UploadedPDF(models.Model):
     # 定义一个字段来存储上传的PDF文件
     model_name = models.CharField(max_length=100, default='')
     pdf_file = models.FileField(upload_to='pdfs/')
-    
-    
+
 class UploadedTu(models.Model):
     # 定义一个字段来存储上传的PDF文件
     model_name = models.CharField(max_length=100, default='')
     pdf_file = models.FileField(upload_to='tu/')    
-    
-
-
-
-
 
 class UploadedZhaopian(models.Model):
     # 定义一个字段来存储上传的PDF文件
@@ -228,23 +165,6 @@ class UploadedZhaopian(models.Model):
 
     uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name='上传时间')  # 添加verbose_name
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class IDCard(models.Model):
     name = models.CharField(max_length=100, verbose_name='姓名')
     id_number = models.CharField(max_length=18, verbose_name='身份证号')
@@ -267,30 +187,10 @@ class IDCard(models.Model):
         verbose_name='创建时间'
     )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class ContractLabor(models.Model):
     name = models.CharField(max_length=4, verbose_name='姓名')
     id_number = models.CharField(max_length=18, verbose_name='身份证号')
-    
+
     contract_file = models.FileField(
         upload_to='contractlabor/', 
         verbose_name='劳动合同'
@@ -300,15 +200,6 @@ class ContractLabor(models.Model):
         auto_now_add=True,
         verbose_name='创建时间'
     )
-
-
-
-
-
-
-
-
-
 
 class Candidate(models.Model):
     GENDER_CHOICES = [('男', '男性'), ('女', '女性')]
@@ -332,8 +223,7 @@ class Candidate(models.Model):
         default=30,
         validators=[MinValueValidator(18), MaxValueValidator(65)]  # 添加数值范围验证
     )
-    
-    
+
     marital_status = models.CharField(max_length=2, choices=MARITAL_CHOICES, verbose_name='婚姻状况')
     education = models.CharField(max_length=50, verbose_name='学历+专业')
     has_driver_license = models.CharField(max_length=2, choices=LICENSE_CHOICES, verbose_name='驾照')
@@ -365,14 +255,6 @@ class Candidate(models.Model):
     def __str__(self):
         return f"{self.name} - {self.get_gender_display()}"
 
-
-
-
-
-
-
-
-
 class ExplosiveStaff(models.Model):
     name = models.CharField(max_length=100, verbose_name='姓名')
     id_number = models.CharField(max_length=18, verbose_name='身份证号')    
@@ -383,7 +265,6 @@ class ExplosiveStaff(models.Model):
         null=True
     )
 
- 
     # 新增银行卡号字段
     bank_card_number = models.CharField(
         max_length=19,
@@ -398,17 +279,14 @@ class ExplosiveStaff(models.Model):
             )
         ]
     )
- 
- 
- 
-    
+
     front_image = models.ImageField(upload_to='explosive_staff/', verbose_name='人像面照片')  
     back_image = models.ImageField(upload_to='explosive_staff/', verbose_name='国徽面照片')  
     combined_image = models.ImageField(upload_to='explosive_staff/', verbose_name='双面合成图')
-    
+
     photo = models.FileField(upload_to='explosive_staff/photo/', verbose_name='1寸照片')  
     typeset_photo = models.ImageField(upload_to='explosive_staff/', verbose_name='排版后照片')
-    
+
     no_crime = models.ImageField(
         upload_to='explosive_staff/',
         verbose_name='无犯罪证明',
@@ -421,13 +299,8 @@ class ExplosiveStaff(models.Model):
         blank=True,  # 新增：允许表单为空
         null=True    # 新增：允许数据库存储NULL
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-
-
-
-
-
 
 class WeighingRecord(models.Model):
     weight_number = models.CharField(
@@ -456,36 +329,7 @@ class WeighingRecord(models.Model):
         if self.weight_number == '岩石' and self.net_weight <= 0:  # 同步修改字段引用
             raise ValidationError('岩石类型必须填写重量')
 
-
-
-
-
 # ... 其他模型保持不变 ...
-
-class BlastingRegistration(models.Model):
-    """爆破作业登记表"""
-    shift = models.CharField(max_length=10, verbose_name='班次')
-    blaster = models.CharField(max_length=50, verbose_name='爆破员')
-    work_data = models.TextField(verbose_name='作业点数据(JSON)')
-    date = models.DateField(auto_now_add=True, verbose_name='日期')
-    usage_date = models.DateField(null=True, blank=True, verbose_name='使用日期')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-
-    class Meta:
-        verbose_name = '爆破作业登记'
-        verbose_name_plural = '爆破作业登记'
-
-
-class WorkPoint(models.Model):
-    """作业点负责人登记表"""
-    manager = models.CharField(max_length=50, verbose_name='作业点负责人')
-    work_point = models.CharField(max_length=100, verbose_name='作业点')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='提交时间')
-
-    class Meta:
-        verbose_name = '作业点登记'
-        verbose_name_plural = '作业点登记'
-
 
 class BlastingCertificate(models.Model):
     """爆破作业人员证书模型"""
@@ -510,9 +354,7 @@ class BlastingCertificate(models.Model):
         blank=True,
         null=True
     )
-    
-    
-    
+
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='创建时间'
@@ -527,13 +369,6 @@ class BlastingCertificate(models.Model):
         return f"{self.certificate_number} - {self.name}"
 
 # ... 原有模型保持不变 ...
-
-
-
-
-
-
-
 
 #cd OneDrive\lnjx && python manage.py makemigrations
 
@@ -552,3 +387,23 @@ class Blaster(models.Model):
     def __str__(self):
         return self.name
 
+class BlastingSummary(models.Model):
+    """雷管炸药台账汇总"""
+    shift = models.CharField(max_length=20, blank=True, verbose_name="班次")
+    person = models.CharField(max_length=50, verbose_name='人员')
+    location = models.CharField(max_length=100, verbose_name='地点')
+    date = models.CharField(max_length=20, verbose_name='日期')
+    detonator_count = models.IntegerField(default=0, verbose_name='雷管数')
+    explosive_count = models.IntegerField(default=0, verbose_name='炸药数(公斤)')
+    blaster = models.CharField(max_length=50, blank=True, verbose_name="爆破员")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+
+    segments_data = models.JSONField(default=dict, blank=True, verbose_name="分段数据")
+
+    class Meta:
+        verbose_name = '雷管炸药台账'
+        verbose_name_plural = verbose_name
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.person} - {self.date} - 雷管{self.detonator_count}发"
