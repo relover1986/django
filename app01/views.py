@@ -2789,7 +2789,7 @@ def blasting_stats(request):
     from app01 import models
     from collections import defaultdict
 
-    records = models.BlastingRegistration.objects.filter(usage_date__isnull=False).order_by('usage_date', 'shift')
+    records = models.BlastingRegistration.objects.filter(usage_date__isnull=False).order_by('-usage_date', 'shift')
     
     # 按(日期, 班次, 爆破员)分组
     groups = defaultdict(lambda: {'lei_guan': 0, 'ru_hua': 0, 'fen_zhuang': 0, 'count': 0})
@@ -2814,7 +2814,7 @@ def blasting_stats(request):
         groups[(r.usage_date, r.shift, r.blaster)]['count'] += 1
 
     rows = []
-    for (usage_date, shift, blaster), vals in sorted(groups.items()):
+    for (usage_date, shift, blaster), vals in sorted(groups.items(), key=lambda x: (-x[0][0].toordinal(), x[0][1], x[0][2])):
         ru_hua_boxes, ru_hua_bags, _ = utils.kg_to_box_package(vals['ru_hua'])
         fen_zhuang_boxes, fen_zhuang_bags, _ = utils.kg_to_box_package(vals['fen_zhuang'])
         rows.append({
@@ -2870,6 +2870,20 @@ def blasting_stats(request):
             'fen_zhuang': totals['fen_zhuang'],
             'fen_zhuang_boxes': fz_b, 'fen_zhuang_bags': fz_p,
         })
+
+    # 计算相同日期的行数，用于合并单元格
+    date_counts = {}
+    for r in display_rows:
+        d = r['usage_date']
+        date_counts[d] = date_counts.get(d, 0) + 1
+    date_done = set()
+    for r in display_rows:
+        d = r['usage_date']
+        if d not in date_done:
+            r['date_rowspan'] = date_counts[d]
+            date_done.add(d)
+        else:
+            r['date_rowspan'] = 0
 
     return render(request, 'blasting_stats.html', {'rows': display_rows})
 

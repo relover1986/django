@@ -13,6 +13,8 @@
         .table-scroll thead { position: sticky; top: 0; z-index: 2; background: #f8f9fa; }
         .summary-row { background: #fff3cd !important; font-weight: bold; }
         .summary-row td { border-bottom: 2px solid #ffc107 !important; }
+        .date-group-start { border-top: 3px solid #1a3a5c !important; }
+        .date-cell { vertical-align: middle !important; text-align: center; font-weight: bold; background: #e9ecef; }
     </style>
 </head>
 <body class="bg-light">
@@ -26,26 +28,28 @@
                         <th>班次</th>
                         <th>爆破员</th>
                         <th>雷管</th>
-                        <th>乳化炸药(kg)</th>
-                        <th>乳化(箱/包)</th>
                         <th>粉状炸药(kg)</th>
                         <th>粉状(箱/包)</th>
+                        <th>乳化炸药(kg)</th>
+                        <th>乳化(箱/包)</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for r in rows %}
-                    <tr{% if r.is_summary %} class="summary-row"{% endif %}>
-                        <td>{{ r.usage_date|date:"Y-m-d" }}</td>
+                    {% if r.date_rowspan %}<tr class="date-group-start">{% elif r.is_summary %}<tr class="summary-row">{% else %}<tr>{% endif %}
+                        {% if r.date_rowspan %}
+                        <td class="date-cell" rowspan="{{ r.date_rowspan }}">{{ r.usage_date|date:"Y-m-d" }}</td>
+                        {% endif %}
                         <td>{{ r.shift }}</td>
                         <td>{% if r.is_summary %}<strong>{{ r.blaster }}</strong>{% else %}{{ r.blaster }}{% endif %}</td>
                         <td>{{ r.lei_guan }}</td>
-                        <td>{{ r.ru_hua }}</td>
-                        <td>{{ r.ru_hua_boxes }}箱{{ r.ru_hua_bags }}包</td>
                         <td>{{ r.fen_zhuang }}</td>
                         <td>{{ r.fen_zhuang_boxes }}箱{{ r.fen_zhuang_bags }}包</td>
+                        <td>{{ r.ru_hua }}</td>
+                        <td>{{ r.ru_hua_boxes }}箱{{ r.ru_hua_bags }}包</td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="9" class="text-center text-muted">暂无数据</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted">暂无数据</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
