@@ -815,7 +815,7 @@ def idcard_add(request):
             img_cv = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             if img_cv is None:
                 raise ValueError('图片解析失败')
-            seg = SegModel.from_path(r'C:\Users\Administrator\.hermes\models\seg_model.onnx')
+            seg = SegModel.from_path(os.path.expanduser('~/.hermes/models/seg_model.onnx'))
             cards = seg.apply(Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)))
             if cards:
                 mask = (cards[0].mask > 0.5).astype(np.uint8) * 255
@@ -840,7 +840,7 @@ def idcard_add(request):
             try:
                 import math
                 import onnxruntime as ort
-                from rapidocr_onnxruntime.ch_ppocr_v3_det.text_detect import TextDetector
+                from rapidocr_onnxruntime.ch_ppocr_det.text_detect import TextDetector
 
                 _det_path = r'C:\Users\Administrator\.hermes\models\det.onnx'
                 _cls_path = r'C:\Users\Administrator\.hermes\models\cls.onnx'
@@ -2381,7 +2381,7 @@ def idcard_batch_upload(request):
     from PIL import Image as PILImage
     from microwink import SegModel
     import onnxruntime as ort
-    from rapidocr_onnxruntime.ch_ppocr_v3_det.text_detect import TextDetector
+    from rapidocr_onnxruntime.ch_ppocr_det.text_detect import TextDetector
     from django.core.files.uploadedfile import InMemoryUploadedFile
 
     if request.method != 'POST':
