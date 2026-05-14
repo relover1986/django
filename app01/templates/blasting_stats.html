@@ -41,11 +41,11 @@
                         {% if r.date_rowspan %}
                         <td class="date-cell" rowspan="{{ r.date_rowspan }}">{{ r.date }}</td>
                         {% endif %}
-                        <td>{{ r.shift }}</td>
-                        <td>{% if r.is_summary %}<strong>{{ r.blaster }}</strong>{% else %}{{ r.blaster }}{% endif %}</td>
-                        <td>{{ r.detonator }}</td>
-                        <td>{{ r.explosive }}</td>
-                        <td>{{ r.explosive_boxes }}箱{{ r.explosive_bags }}包</td>
+                        <td class="text-center">{{ r.shift }}</td>
+                        <td class="text-center">{% if r.is_summary %}<strong>{{ r.blaster }}</strong>{% else %}{{ r.blaster }}{% endif %}</td>
+                        <td class="text-center">{{ r.detonator }}</td>
+                        <td class="text-center">{{ r.explosive }}</td>
+                        <td class="text-center">{{ r.explosive_boxes }}箱{{ r.explosive_bags }}包</td>
                     </tr>
                     {% empty %}
                     <tr><td colspan="6" class="text-center text-muted">暂无数据</td></tr>
