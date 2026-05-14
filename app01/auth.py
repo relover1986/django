@@ -72,7 +72,10 @@ class M2(MiddlewareMixin):
                 return redirect('/home/photo_add')      
             elif '大车司机'  in job:
                 # 如果会话中没有信息，可能需要重定向到登录页面
-                return redirect('/home/weighingrecord_add')               
+                return redirect('/home/weighingrecord_add')              
+            
+            elif '安全员'  in job:
+                return redirect('/home/blasting_summary_add/') 
             
                     
             

@@ -21,6 +21,7 @@
         .seg-table td+td { border-left: 1px solid #dee2e6; }
         .seg-total td { border-top: 2px solid #ffc107 !important; background: #fffbe6 !important; }
         .blaster-select { font-size: .78rem; padding: .1rem .15rem; max-width: 6rem; }
+        .badge-night { background: #6c757d !important; color: #ff7d00 !important; }
     </style>
 </head>
 <body>
@@ -76,8 +77,17 @@
     <div class="bottom-section">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <a href="/home/" class="btn btn-sm px-3" style="background:#E8F3FF;color:#165DFF;border:none;font-weight:500;">← 返回主页</a>
+            {% if warnings %}
+            <span class="btn btn-sm px-3" style="background:#ccc;color:#888;border:none;font-weight:600;cursor:not-allowed;">统计数据</span>
+            {% else %}
             <a href="/home/blasting_stats/" class="btn btn-sm px-3" style="background:#FF7D00;color:#FFFFFF;border:none;font-weight:600;">统计数据</a>
+            {% endif %}
         </div>
+        {% if warnings %}
+        <div class="alert alert-warning py-2 mb-2">
+            {% for w in warnings %}<div>⚠ {{ w }}，请补充后再统计</div>{% endfor %}
+        </div>
+        {% endif %}
         <div class="row g-4">
             {% for r in records %}
             <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
@@ -85,7 +95,7 @@
                     <div class="seg-card-header text-center small fw-bold">
                         {{ r.person }}
                         <span class="text-muted fw-normal ms-1">{{ r.location }}</span>
-                        {% if r.shift %}<span class="badge bg-info ms-1">{{ r.shift }}</span>{% endif %}
+                        {% if r.shift %}<span class="badge ms-1 {% if r.shift == "夜" or r.shift == "夜班" %}badge-night{% else %}bg-info{% endif %}">{{ r.shift }}</span>{% endif %}
                     </div>
                     <div class="seg-table">
                         <table class="table table-sm table-striped text-center mb-0 small">
@@ -127,7 +137,7 @@ function assignBlaster(el) {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
         body: JSON.stringify({pk: el.getAttribute('data-pk'), blaster: el.value})
-    });
+    }).then(function() { location.reload(); });
 }
 </script>
 <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>

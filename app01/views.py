@@ -2651,7 +2651,8 @@ def blasting_stats(request):
         shift_totals[sk]['explosive'] += r.explosive_count
 
     rows = []
-    for (date, shift, blaster), vals in sorted(groups.items(), key=lambda x: (-int(x[0][0].replace('年','').replace('月','').replace('日','')) if '年' in x[0][0] else 0, x[0][1], x[0][2])):
+    shift_order = {'早':1,'早班':1,'白':2,'白班':2,'中':3,'中班':3,'晚':4,'晚班':4,'夜':5,'夜班':5}
+    for (date, shift, blaster), vals in sorted(groups.items(), key=lambda x: (-int(x[0][0].replace('年','').replace('月','').replace('日','')) if '年' in x[0][0] else 0, shift_order.get(x[0][1], 99), x[0][2])):
         boxes, bags, _ = kg_to_box_package(vals['explosive'])
         rows.append({
             'date': date,
@@ -2729,19 +2730,30 @@ def blasting_summary_list(request):
     """岩工报药列表"""
     from django.shortcuts import render
     from datetime import date
-    all_records = models.BlastingSummary.objects.all().order_by('-created_at')
+    shift_order = {'早':0,'早班':0,'白':0,'白班':0,'中':0,'中班':0,'晚':0,'晚班':0,'夜':1,'夜班':1}
+    all_records_qs = models.BlastingSummary.objects.all().order_by('-created_at')
     # 将segments_data转为排序后的列表 [(段号, 数量), ...]
-    for r in all_records:
+    for r in all_records_qs:
         sd = r.segments_data or {}
         r.seg_list = sorted(sd.items(), key=lambda x: int(x[0]))
+    # 排序：夜班排后面
+    all_records = sorted(all_records_qs, key=lambda r: (shift_order.get(r.shift, 0), -r.created_at.timestamp() if r.created_at else 0))
     # 上半部分仅显示当日数据
     today_str = date.today().strftime('%Y年%-m月%-d日')
-    records = all_records.filter(date=today_str)
+    records = all_records_qs.filter(date=today_str)
     for r in records:
         sd = r.segments_data or {}
         r.seg_list = sorted(sd.items(), key=lambda x: int(x[0]))
+    # 空字段提示
+    empty_shift = all_records_qs.filter(shift='').count()
+    empty_blaster = all_records_qs.filter(blaster='').count()
+    warnings = []
+    if empty_shift:
+        warnings.append(f'有 {empty_shift} 条记录缺少班次')
+    if empty_blaster:
+        warnings.append(f'有 {empty_blaster} 条记录缺少爆破员')
     blasters = models.Blaster.objects.all().order_by('-created_at')
-    return render(request, 'blasting_summary_list.html', {'records': records, 'all_records': all_records, 'blasters': blasters})
+    return render(request, 'blasting_summary_list.html', {'records': records, 'all_records': all_records, 'blasters': blasters, 'warnings': warnings})
 @csrf_exempt
 def blasting_summary_add(request):
     """岩工报药添加 - 解析文本写入数据库，显示计算结果和核对状态"""
