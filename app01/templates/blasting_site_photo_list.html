@@ -30,6 +30,7 @@
           <tbody>
             {% for obj in data %}
             <tr>
+              <td class="text-center">{{ forloop.counter }}</td>
               {% for key, cell in obj.items %}
                 {% if key == "uploaded_at" %}
                   <td class="text-center">{{ cell|date:"Y-m-d H:i:s" }}</td>
