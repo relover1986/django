@@ -2896,7 +2896,6 @@ def blasting_site_photo_add(request):
         import cv2, tempfile, os
         import numpy as np
         from django.core.files.base import ContentFile
-        from docscan.doc import scan
         from deskew import determine_skew
         from rapidocr_onnxruntime import RapidOCR
 
@@ -2914,16 +2913,37 @@ def blasting_site_photo_add(request):
                                   borderMode=cv2.BORDER_REPLICATE)
 
         def 剪裁(img):
-            _, tmp = tempfile.mkstemp(suffix='.jpg')
-            cv2.imwrite(tmp, img)
-            try:
-                with open(tmp, 'rb') as f:
-                    result = scan(f.read())
-            finally:
-                os.unlink(tmp)
-            if result is None:
+            # 纯 OpenCV 文档扫描：边缘检测 → 找四点轮廓 → 透视变换
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+            edged = cv2.Canny(blurred, 50, 150)
+            cnts, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:10]
+            outline = None
+            for c in cnts:
+                peri = cv2.arcLength(c, True)
+                poly = cv2.approxPolyDP(c, 0.02 * peri, True)
+                if len(poly) == 4:
+                    outline = poly.reshape(4, 2).astype(np.float32)
+                    break
+            if outline is None:
                 return None
-            return cv2.imdecode(np.frombuffer(result, np.uint8), cv2.IMREAD_COLOR)
+            # 四点透视变换
+            rect = np.zeros((4, 2), dtype=np.float32)
+            s = outline.sum(axis=1)
+            rect[0] = outline[np.argmin(s)]   # 左上
+            rect[2] = outline[np.argmax(s)]   # 右下
+            d = np.diff(outline, axis=1)
+            rect[1] = outline[np.argmin(d)]   # 右上
+            rect[3] = outline[np.argmax(d)]   # 左下
+            dst_w = max(int(np.linalg.norm(rect[1] - rect[0])),
+                        int(np.linalg.norm(rect[3] - rect[2])))
+            dst_h = max(int(np.linalg.norm(rect[3] - rect[0])),
+                        int(np.linalg.norm(rect[2] - rect[1])))
+            dst = np.array([[0, 0], [dst_w - 1, 0],
+                            [dst_w - 1, dst_h - 1], [0, dst_h - 1]], dtype=np.float32)
+            M = cv2.getPerspectiveTransform(rect, dst)
+            return cv2.warpPerspective(img, M, (dst_w, dst_h))
 
         def 处理单张(img):
             ident = ''
