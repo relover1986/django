@@ -2912,62 +2912,37 @@ def blasting_site_photo_add(request):
                                   flags=cv2.INTER_CUBIC,
                                   borderMode=cv2.BORDER_REPLICATE)
 
-        def 剪裁(img):
-            # 纯 OpenCV 文档扫描：边缘检测 → 找四点轮廓 → 透视变换
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-            edged = cv2.Canny(blurred, 50, 150)
-            cnts, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:10]
-            outline = None
-            for c in cnts:
-                peri = cv2.arcLength(c, True)
-                poly = cv2.approxPolyDP(c, 0.02 * peri, True)
-                if len(poly) == 4:
-                    outline = poly.reshape(4, 2).astype(np.float32)
-                    break
-            if outline is None:
-                return None
-            # 四点透视变换
-            rect = np.zeros((4, 2), dtype=np.float32)
-            s = outline.sum(axis=1)
-            rect[0] = outline[np.argmin(s)]   # 左上
-            rect[2] = outline[np.argmax(s)]   # 右下
-            d = np.diff(outline, axis=1)
-            rect[1] = outline[np.argmin(d)]   # 右上
-            rect[3] = outline[np.argmax(d)]   # 左下
-            dst_w = max(int(np.linalg.norm(rect[1] - rect[0])),
-                        int(np.linalg.norm(rect[3] - rect[2])))
-            dst_h = max(int(np.linalg.norm(rect[3] - rect[0])),
-                        int(np.linalg.norm(rect[2] - rect[1])))
-            dst = np.array([[0, 0], [dst_w - 1, 0],
-                            [dst_w - 1, dst_h - 1], [0, dst_h - 1]], dtype=np.float32)
-            M = cv2.getPerspectiveTransform(rect, dst)
-            return cv2.warpPerspective(img, M, (dst_w, dst_h))
-
         def 处理单张(img):
             ident = ''
             # Step 1: 回正
-            corrected = 回正(img)
-            # Step 2: 剪裁
-            scanned = 剪裁(corrected)
-            if scanned is None:
-                scanned = corrected
-            # Step 3: OCR定位标题
-            h, w = scanned.shape[:2]
+            img = 回正(img)
+            h, w = img.shape[:2]
+            # Step 2: OCR全图定位关键文字
             _, tmp = tempfile.mkstemp(suffix='.jpg')
-            cv2.imwrite(tmp, scanned)
+            cv2.imwrite(tmp, img)
             result, _ = ocr_engine(tmp)
             os.unlink(tmp)
+
+            top_y, left_x, bottom_y = 0, 0, h
             for box, text, conf in result or []:
+                pts = np.array(box, dtype=np.int32)
+                xs = pts[:, 0]
+                ys = pts[:, 1]
                 if '爆破现场记录' in text:
-                    ident = text.split('录')[1]  # '录' 之后的编号文字
-                    pts = np.array(box, dtype=np.int32)
-                    top_y = int(pts[:, 1].min())
-                    if h - top_y >= 10:
-                        scanned = scanned[top_y:h, 0:w]
-                    break
-            return scanned, ident
+                    ident = text.split('录')[1]
+                    top_y = int(ys.min())
+                if '作业场地' in text:
+                    left_x = int(xs.min())
+                if '存根' in text:
+                    bottom_y = int(ys.max())
+
+            # Step 3: 根据 OCR 定位裁图
+            top_y = max(top_y, 0)
+            left_x = max(left_x, 0)
+            bottom_y = min(bottom_y, h)
+            if bottom_y - top_y >= 10 and w - left_x >= 10:
+                img = img[top_y:bottom_y, left_x:w]
+            return img, ident
 
         for file in files:
             file_bytes = np.frombuffer(file.read(), np.uint8)
