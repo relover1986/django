@@ -410,6 +410,7 @@ class BlastingSummary(models.Model):
 
 class BlastingSitePhoto(models.Model):
     """爆破现场记录照片"""
+    code = models.CharField(max_length=50, verbose_name='编号', blank=True, null=True)
     location = models.CharField(max_length=100, verbose_name='爆破地点')
     photo = models.FileField(upload_to='blasting_site/', verbose_name='现场照片')
     uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name='上传时间')
