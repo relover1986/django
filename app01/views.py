@@ -2912,31 +2912,6 @@ def blasting_site_photo_add(request):
                                   flags=cv2.INTER_CUBIC,
                                   borderMode=cv2.BORDER_REPLICATE)
 
-        def 红色数字识别(roi):
-            """在 ROI 中提取红色数字，返回识别文本"""
-            hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-            # 红色在 HSV 中有两个区间
-            lower_red1 = np.array([0, 50, 50])
-            upper_red1 = np.array([10, 255, 255])
-            lower_red2 = np.array([170, 50, 50])
-            upper_red2 = np.array([180, 255, 255])
-            mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
-            mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
-            mask = cv2.bitwise_or(mask1, mask2)
-            # 形态学闭运算连接断开的笔画
-            kernel = np.ones((3, 3), np.uint8)
-            mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-            # 白字黑底
-            white_on_black = cv2.bitwise_not(mask)
-            # OCR 识别
-            _, tmp = tempfile.mkstemp(suffix='.png')
-            cv2.imwrite(tmp, white_on_black)
-            r, _ = ocr_engine(tmp)
-            os.unlink(tmp)
-            if r:
-                return ''.join(t for _, t, _ in r)
-            return ''
-
         def 处理单张(img):
             ident = ''
             # Step 1: 回正
@@ -2954,14 +2929,8 @@ def blasting_site_photo_add(request):
                 xs = pts[:, 0]
                 ys = pts[:, 1]
                 if '爆破现场记录' in text:
-                    # 在这个框右侧区域专门识别红色数字
-                    right_x = int(xs.max())
-                    top_y_text = int(ys.min())
-                    bottom_y_text = int(ys.max())
-                    roi = img[top_y_text:bottom_y_text, right_x:min(w, right_x + 300)]
-                    if roi.size > 0:
-                        ident = 红色数字识别(roi)
-                    top_y = top_y_text
+                    ident = text.split('录')[1]
+                    top_y = int(ys.min())
                 if '作业场地' in text:
                     left_x = int(xs.min())
                 if '存根' in text:
