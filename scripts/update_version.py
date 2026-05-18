@@ -100,14 +100,15 @@ subprocess.run(['git', 'commit', '-m', f'首页版本号 {new_tag}'], check=True
 subprocess.run(['git', 'push'], check=True, timeout=30)
 print('✅ git 已提交推送')
 
-# --- 7. 创建 GitHub Release ---
+# --- 7. 创建 GitHub Release（中文描述）---
 release_notes = []
+release_notes.append(f'## v{new_ver} 更新内容\n')
 for ver, date, msg in rows:
     release_notes.append(f'- **v{ver}** ({date}) — {msg}')
 notes_body = '\n'.join(release_notes)
 
 subprocess.run(['gh', 'release', 'create', new_tag,
-                '--title', f'{new_tag}',
+                '--title', f'v{new_ver} 版本更新',
                 '--notes', notes_body,
                 '--repo', 'relover1986/django'], check=True, timeout=30)
 print(f'✅ Release {new_tag} 已创建')
