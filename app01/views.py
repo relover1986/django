@@ -132,7 +132,7 @@ def contractlabor_list(request):
     if request.method == "GET":
         data = models.ContractLabor.objects.values().order_by('-id')[:100]
         model_fields = models.ContractLabor._meta.fields
-        cols = [{'verbose_name': field.verbose_name} for field in model_fields]
+        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname != 'id']
 
         # 添加操作列
         cols.append({'verbose_name': '操作'})
@@ -583,7 +583,7 @@ def photo_list(request):
     title = 'photo'
     if request.method == "GET":
         model_fields = models.UploadedZhaopian._meta.fields
-        cols = [{'verbose_name': field.verbose_name} for field in model_fields]
+        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname != 'id']
         cols.append({'verbose_name': '操作'})
         data = models.UploadedZhaopian.objects.values().order_by(
             '-uploaded_at')[:100]
@@ -706,7 +706,7 @@ def blastingcertificate_list(request):
     title = 'blastingcertificate'
     if request.method == "GET":
         model_fields = models.BlastingCertificate._meta.fields
-        cols = [{'verbose_name': field.verbose_name} for field in model_fields]
+        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname != 'id']
         cols.append({'verbose_name': '操作'})
         data = models.BlastingCertificate.objects.values().order_by(
             '-created_at')[:100]
@@ -1160,7 +1160,7 @@ def idcard_list(request):
     title = 'idcard'
     if request.method == "GET":
         model_fields = models.IDCard._meta.fields
-        cols = [{'verbose_name': field.verbose_name} for field in model_fields]
+        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname != 'id']
         cols.append({'verbose_name': '操作'})
         data = models.IDCard.objects.values().order_by('-created_at')[:100]
         return render(request, 'idcard_list.html', {
@@ -1324,7 +1324,7 @@ def inventory_list(request):
     if request.method == "GET":
 
         model_fields = models.ExplosiveInventoryItem._meta.fields
-        cols = [{'verbose_name': field.verbose_name} for field in model_fields]
+        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname != 'id']
         cols.append({'verbose_name': '操作'})
         data = models.ExplosiveInventoryItem.objects.values().order_by(
             '-date')[:100]
@@ -2089,7 +2089,7 @@ def explosivestaff_list(request):
     title = 'explosivestaff'
     if request.method == "GET":
         model_fields = models.ExplosiveStaff._meta.fields
-        cols = [{'verbose_name': field.verbose_name} for field in model_fields]
+        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname != 'id']
         cols.append({'verbose_name': '操作'})
         data = models.ExplosiveStaff.objects.values().order_by(
             '-created_at')[:100]
@@ -2879,7 +2879,7 @@ def blasting_site_photo_list(request):
     if request.method == 'GET':
         from app01 import models
         model_fields = models.BlastingSitePhoto._meta.fields
-        cols = [{'verbose_name': field.verbose_name} for field in model_fields]
+        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname != 'id']
         cols.append({'verbose_name': '操作'})
         data = models.BlastingSitePhoto.objects.values().order_by('-uploaded_at')[:100]
         return render(request, 'blasting_site_photo_list.html', {
