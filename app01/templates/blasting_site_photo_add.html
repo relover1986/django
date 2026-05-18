@@ -1,0 +1,23 @@
+{% extends "home.html" %}
+{% block content %}
+<br /><br /><br /><br />
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">爆破现场记录 - 上传照片</h3>
+    </div>
+    <div class="card-body">
+      <div class="mb-3">
+        <label for="location" class="form-label">爆破地点</label>
+        <input type="text" class="form-control" id="location" name="location" placeholder="请输入爆破地点" required>
+      </div>
+      <div class="mb-3">
+        <label for="file_upload" class="form-label">选择照片</label>
+        <input type="file" id="file_upload" name="file" accept="image/*" multiple class="form-control">
+      </div>
+      <button type="submit" class="btn btn-primary">上传</button>
+    </div>
+  </div>
+</form>
+{% endblock %}

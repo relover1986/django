@@ -82,6 +82,11 @@ urlpatterns = [
     
     path('home/photo_add/', views.photo_add),  
     path('home/photo_delete/', views.photo_delete),
+
+    # 爆破现场记录
+    path('home/blasting_site_photo_add/', views.blasting_site_photo_add),
+    path('home/blasting_site_photo_delete/', views.blasting_site_photo_delete),
+    path('home/blasting_site_photo_list/', views.blasting_site_photo_list),
     path('home/photo_list/', views.photo_list),
     path('home/photo_export_zip/', views.photo_export_zip, name='photo_export_zip'),
 

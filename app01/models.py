@@ -407,3 +407,18 @@ class BlastingSummary(models.Model):
 
     def __str__(self):
         return f"{self.person} - {self.date} - 雷管{self.detonator_count}发"
+
+class BlastingSitePhoto(models.Model):
+    """爆破现场记录照片"""
+    location = models.CharField(max_length=100, verbose_name='爆破地点')
+    photo = models.FileField(upload_to='blasting_site/', verbose_name='现场照片')
+    description = models.TextField(blank=True, null=True, verbose_name='现场描述')
+    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name='上传时间')
+
+    class Meta:
+        verbose_name = '爆破现场记录'
+        verbose_name_plural = '爆破现场记录'
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f'{self.location} - {self.uploaded_at.strftime("%Y-%m-%d %H:%M")}'

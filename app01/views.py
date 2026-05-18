@@ -2871,3 +2871,44 @@ def blasting_summary_assign_blaster(request):
         return JsonResponse({'ok': True})
     return JsonResponse({'ok': False}, status=400)
 
+
+
+# ==================== 爆破现场记录 ====================
+def blasting_site_photo_list(request):
+    title = 'blasting_site_photo'
+    if request.method == 'GET':
+        from app01 import models
+        model_fields = models.BlastingSitePhoto._meta.fields
+        cols = [{'verbose_name': field.verbose_name} for field in model_fields]
+        cols.append({'verbose_name': '操作'})
+        data = models.BlastingSitePhoto.objects.values().order_by('-uploaded_at')[:100]
+        return render(request, 'blasting_site_photo_list.html', {
+            'data': data,
+            'cols': cols,
+            'title': title,
+        })
+
+
+def blasting_site_photo_add(request):
+    title = 'blasting_site_photo'
+    if request.method == 'POST':
+        from app01 import models
+        files = request.FILES.getlist('file')
+        location = request.POST.get('location', '')
+
+        for file in files:
+            models.BlastingSitePhoto.objects.create(
+                location=location,
+                photo=file,
+            )
+
+        return redirect('/home/blasting_site_photo_list')
+
+    return render(request, 'blasting_site_photo_add.html')
+
+
+def blasting_site_photo_delete(request):
+    id = request.GET.get('id')
+    from app01 import models
+    models.BlastingSitePhoto.objects.filter(id=str(id)).delete()
+    return redirect('/home/blasting_site_photo_list')
