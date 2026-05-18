@@ -2893,35 +2893,88 @@ def blasting_site_photo_add(request):
     title = 'blasting_site_photo'
     if request.method == 'POST':
         from app01 import models
-        import cv2
+        import cv2, tempfile, os
         import numpy as np
         from django.core.files.base import ContentFile
+        from docscan.doc import scan
+        from deskew import determine_skew
+        from rapidocr_onnxruntime import RapidOCR
+
+        ocr_engine = RapidOCR()
         files = request.FILES.getlist('file')
         location = request.POST.get('location', '')
 
+        def 回正(img):
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            angle = determine_skew(gray)
+            h, w = img.shape[:2]
+            M = cv2.getRotationMatrix2D((w // 2, h // 2), angle, 1.0)
+            return cv2.warpAffine(img, M, (w, h),
+                                  flags=cv2.INTER_CUBIC,
+                                  borderMode=cv2.BORDER_REPLICATE)
+
+        def 剪裁(img):
+            _, tmp = tempfile.mkstemp(suffix='.jpg')
+            cv2.imwrite(tmp, img)
+            try:
+                with open(tmp, 'rb') as f:
+                    result = scan(f.read())
+            finally:
+                os.unlink(tmp)
+            if result is None:
+                return None
+            return cv2.imdecode(np.frombuffer(result, np.uint8), cv2.IMREAD_COLOR)
+
+        def 处理单张(img):
+            ident = ''
+            # Step 1: 回正
+            corrected = 回正(img)
+            # Step 2: 剪裁
+            scanned = 剪裁(corrected)
+            if scanned is None:
+                scanned = corrected
+            # Step 3: OCR定位标题
+            h, w = scanned.shape[:2]
+            _, tmp = tempfile.mkstemp(suffix='.jpg')
+            cv2.imwrite(tmp, scanned)
+            result, _ = ocr_engine(tmp)
+            os.unlink(tmp)
+            for box, text, conf in result or []:
+                if '爆破现场记录' in text:
+                    ident = text.split('录')[1]  # '录' 之后的编号文字
+                    pts = np.array(box, dtype=np.int32)
+                    top_y = int(pts[:, 1].min())
+                    if h - top_y >= 10:
+                        scanned = scanned[top_y:h, 0:w]
+                    break
+            return scanned, ident
+
         for file in files:
-            # 读取上传文件为字节流
             file_bytes = np.frombuffer(file.read(), np.uint8)
             img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-            if img is not None:
-                # JPEG压缩，分辨率不变，quality=82 肉眼几乎无差别
-                success, encoded_img = cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, 82])
-                if success:
-                    compressed_bytes = encoded_img.tobytes()
-                    # 用压缩后的数据覆盖原文件
-                    file.seek(0)
-                    models.BlastingSitePhoto.objects.create(
-                        location=location,
-                        photo=ContentFile(compressed_bytes, name=file.name.rsplit('.', 1)[0] + '.jpg'),
-                    )
-                    continue
+            if img is None:
+                file.seek(0)
+                models.BlastingSitePhoto.objects.create(
+                    location=location, photo=file, code=''
+                )
+                continue
 
-            # 压缩失败则原样保存
-            file.seek(0)
-            models.BlastingSitePhoto.objects.create(
-                location=location,
-                photo=file,
-            )
+            processed_img, ident = 处理单张(img)
+
+            # JPEG压缩 quality=82
+            success, encoded = cv2.imencode('.jpg', processed_img, [cv2.IMWRITE_JPEG_QUALITY, 82])
+            if success:
+                name = file.name.rsplit('.', 1)[0] + '.jpg'
+                models.BlastingSitePhoto.objects.create(
+                    location=location,
+                    photo=ContentFile(encoded.tobytes(), name=name),
+                    code=ident,
+                )
+            else:
+                file.seek(0)
+                models.BlastingSitePhoto.objects.create(
+                    location=location, photo=file, code=ident,
+                )
 
         return redirect('/home/blasting_site_photo_list')
 
