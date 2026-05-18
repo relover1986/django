@@ -2893,10 +2893,31 @@ def blasting_site_photo_add(request):
     title = 'blasting_site_photo'
     if request.method == 'POST':
         from app01 import models
+        import cv2
+        import numpy as np
+        from django.core.files.base import ContentFile
         files = request.FILES.getlist('file')
         location = request.POST.get('location', '')
 
         for file in files:
+            # 读取上传文件为字节流
+            file_bytes = np.frombuffer(file.read(), np.uint8)
+            img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+            if img is not None:
+                # JPEG压缩，分辨率不变，quality=82 肉眼几乎无差别
+                success, encoded_img = cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, 82])
+                if success:
+                    compressed_bytes = encoded_img.tobytes()
+                    # 用压缩后的数据覆盖原文件
+                    file.seek(0)
+                    models.BlastingSitePhoto.objects.create(
+                        location=location,
+                        photo=ContentFile(compressed_bytes, name=file.name.rsplit('.', 1)[0] + '.jpg'),
+                    )
+                    continue
+
+            # 压缩失败则原样保存
+            file.seek(0)
             models.BlastingSitePhoto.objects.create(
                 location=location,
                 photo=file,
