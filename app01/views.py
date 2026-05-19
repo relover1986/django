@@ -2887,7 +2887,7 @@ def blasting_site_photo_list(request):
         model_fields = models.BlastingSitePhoto._meta.fields
         cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location')]
         cols.append({'verbose_name': '操作'})
-        data = models.BlastingSitePhoto.objects.values().order_by('-uploaded_at')[:100]
+        data = models.BlastingSitePhoto.objects.values().order_by('code')[:100]
         return render(request, 'blasting_site_photo_list.html', {
             'data': data,
             'cols': cols,
@@ -2897,7 +2897,7 @@ def blasting_site_photo_list(request):
 
 
 # ─── 签名识别（模型全局加载一次） ─────────────────────────
-SIGNATURE_MODEL_PATH = "/root/MLX/05模型文件/sign_model.npz"
+SIGNATURE_MODEL_PATH = "/root/MLX/05模型文件/sign_model.pth"
 SIGNATURE_MAP_PATH = "/root/MLX/05模型文件/label_map.json"
 LOW_CONF_DIR = os.path.join(settings.MEDIA_ROOT, "blasting_site_low_conf")
 os.makedirs(LOW_CONF_DIR, exist_ok=True)
@@ -2924,14 +2924,8 @@ def _load_sign_model():
         label_map = json.load(f)
     idx_to_name = {int(k): v for k, v in label_map.items()}
     model = SignNetMulti(len(label_map))
-    w = np.load(SIGNATURE_MODEL_PATH)
-    state = {}
-    for k, v in w.items():
-        if 'conv' in k and 'weight' in k:
-            state[k] = torch.from_numpy(np.transpose(v, (0, 3, 1, 2)))
-        else:
-            state[k] = torch.from_numpy(v)
-    model.load_state_dict(state, strict=False)
+    sd = torch.load(SIGNATURE_MODEL_PATH, weights_only=True, map_location='cpu')
+    model.load_state_dict(sd)
     model.eval()
     return model, idx_to_name
 
@@ -2959,6 +2953,14 @@ def 识别签名(_ocr_engine, record_img):
 
     def _crop_sig(img, keyword, pad=220):
         h, w = img.shape[:2]
+        # 固定矩形坐标 (x1, y1, x2, y2)
+        if isinstance(keyword, tuple) and len(keyword) == 4:
+            x1, y1, x2, y2 = keyword
+            x1 = max(x1, 0); y1 = max(y1, 0)
+            x2 = min(x2, w); y2 = min(y2, h)
+            if x2 > x1 and y2 > y1:
+                return img[y1:y2, x1:x2]
+            return None
         for box, text, conf in _ocr(img):
             if keyword in text:
                 pts = np.array(box, dtype=np.int32)
@@ -2997,7 +2999,7 @@ def 识别签名(_ocr_engine, record_img):
     print(f"[签名识别] OCR共{len(all_texts)}个文字块: {all_texts[:15]}")
 
     configs = [
-        ('爆破员', 160, 'blaster'),
+        ((160, 110, 310, 170), 0, 'blaster'),
         ('安全员', 220, 'safety_officer'),
         ('现场负责人', 220, 'engineer'),
     ]
@@ -3014,15 +3016,14 @@ def 识别签名(_ocr_engine, record_img):
         pil_crop = Image.fromarray(crop_rgb)
         pred_name, conf = _predict(pil_crop)
         print(f"[签名识别]   -> {keyword} 裁图 {crop.shape[1]}x{crop.shape[0]}, 预测={pred_name}, 置信度={conf:.1%}")
-        if conf >= 0.6:
+        if conf >= 0.85:
             result[field] = pred_name
         else:
             result[field] = ''
             # 保存低置信度裁图
-            fname = f"lowconf_{{keyword}}_{{pred_name}}_{{conf:.0%}}.jpg"
-            # 用时间戳避免重名
+            # 用时间戳避免重名，不用 % 避免 URL 解析错误
             import time
-            fname = f"lowconf_{int(time.time()*1000)}_{keyword}_{pred_name}_{conf:.0%}.jpg"
+            fname = f"lowconf_{int(time.time()*1000)}_{keyword}_{pred_name}_{conf*100:.0f}pct.jpg"
             path = os.path.join(LOW_CONF_DIR, fname)
             cv2.imwrite(path, crop)
             low_conf_files.append(path)
@@ -3146,6 +3147,22 @@ def blasting_site_photo_add(request):
         return redirect('/home/blasting_site_photo_list')
 
     return render(request, 'blasting_site_photo_add.html')
+
+
+
+def blasting_site_low_conf(request):
+    """低置信度签名裁图列表"""
+    import os
+    from django.conf import settings
+    low_dir = os.path.join(settings.MEDIA_ROOT, "blasting_site_low_conf")
+    files = []
+    if os.path.isdir(low_dir):
+        for fname in sorted(os.listdir(low_dir), reverse=True):
+            fpath = os.path.join(low_dir, fname)
+            if os.path.isfile(fpath):
+                size = os.path.getsize(fpath)
+                files.append({'name': fname, 'size': size})
+    return render(request, 'blasting_site_low_conf.html', {'files': files})
 
 
 def blasting_site_photo_delete(request):

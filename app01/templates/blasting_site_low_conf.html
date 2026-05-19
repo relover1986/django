@@ -1,0 +1,45 @@
+{% extends "home.html" %}
+{% block content %}
+<br /><br /><br /><br />
+
+<div class="container">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">
+        <span class="glyphicon glyphicon-warning-sign"></span>
+        低置信度签名裁图
+      </h3>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 mb-3">
+    <a class="btn btn-success btn-sm" href="/home/blasting_site_photo_list">
+      <i class="bi bi-arrow-left me-2"></i>返回现场记录
+    </a>
+  </div>
+
+  <div class="container">
+    <div class="panel-body">
+      {% if files %}
+        <p>共 {{ files|length }} 张低置信度签名裁图（置信度 < 60%），建议人工复核后手动填入对应字段。</p>
+        <div class="row">
+          {% for f in files %}
+          <div class="col-md-4 mb-4">
+            <div class="card">
+              <a href="/media/blasting_site_low_conf/{{ f.name }}" target="_blank">
+                <img src="/media/blasting_site_low_conf/{{ f.name }}" class="card-img-top img-fluid" style="max-height:200px; object-fit:contain;" alt="{{ f.name }}">
+              </a>
+              <div class="card-body">
+                <p class="card-text" style="font-size:0.85rem;">{{ f.name }}</p>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="alert alert-success">暂无低置信度签名裁图</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
