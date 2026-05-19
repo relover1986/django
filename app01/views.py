@@ -132,7 +132,7 @@ def contractlabor_list(request):
     if request.method == "GET":
         data = models.ContractLabor.objects.values().order_by('-id')[:100]
         model_fields = models.ContractLabor._meta.fields
-        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname != 'id']
+        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location')]
 
         # 添加操作列
         cols.append({'verbose_name': '操作'})
@@ -583,7 +583,7 @@ def photo_list(request):
     title = 'photo'
     if request.method == "GET":
         model_fields = models.UploadedZhaopian._meta.fields
-        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname != 'id']
+        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location')]
         cols.append({'verbose_name': '操作'})
         data = models.UploadedZhaopian.objects.values().order_by(
             '-uploaded_at')[:100]
@@ -706,7 +706,7 @@ def blastingcertificate_list(request):
     title = 'blastingcertificate'
     if request.method == "GET":
         model_fields = models.BlastingCertificate._meta.fields
-        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname != 'id']
+        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location')]
         cols.append({'verbose_name': '操作'})
         data = models.BlastingCertificate.objects.values().order_by(
             '-created_at')[:100]
@@ -1160,7 +1160,7 @@ def idcard_list(request):
     title = 'idcard'
     if request.method == "GET":
         model_fields = models.IDCard._meta.fields
-        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname != 'id']
+        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location')]
         cols.append({'verbose_name': '操作'})
         data = models.IDCard.objects.values().order_by('-created_at')[:100]
         return render(request, 'idcard_list.html', {
@@ -1324,7 +1324,7 @@ def inventory_list(request):
     if request.method == "GET":
 
         model_fields = models.ExplosiveInventoryItem._meta.fields
-        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname != 'id']
+        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location')]
         cols.append({'verbose_name': '操作'})
         data = models.ExplosiveInventoryItem.objects.values().order_by(
             '-date')[:100]
@@ -2089,7 +2089,7 @@ def explosivestaff_list(request):
     title = 'explosivestaff'
     if request.method == "GET":
         model_fields = models.ExplosiveStaff._meta.fields
-        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname != 'id']
+        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location')]
         cols.append({'verbose_name': '操作'})
         data = models.ExplosiveStaff.objects.values().order_by(
             '-created_at')[:100]
@@ -2879,7 +2879,7 @@ def blasting_site_photo_list(request):
     if request.method == 'GET':
         from app01 import models
         model_fields = models.BlastingSitePhoto._meta.fields
-        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname != 'id']
+        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location')]
         cols.append({'verbose_name': '操作'})
         data = models.BlastingSitePhoto.objects.values().order_by('-uploaded_at')[:100]
         return render(request, 'blasting_site_photo_list.html', {
@@ -2902,6 +2902,9 @@ def blasting_site_photo_add(request):
         ocr_engine = RapidOCR()
         files = request.FILES.getlist('file')
         location = request.POST.get('location', '')
+        blaster = request.POST.get('blaster', '')
+        safety_officer = request.POST.get('safety_officer', '')
+        engineer = request.POST.get('engineer', '')
 
         def 回正(img):
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -2929,7 +2932,7 @@ def blasting_site_photo_add(request):
                 xs = pts[:, 0]
                 ys = pts[:, 1]
                 if '爆破现场记录' in text:
-                    ident = text.split('录')[1]
+                    ident = text.split("录")[1].zfill(7)
                     top_y = int(ys.min())
                 if '作业场地' in text:
                     left_x = int(xs.min())
@@ -2950,11 +2953,31 @@ def blasting_site_photo_add(request):
             if img is None:
                 file.seek(0)
                 models.BlastingSitePhoto.objects.create(
-                    location=location, photo=file, code=''
+                    location=location, photo=file, code='',
+                    blaster=blaster, safety_officer=safety_officer, engineer=engineer
                 )
                 continue
 
             processed_img, ident = 处理单张(img)
+
+            # 统一高度为 1200px（等比例缩放）
+            h, w = processed_img.shape[:2]
+            if h != 1200:
+                new_w = int(w * 1200 / h)
+                processed_img = cv2.resize(processed_img, (new_w, 1200), interpolation=cv2.INTER_LANCZOS4)
+
+            # RapidOCR 定位"爆破现场记录"文字块，右侧+50像素裁切
+            _, _tmp2 = tempfile.mkstemp(suffix='.jpg')
+            cv2.imwrite(_tmp2, processed_img)
+            _res2, _ = ocr_engine(_tmp2)
+            os.unlink(_tmp2)
+            _crop_right = processed_img.shape[1]
+            for _box, _text, _conf in _res2 or []:
+                if '爆破现场记录' in _text:
+                    _pts = np.array(_box, dtype=np.int32)
+                    _crop_right = min(int(_pts[:, 0].max()) + 50, processed_img.shape[1])
+                    break
+            processed_img = processed_img[:, :_crop_right]
 
             # JPEG压缩 quality=82
             success, encoded = cv2.imencode('.jpg', processed_img, [cv2.IMWRITE_JPEG_QUALITY, 82])
@@ -2964,11 +2987,13 @@ def blasting_site_photo_add(request):
                     location=location,
                     photo=ContentFile(encoded.tobytes(), name=name),
                     code=ident,
+                    blaster=blaster, safety_officer=safety_officer, engineer=engineer
                 )
             else:
                 file.seek(0)
                 models.BlastingSitePhoto.objects.create(
                     location=location, photo=file, code=ident,
+                    blaster=blaster, safety_officer=safety_officer, engineer=engineer
                 )
 
         return redirect('/home/blasting_site_photo_list')

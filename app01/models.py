@@ -413,6 +413,9 @@ class BlastingSitePhoto(models.Model):
     code = models.CharField(max_length=50, verbose_name='编号', blank=True, null=True)
     location = models.CharField(max_length=100, verbose_name='爆破地点')
     photo = models.FileField(upload_to='blasting_site/', verbose_name='现场照片')
+    blaster = models.CharField(max_length=50, verbose_name='爆破员', blank=True, default='')
+    safety_officer = models.CharField(max_length=50, verbose_name='安全员', blank=True, default='')
+    engineer = models.CharField(max_length=50, verbose_name='工程师', blank=True, default='')
     uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name='上传时间')
 
     class Meta:

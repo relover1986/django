@@ -23,6 +23,7 @@
       <div class="table-responsive">
         <table class="table table-hover table-layout-fixed">
           <thead>
+            <th class="text-center" style="white-space: nowrap;">序号</th>
             {% for col in cols %}
             <th class="text-center" style="white-space: nowrap;">{{ col.verbose_name }}</th>
             {% endfor %}
@@ -36,11 +37,9 @@
                   <td class="text-center">{{ cell|date:"Y-m-d H:i:s" }}</td>
                 {% elif key == "photo" and cell %}
                   <td class="text-center">
-                    <a href="/media/{{cell}}" target="_blank">
-                      <img src="/media/{{cell}}" class="img-thumbnail" style="max-width: 100px; max-height: 100px;">
-                    </a>
+                    <a href="/media/{{cell}}" target="_blank">{{ cell|cut:"blasting_site/" }}</a>
                   </td>
-                {% elif key != "id" %}
+                {% elif key != "id" and key != "location" %}
                   <td class="text-center">{{cell}}</td>
                 {% endif %}
               {% endfor %}
