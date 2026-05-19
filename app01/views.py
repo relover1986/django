@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import json
 import tempfile
+import cv2
 from rapidocr_onnxruntime import RapidOCR
 from django.http import JsonResponse
 from app01 import models
@@ -2990,6 +2991,11 @@ def 识别签名(_ocr_engine, record_img):
         return _SIGN_IDX[pred], conf
 
     # 关键词 → DB字段映射
+    print(f"[签名识别] 图片尺寸: {record_img.shape[1]}x{record_img.shape[0]}")
+    # 先看看 OCR 能找到什么
+    all_texts = [t for _,t,_ in _ocr(record_img)]
+    print(f"[签名识别] OCR共{len(all_texts)}个文字块: {all_texts[:15]}")
+
     configs = [
         ('爆破员', 160, 'blaster'),
         ('安全员', 220, 'safety_officer'),
@@ -2997,13 +3003,17 @@ def 识别签名(_ocr_engine, record_img):
     ]
 
     for keyword, pad, field in configs:
+        print(f"[签名识别] 搜索关键词: {keyword}")
         crop = _crop_sig(record_img, keyword, pad)
+        if crop is None:
+            print(f"[签名识别]   -> 未找到 {keyword}")
         if crop is None:
             result[field] = ''
             continue
         crop_rgb = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)
         pil_crop = Image.fromarray(crop_rgb)
         pred_name, conf = _predict(pil_crop)
+        print(f"[签名识别]   -> {keyword} 裁图 {crop.shape[1]}x{crop.shape[0]}, 预测={pred_name}, 置信度={conf:.1%}")
         if conf >= 0.6:
             result[field] = pred_name
         else:
@@ -3120,13 +3130,17 @@ def blasting_site_photo_add(request):
                     location=location,
                     photo=ContentFile(encoded.tobytes(), name=name),
                     code=ident,
-                    blaster=blaster, safety_officer=safety_officer, engineer=engineer
+                    blaster=sig_result.get('blaster', ''),
+                    safety_officer=sig_result.get('safety_officer', ''),
+                    engineer=sig_result.get('engineer', ''),
                 )
             else:
                 file.seek(0)
                 models.BlastingSitePhoto.objects.create(
                     location=location, photo=file, code=ident,
-                    blaster=blaster, safety_officer=safety_officer, engineer=engineer
+                    blaster=sig_result.get('blaster', ''),
+                    safety_officer=sig_result.get('safety_officer', ''),
+                    engineer=sig_result.get('engineer', ''),
                 )
 
         return redirect('/home/blasting_site_photo_list')
