@@ -1,4 +1,9 @@
 from django.shortcuts import render, HttpResponse, redirect
+import torch
+import torch.nn as nn
+import json
+import tempfile
+from rapidocr_onnxruntime import RapidOCR
 from django.http import JsonResponse
 from app01 import models
 from app01.models import UploadedZhaopian
@@ -2889,6 +2894,130 @@ def blasting_site_photo_list(request):
         })
 
 
+
+# ─── 签名识别（模型全局加载一次） ─────────────────────────
+SIGNATURE_MODEL_PATH = "/root/MLX/05模型文件/sign_model.npz"
+SIGNATURE_MAP_PATH = "/root/MLX/05模型文件/label_map.json"
+LOW_CONF_DIR = os.path.join(settings.MEDIA_ROOT, "blasting_site_low_conf")
+os.makedirs(LOW_CONF_DIR, exist_ok=True)
+
+class SignNetMulti(nn.Module):
+    def __init__(self, num_classes):
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 16, 3, padding=1)
+        self.conv2 = nn.Conv2d(16, 32, 3, padding=1)
+        self.pool = nn.MaxPool2d(2)
+        self.fc1 = nn.Linear(32 * 64 * 64, 128)
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, num_classes)
+    def forward(self, x):
+        x = self.pool(torch.relu(self.conv1(x)))
+        x = self.pool(torch.relu(self.conv2(x)))
+        x = x.view(x.size(0), -1)
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        return self.fc3(x)
+
+def _load_sign_model():
+    with open(SIGNATURE_MAP_PATH) as f:
+        label_map = json.load(f)
+    idx_to_name = {int(k): v for k, v in label_map.items()}
+    model = SignNetMulti(len(label_map))
+    w = np.load(SIGNATURE_MODEL_PATH)
+    state = {}
+    for k, v in w.items():
+        if 'conv' in k and 'weight' in k:
+            state[k] = torch.from_numpy(np.transpose(v, (0, 3, 1, 2)))
+        else:
+            state[k] = torch.from_numpy(v)
+    model.load_state_dict(state, strict=False)
+    model.eval()
+    return model, idx_to_name
+
+_SIGN_MODEL, _SIGN_IDX = None, None
+
+def 识别签名(_ocr_engine, record_img):
+    """record_img: 1200px 高的记录区 BGR ndarray
+       返回 (字段值字典, 低置信度文件列表)
+       字段值: {'blaster': 名, 'safety_officer': 名, 'engineer': 名}
+       未识别或低置信度的字段值为 ''
+    """
+    global _SIGN_MODEL, _SIGN_IDX
+    if _SIGN_MODEL is None:
+        _SIGN_MODEL, _SIGN_IDX = _load_sign_model()
+
+    result = {}
+    low_conf_files = []
+
+    def _ocr(img_bgr):
+        _, tmp = tempfile.mkstemp(suffix='.jpg')
+        cv2.imwrite(tmp, img_bgr)
+        res, _ = _ocr_engine(tmp)
+        os.unlink(tmp)
+        return res or []
+
+    def _crop_sig(img, keyword, pad=220):
+        h, w = img.shape[:2]
+        for box, text, conf in _ocr(img):
+            if keyword in text:
+                pts = np.array(box, dtype=np.int32)
+                xs, ys = pts[:, 0], pts[:, 1]
+                y_top = max(int(ys.min()) - 10, 0)
+                y_bot = min(int(ys.max()) + 10, h)
+                x_r = int(xs.max())
+                x_end = min(x_r + pad, w)
+                return img[y_top:y_bot, x_r:x_end]
+        return None
+
+    def _predict(pil_crop):
+        arr = np.array(pil_crop.convert("L"), dtype=np.float32)
+        binary = np.where(arr > 130, 255, 0).astype(np.uint8)
+        pb = Image.fromarray(binary)
+        w, h = pb.size
+        scale = 256 / max(w, h)
+        nw, nh = int(w * scale), int(h * scale)
+        rs = pb.resize((nw, nh), Image.LANCZOS)
+        cv = Image.new("L", (256, 256), 255)
+        cv.paste(rs, ((256 - nw) // 2, (256 - nh) // 2))
+        final = np.array(cv, dtype=np.float32) / 255.0
+        final = np.expand_dims(final, axis=0)
+        x = torch.from_numpy(final).unsqueeze(0)
+        with torch.no_grad():
+            logits = _SIGN_MODEL(x)
+            probs = torch.softmax(logits, dim=1)[0]
+        pred = int(torch.argmax(logits, dim=1)[0].item())
+        conf = float(probs[pred].item())
+        return _SIGN_IDX[pred], conf
+
+    # 关键词 → DB字段映射
+    configs = [
+        ('爆破员', 160, 'blaster'),
+        ('安全员', 220, 'safety_officer'),
+        ('现场负责人', 220, 'engineer'),
+    ]
+
+    for keyword, pad, field in configs:
+        crop = _crop_sig(record_img, keyword, pad)
+        if crop is None:
+            result[field] = ''
+            continue
+        crop_rgb = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)
+        pil_crop = Image.fromarray(crop_rgb)
+        pred_name, conf = _predict(pil_crop)
+        if conf >= 0.6:
+            result[field] = pred_name
+        else:
+            result[field] = ''
+            # 保存低置信度裁图
+            fname = f"lowconf_{{keyword}}_{{pred_name}}_{{conf:.0%}}.jpg"
+            # 用时间戳避免重名
+            import time
+            fname = f"lowconf_{int(time.time()*1000)}_{keyword}_{pred_name}_{conf:.0%}.jpg"
+            path = os.path.join(LOW_CONF_DIR, fname)
+            cv2.imwrite(path, crop)
+            low_conf_files.append(path)
+
+    return result, low_conf_files
 def blasting_site_photo_add(request):
     title = 'blasting_site_photo'
     if request.method == 'POST':
@@ -2897,7 +3026,6 @@ def blasting_site_photo_add(request):
         import numpy as np
         from django.core.files.base import ContentFile
         from deskew import determine_skew
-        from rapidocr_onnxruntime import RapidOCR
 
         ocr_engine = RapidOCR()
         files = request.FILES.getlist('file')
@@ -2965,6 +3093,11 @@ def blasting_site_photo_add(request):
             if h != 1200:
                 new_w = int(w * 1200 / h)
                 processed_img = cv2.resize(processed_img, (new_w, 1200), interpolation=cv2.INTER_LANCZOS4)
+
+            # ── 签名识别 ──
+            sig_result, low_conf_list = 识别签名(ocr_engine, processed_img)
+            if low_conf_list:
+                print(f"[签名] {len(low_conf_list)} 张低置信度裁图 -> {LOW_CONF_DIR}")
 
             # RapidOCR 定位"爆破现场记录"文字块，右侧+50像素裁切
             _, _tmp2 = tempfile.mkstemp(suffix='.jpg')
