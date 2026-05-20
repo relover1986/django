@@ -3170,3 +3170,15 @@ def blasting_site_photo_delete(request):
     from app01 import models
     models.BlastingSitePhoto.objects.filter(id=str(id)).delete()
     return redirect('/home/blasting_site_photo_list')
+
+def blasting_site_low_conf_delete(request):
+    """删除低置信度签名裁图"""
+    import os
+    from django.conf import settings
+    from django.shortcuts import redirect
+    filename = request.GET.get('filename')
+    if filename:
+        fpath = os.path.join(settings.MEDIA_ROOT, 'blasting_site_low_conf', filename)
+        if os.path.isfile(fpath):
+            os.remove(fpath)
+    return redirect('/home/blasting_site_low_conf/')

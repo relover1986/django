@@ -12,29 +12,63 @@
     </div>
   </div>
 
-  <div class="d-flex gap-2 mb-3">
+  <div class="d-flex gap-2 mb-3 align-items-center">
     <a class="btn btn-success btn-sm" href="/home/blasting_site_photo_list">
       <i class="bi bi-arrow-left me-2"></i>返回现场记录
     </a>
+
+    <!-- 选择下拉菜单 -->
+    <div class="dropdown d-inline-block">
+      <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-check2-square me-2"></i>选择操作
+      </button>
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="javascript:selectAll()"><i class="bi bi-check-all me-2"></i>全选</a></li>
+        <li><a class="dropdown-item" href="javascript:deselectAll()"><i class="bi bi-x-circle me-2"></i>取消全选</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item text-danger" href="javascript:batchDelete()"><i class="bi bi-trash me-2"></i>删除选中</a></li>
+      </ul>
+    </div>
   </div>
 
   <div class="container">
     <div class="panel-body">
       {% if files %}
-        <p>共 {{ files|length }} 张低置信度签名裁图（置信度 < 60%），建议人工复核后手动填入对应字段。</p>
-        <div class="row">
-          {% for f in files %}
-          <div class="col-md-4 mb-4">
-            <div class="card">
-              <a href="/media/blasting_site_low_conf/{{ f.name }}" target="_blank">
-                <img src="/media/blasting_site_low_conf/{{ f.name }}" class="card-img-top img-fluid" style="max-height:200px; object-fit:contain;" alt="{{ f.name }}">
-              </a>
-              <div class="card-body">
-                <p class="card-text" style="font-size:0.85rem;">{{ f.name }}</p>
-              </div>
-            </div>
-          </div>
-          {% endfor %}
+        <p>共 <strong>{{ files|length }}</strong> 张低置信度签名裁图（置信度 &lt; 60%），建议人工复核后手动填入对应字段。</p>
+        <div class="table-responsive">
+          <table class="table table-hover table-bordered table-striped text-center align-middle" id="lowConfTable">
+            <thead class="table-secondary">
+              <tr>
+                <th style="width:44px;"><input type="checkbox" id="checkAll" onchange="toggleAll(this)"></th>
+                <th style="width:70px;">预览</th>
+                <th>文件名</th>
+                <th style="width:100px;">大小</th>
+                <th style="width:150px;">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for f in files %}
+              <tr>
+                <td><input type="checkbox" class="file-checkbox" value="{{ f.name }}"></td>
+                <td>
+                  <a href="/media/blasting_site_low_conf/{{ f.name }}" target="_blank">
+                    <img src="/media/blasting_site_low_conf/{{ f.name }}" style="max-height:50px; max-width:80px; object-fit:contain; border-radius:4px;" alt="{{ f.name }}">
+                  </a>
+                </td>
+                <td style="word-break:break-all; text-align:left;">{{ f.name }}</td>
+                <td>{{ f.size|filesizeformat }}</td>
+                <td>
+                  <a class="btn btn-danger btn-xs" href="/home/blasting_site_low_conf_delete/?filename={{ f.name }}" onclick="return confirm('确认删除「{{ f.name }}」？')">
+                    <i class="bi bi-trash"></i> 删除
+                  </a>
+                  <a class="btn btn-info btn-xs" href="/media/blasting_site_low_conf/{{ f.name }}" target="_blank">
+                    <i class="bi bi-eye"></i> 查看
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
       {% else %}
         <div class="alert alert-success">暂无低置信度签名裁图</div>
@@ -42,4 +76,42 @@
     </div>
   </div>
 </div>
+
+<script>
+function toggleAll(source) {
+  var cbs = document.querySelectorAll('.file-checkbox');
+  for (var i = 0; i < cbs.length; i++) { cbs[i].checked = source.checked; }
+}
+function selectAll() {
+  var cbs = document.querySelectorAll('.file-checkbox');
+  for (var i = 0; i < cbs.length; i++) { cbs[i].checked = true; }
+  document.getElementById('checkAll').checked = true;
+}
+function deselectAll() {
+  var cbs = document.querySelectorAll('.file-checkbox');
+  for (var i = 0; i < cbs.length; i++) { cbs[i].checked = false; }
+  document.getElementById('checkAll').checked = false;
+}
+function batchDelete() {
+  var checked = document.querySelectorAll('.file-checkbox:checked');
+  if (checked.length === 0) {
+    alert('请先选择要删除的文件');
+    return;
+  }
+  if (!confirm('确认删除选中的 ' + checked.length + ' 张图片吗？此操作不可恢复。')) {
+    return;
+  }
+  var names = [];
+  for (var i = 0; i < checked.length; i++) { names.push(checked[i].value); }
+  var done = 0;
+  for (var i = 0; i < names.length; i++) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '/home/blasting_site_low_conf_delete/?filename=' + encodeURIComponent(names[i]), false);
+    xhr.send();
+    if (xhr.status >= 200 && xhr.status < 300) done++;
+  }
+  alert('操作完成：成功删除 ' + done + ' / ' + names.length + ' 张图片');
+  location.reload();
+}
+</script>
 {% endblock %}
