@@ -3152,7 +3152,7 @@ def blasting_site_photo_add(request):
 
 def blasting_site_low_conf(request):
     """低置信度签名裁图列表"""
-    import os
+    import os, json
     from django.conf import settings
     low_dir = os.path.join(settings.MEDIA_ROOT, "blasting_site_low_conf")
     files = []
@@ -3162,7 +3162,18 @@ def blasting_site_low_conf(request):
             if os.path.isfile(fpath):
                 size = os.path.getsize(fpath)
                 files.append({'name': fname, 'size': size})
-    return render(request, 'blasting_site_low_conf.html', {'files': files})
+    # 读取 label_map.json 作为姓名下拉选项
+    label_map_path = '/root/MLX/05模型文件/label_map.json'
+    name_options = []
+    try:
+        with open(label_map_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            for v in data.values():
+                if v.strip():
+                    name_options.append(v.strip())
+    except Exception:
+        name_options = []
+    return render(request, 'blasting_site_low_conf.html', {'files': files, 'name_options': name_options})
 
 
 def blasting_site_photo_delete(request):
@@ -3182,3 +3193,244 @@ def blasting_site_low_conf_delete(request):
         if os.path.isfile(fpath):
             os.remove(fpath)
     return redirect('/home/blasting_site_low_conf/')
+
+
+def blasting_site_low_conf_submit(request):
+    """提交低置信度裁图到对应签名文件夹"""
+    import os, json
+    from django.conf import settings
+    from django.http import JsonResponse
+    from django.views.decorators.csrf import csrf_exempt
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': '仅支持POST'})
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'JSON解析失败'})
+
+    items = data.get('items', [])
+    if not items:
+        return JsonResponse({'success': False, 'message': '没有提交项'})
+
+    src_dir = os.path.join(settings.MEDIA_ROOT, 'blasting_site_low_conf')
+    dst_root = os.path.join(settings.MEDIA_ROOT, '签名')
+    moved = 0
+    errors = []
+
+    for item in items:
+        filename = item.get('filename', '').strip()
+        name = item.get('name', '').strip()
+        if not filename or not name:
+            errors.append(f'{filename or "?"}: 姓名列为空')
+            continue
+
+        src_path = os.path.join(src_dir, filename)
+        if not os.path.isfile(src_path):
+            errors.append(f'{filename}: 源文件不存在')
+            continue
+
+        dst_dir = os.path.join(dst_root, name)
+        os.makedirs(dst_dir, exist_ok=True)
+
+        dst_path = os.path.join(dst_dir, filename)
+        if os.path.exists(dst_path):
+            base, ext = os.path.splitext(filename)
+            import time
+            dst_path = os.path.join(dst_dir, f'{base}_{int(time.time())}{ext}')
+
+        os.rename(src_path, dst_path)
+        moved += 1
+
+    return JsonResponse({
+        'success': True,
+        'moved': moved,
+        'errors': errors,
+    })
+
+
+
+# ─── 签名训练（SSE 流式推送进度） ────────────────────
+SIGNATURE_DATA_DIR = os.path.join(settings.MEDIA_ROOT, "签名")
+SIGNATURE_OUT_DIR = "/root/MLX/05模型文件"
+os.makedirs(SIGNATURE_OUT_DIR, exist_ok=True)
+
+TARGET_SIZE_TRAIN = 256
+EPOCHS_TRAIN = 40
+BATCH_SIZE_TRAIN = 16
+LR_TRAIN = 1e-3
+POS_COUNT_TRAIN = 50
+NEG_COUNT_TRAIN = 75
+
+
+def _preprocess_signature(img_path):
+    from PIL import Image
+    img = Image.open(img_path).convert("L")
+    arr = np.array(img, dtype=np.uint8)
+    binary = np.where(arr > 130, 255, 0).astype(np.uint8)
+    pil_bin = Image.fromarray(binary)
+    w, h = pil_bin.size
+    scale = TARGET_SIZE_TRAIN / max(w, h)
+    nw, nh = int(w * scale), int(h * scale)
+    resized = pil_bin.resize((nw, nh), Image.LANCZOS)
+    canvas = Image.new("L", (TARGET_SIZE_TRAIN, TARGET_SIZE_TRAIN), 255)
+    ox = (TARGET_SIZE_TRAIN - nw) // 2
+    oy = (TARGET_SIZE_TRAIN - nh) // 2
+    canvas.paste(resized, (ox, oy))
+    final = np.array(canvas, dtype=np.float32) / 255.0
+    final = np.expand_dims(final, axis=0)
+    return final
+
+
+def _train_sse_events():
+    import random, time, glob
+
+    data_dir = SIGNATURE_DATA_DIR
+    if not os.path.isdir(data_dir):
+        yield "data: " + json.dumps({"type": "error", "message": "签名目录不存在"}) + "\n\n"
+        return
+
+    person_dirs = sorted([
+        d for d in os.listdir(data_dir)
+        if os.path.isdir(os.path.join(data_dir, d))
+    ])
+    all_people = {}
+    for name in person_dirs:
+        d = os.path.join(data_dir, name)
+        files = sorted(glob.glob(os.path.join(d, "*")))
+        files = [f for f in files if os.path.isfile(f)
+                 and not os.path.basename(f).startswith(".")]
+        files = files[:POS_COUNT_TRAIN]
+        if files:
+            all_people[name] = files
+
+    names = sorted(all_people.keys())
+    num_classes = len(names)
+    if num_classes < 2:
+        yield "data: " + json.dumps({"type": "error", "message": "至少需要 2 人才能训练"}) + "\n\n"
+        return
+
+    label_map = {str(i): n for i, n in enumerate(names)}
+    name_to_idx = {n: i for i, n in enumerate(names)}
+
+    details = []
+    for name in names:
+        details.append(name + ": " + str(len(all_people[name])) + " 张")
+
+    yield "data: " + json.dumps({"type": "start", "num_classes": num_classes, "details": details}) + "\n\n"
+
+    # 预分配 numpy 数组，避免 list→array 双倍内存
+    total_estimate = len(names) * (POS_COUNT_TRAIN + NEG_COUNT_TRAIN)
+    all_imgs = np.zeros((total_estimate, 1, TARGET_SIZE_TRAIN, TARGET_SIZE_TRAIN), dtype=np.float32)
+    all_labels = np.zeros(total_estimate, dtype=np.int64)
+    _idx = 0
+    for person_name in names:
+        pos_files = all_people[person_name]
+        neg_pool = []
+        for other_name in names:
+            if other_name != person_name:
+                for f in all_people[other_name]:
+                    neg_pool.append((f, name_to_idx[other_name]))
+        neg_selected = random.sample(neg_pool, min(NEG_COUNT_TRAIN, len(neg_pool)))
+        for f in pos_files:
+            try:
+                all_imgs[_idx] = _preprocess_signature(f)
+                all_labels[_idx] = name_to_idx[person_name]
+                _idx += 1
+            except Exception:
+                pass
+        for f_path, label in neg_selected:
+            try:
+                all_imgs[_idx] = _preprocess_signature(f_path)
+                all_labels[_idx] = label
+                _idx += 1
+            except Exception:
+                pass
+
+    total = _idx
+    all_imgs = all_imgs[:total]
+    all_labels = all_labels[:total]
+
+    indices = np.random.permutation(total)
+    x_np = all_imgs[indices]
+    y_np = all_labels[indices]
+    x_t = torch.from_numpy(x_np)
+    y_t = torch.from_numpy(y_np).long()
+
+    model = SignNetMulti(num_classes)
+    loss_fn = nn.CrossEntropyLoss()
+    opt = torch.optim.Adam(model.parameters(), lr=LR_TRAIN)
+
+    start = time.time()
+    batch_size = min(BATCH_SIZE_TRAIN, total)
+
+    for epoch in range(EPOCHS_TRAIN):
+        perm = torch.randperm(total)
+        epoch_loss = 0.0
+        n_batches = 0
+        model.train()
+        for i in range(0, total, batch_size):
+            idx = perm[i:i + batch_size]
+            bx = x_t[idx]
+            by = y_t[idx]
+            opt.zero_grad()
+            logits = model(bx)
+            loss = loss_fn(logits, by)
+            loss.backward()
+            opt.step()
+            epoch_loss += loss.item()
+            n_batches += 1
+        avg_loss = epoch_loss / n_batches
+
+        should_report = (epoch + 1) % 5 == 0 or epoch == 0 or epoch == EPOCHS_TRAIN - 1
+        if should_report:
+            model.eval()
+            with torch.no_grad():
+                correct = 0
+                eval_bs = 32
+                for j in range(0, total, eval_bs):
+                    logits = model(x_t[j:j+eval_bs])
+                    correct += (torch.argmax(logits, dim=1) == y_t[j:j+eval_bs]).sum().item()
+                acc = correct / total
+            log_line = "epoch {:2d}/{} | loss: {:.4f} | acc: {:.2%}".format(epoch+1, EPOCHS_TRAIN, avg_loss, acc)
+            pct = round((epoch + 1) / EPOCHS_TRAIN * 100, 1)
+            yield "data: " + json.dumps({
+                "type": "progress", "epoch": epoch + 1, "total": EPOCHS_TRAIN,
+                "loss": round(avg_loss, 4), "acc": round(acc, 4),
+                "pct": pct, "log": log_line
+            }) + "\n\n"
+
+    elapsed = time.time() - start
+    model.eval()
+    with torch.no_grad():
+        correct = 0
+        eval_bs = 32
+        for j in range(0, total, eval_bs):
+            logits = model(x_t[j:j+eval_bs])
+            correct += (torch.argmax(logits, dim=1) == y_t[j:j+eval_bs]).sum().item()
+        final_acc = correct / total
+
+    model_pth = os.path.join(SIGNATURE_OUT_DIR, "sign_model.pth")
+    map_path = os.path.join(SIGNATURE_OUT_DIR, "label_map.json")
+    torch.save(model.state_dict(), model_pth)
+    with open(map_path, "w", encoding="utf-8") as f:
+        json.dump(label_map, f, ensure_ascii=False, indent=2)
+
+    global _SIGN_MODEL, _SIGN_IDX
+    _SIGN_MODEL = None
+    _SIGN_IDX = None
+
+    yield "data: " + json.dumps({
+        "type": "done", "final_acc": round(final_acc, 4),
+        "elapsed": round(elapsed, 2), "num_classes": num_classes,
+        "total_samples": total
+    }) + "\n\n"
+
+
+def blasting_site_train_signatures(request):
+    from django.http import StreamingHttpResponse
+    response = StreamingHttpResponse(_train_sse_events(), content_type="text/event-stream")
+    response["Cache-Control"] = "no-cache"
+    response["X-Accel-Buffering"] = "no"
+    return response

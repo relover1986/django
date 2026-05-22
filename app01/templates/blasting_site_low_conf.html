@@ -27,8 +27,13 @@
         <li><a class="dropdown-item" href="javascript:deselectAll()"><i class="bi bi-x-circle me-2"></i>取消全选</a></li>
         <li><hr class="dropdown-divider"></li>
         <li><a class="dropdown-item text-danger" href="javascript:batchDelete()"><i class="bi bi-trash me-2"></i>删除选中</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item text-success" href="javascript:batchSubmit()"><i class="bi bi-send me-2"></i>提交</a></li>
       </ul>
     </div>
+    <a class="btn btn-warning btn-sm" href="javascript:train()">
+      <i class="bi bi-gear me-2"></i>训练
+    </a>
   </div>
 
   <div class="container">
@@ -43,6 +48,7 @@
                 <th style="width:70px;">预览</th>
                 <th>文件名</th>
                 <th style="width:100px;">大小</th>
+                <th style="width:120px;">姓名</th>
                 <th style="width:150px;">操作</th>
               </tr>
             </thead>
@@ -57,6 +63,9 @@
                 </td>
                 <td style="word-break:break-all; text-align:left;">{{ f.name }}</td>
                 <td>{{ f.size|filesizeformat }}</td>
+                <td>
+                  <input list="name-options" class="form-control form-control-sm name-input" style="min-width:90px;" placeholder="选择或输入姓名">
+                </td>
                 <td>
                   <a class="btn btn-danger btn-xs" href="/home/blasting_site_low_conf_delete/?filename={{ f.name }}" onclick="return confirm('确认删除「{{ f.name }}」？')">
                     <i class="bi bi-trash"></i> 删除
@@ -113,5 +122,139 @@ function batchDelete() {
   alert('操作完成：成功删除 ' + done + ' / ' + names.length + ' 张图片');
   location.reload();
 }
+function batchSubmit() {
+  var checked = document.querySelectorAll('.file-checkbox:checked');
+  if (checked.length === 0) {
+    alert('请先选择要提交的文件');
+    return;
+  }
+  var items = [];
+  for (var i = 0; i < checked.length; i++) {
+    var cb = checked[i];
+    var tr = cb.closest('tr');
+    var nameInput = tr.querySelector('.name-input');
+    var name = nameInput ? nameInput.value.trim() : '';
+    if (!name) {
+      alert('第 ' + (i + 1) + ' 行姓名列为空，请填写或选择姓名');
+      nameInput.focus();
+      return;
+    }
+    items.push({ filename: cb.value, name: name });
+  }
+  if (!confirm('确认提交 ' + items.length + ' 张图片到对应签名文件夹吗？')) {
+    return;
+  }
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', '/home/blasting_site_low_conf_submit/', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+  xhr.onload = function () {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      var resp = JSON.parse(xhr.responseText);
+      var msg = '提交完成：成功移动 ' + resp.moved + ' 张图片';
+      if (resp.errors && resp.errors.length > 0) {
+        msg += '\n\n错误：\n' + resp.errors.join('\n');
+      }
+      alert(msg);
+      location.reload();
+    } else {
+      alert('提交失败：' + xhr.status + ' ' + xhr.statusText);
+    }
+  };
+  xhr.onerror = function () {
+    alert('网络错误，提交失败');
+  };
+  xhr.send(JSON.stringify({ items: items }));
+}
+function getCookie(name) {
+  var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  return match ? decodeURIComponent(match[2]) : '';
+}
+function train() {
+  if (!confirm('即将从零开始训练签名模型（约1-2分钟），确认？')) return;
+  var modal = new bootstrap.Modal(document.getElementById('trainModal'));
+  modal.show();
+  document.getElementById('trainProgressBar').style.width = '0%';
+  document.getElementById('trainProgressText').textContent = '0 / 40';
+  document.getElementById('trainStatus').textContent = '初始化...';
+  document.getElementById('trainLog').textContent = '';
+  document.getElementById('trainResult').classList.add('d-none');
+  document.getElementById('trainSpinner').classList.remove('d-none');
+
+  var es = new EventSource('/home/blasting_site_train_signatures/');
+  es.onmessage = function(e) {
+    var data = JSON.parse(e.data);
+    if (data.type === 'error') {
+      document.getElementById('trainStatus').textContent = '错误: ' + data.message;
+      document.getElementById('trainSpinner').classList.add('d-none');
+      es.close();
+      return;
+    }
+    if (data.type === 'start') {
+      document.getElementById('trainStatus').textContent = '共 ' + data.num_classes + ' 人';
+      return;
+    }
+    if (data.type === 'progress') {
+      var bar = document.getElementById('trainProgressBar');
+      bar.style.width = data.pct + '%';
+      bar.textContent = data.pct + '%';
+      document.getElementById('trainProgressText').textContent = data.epoch + ' / ' + data.total;
+      document.getElementById('trainStatus').textContent = 'loss: ' + data.loss + ' | acc: ' + (data.acc * 100).toFixed(1) + '%';
+      var log = document.getElementById('trainLog');
+      log.textContent += data.log + '\n';
+      log.scrollTop = log.scrollHeight;
+      return;
+    }
+    if (data.type === 'done') {
+      es.close();
+      document.getElementById('trainSpinner').classList.add('d-none');
+      document.getElementById('trainResult').classList.remove('d-none');
+      document.getElementById('trainResult').className = 'alert alert-success mt-2';
+      document.getElementById('trainResult').textContent = '训练完成！准确率: ' + (data.final_acc * 100).toFixed(1) + '%, 耗时: ' + data.elapsed + 's';
+      document.getElementById('trainStatus').textContent = '完成';
+      setTimeout(function() { location.reload(); }, 1500);
+    }
+  };
+  es.onerror = function() {
+    document.getElementById('trainStatus').textContent = '连接中断';
+    document.getElementById('trainSpinner').classList.add('d-none');
+    es.close();
+  };
+}
 </script>
-{% endblock %}
+
+<datalist id="name-options">
+  {% for name in name_options %}
+  <option value="{{ name }}">
+  {% endfor %}
+</datalist>
+
+<!-- 训练进度弹窗 -->
+<div class="modal fade" id="trainModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-gear-fill me-2"></i>训练签名模型</h5>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span id="trainProgressText">0 / 40</span>
+            <span id="trainStatus">初始化...</span>
+          </div>
+          <div class="progress" style="height:24px;">
+            <div id="trainProgressBar" class="progress-bar progress-bar-striped progress-bar-animated"
+                 style="width:0%;">0%</div>
+          </div>
+        </div>
+        <div class="d-flex align-items-center mb-2" id="trainSpinner">
+          <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+          <span class="text-muted small">训练中，请勿关闭页面...</span>
+        </div>
+        <div id="trainResult" class="d-none"></div>
+        <pre id="trainLog" style="max-height:200px; overflow-y:auto; background:#f5f5f5; padding:8px; border-radius:4px; font-size:12px; margin-top:8px;"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+\n{% endblock %}
