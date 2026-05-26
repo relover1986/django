@@ -9,7 +9,7 @@ class M1(MiddlewareMixin):
         print('Session keys:', list(request.session.keys()))
         print('Session info:', request.session.get("info"))
         
-        if request.path_info == '/login/' or request.path_info.startswith('/api/'):
+        if request.path_info == '/login/' or request.path_info.startswith('/api/') or request.path_info == '/manifest.json' or request.path_info == '/sw.js':
             print('Path is login or api, returning')
             return
 

@@ -425,3 +425,20 @@ class BlastingSitePhoto(models.Model):
 
     def __str__(self):
         return f'{self.location} - {self.uploaded_at.strftime("%Y-%m-%d %H:%M")}'
+
+class PushSubscription(models.Model):
+    """Web push subscription for PWA notifications"""
+    endpoint = models.CharField(max_length=255, unique=True, verbose_name='推送端点')
+    p256dh = models.TextField(blank=True, default='', verbose_name='p256dh密钥')
+    auth = models.TextField(blank=True, default='', verbose_name='auth密钥')
+    user_agent = models.TextField(blank=True, default='', verbose_name='用户代理')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    class Meta:
+        verbose_name = '推送订阅'
+        verbose_name_plural = '推送订阅'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Push sub {self.id} ({self.created_at.strftime("%Y-%m-%d")})'

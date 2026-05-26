@@ -1,0 +1,24 @@
+{% load static %}
+<!doctype html>
+<html lang=zh-CN>
+<head>
+    <meta charset=utf-8>
+    <meta name=viewport content=width=device-width, initial-scale=1>
+    <title>离线 - 辽宁捷祥</title>
+    <link href={% static css/bootstrap.min.css %} rel=stylesheet>
+    <style>
+        body { display: flex; align-items: center; justify-content: center; height: 100vh; background: #f8f9fa; }
+        .offline-card { text-align: center; padding: 3rem; }
+        .offline-icon { font-size: 5rem; color: #6c757d; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <div class=offline-card>
+        <div class=offline-icon>📡</div>
+        <h2>您已离线</h2>
+        <p class=text-muted>网络连接已断开，部分功能暂不可用。</p>
+        <p class=text-muted>请检查网络后重试。</p>
+        <a href=/ class=btn btn-primary mt-3>重试</a>
+    </div>
+</body>
+</html>
