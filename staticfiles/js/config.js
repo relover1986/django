@@ -1,1 +1,11 @@
-class Config{adjustLayout(){const i=document.getElementsByTagName("html")[0];window.innerWidth<=1200&&i.setAttribute("data-sidebar-size","full")}initWindowSize(){var t=this;window.addEventListener("resize",function(i){t.adjustLayout()})}init(){this.adjustLayout(),this.initWindowSize()}}(new Config).init();
+(function () {
+  var primary = localStorage.getItem("primary") || "#307EF3";
+  var secondary = localStorage.getItem("secondary") || "#EBA31D";
+
+  window.dunzoAdminConfig = {
+    // Theme Primary Color
+    primary: primary,
+    // theme secondary color
+    secondary: secondary,
+  };
+})();

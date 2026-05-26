@@ -1,358 +1,351 @@
+
 {% load static %}
-<!-- 加载Django的静态文件处理模块 -->
-<!doctype html>
-<!-- 声明文档类型为HTML5 -->
-<html lang="en">
-<!-- 定义HTML文档的根元素，并设置语言为英语 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
 <head>
-<!-- 文档的头部区域，包含元数据和链接到外部资源的标签 -->
-    <meta charset="utf-8">
-    <!-- 设置文档的字符编码为UTF-8 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- 设置视口的宽度为设备宽度，并设置初始缩放比例为1 -->
-    <meta name="description" content="">
-    <!-- 提供页面的简短描述，用于搜索引擎优化 -->
-    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
-    <!-- 声明页面的作者 -->
-    <meta name="generator" content="Hugo 0.79.0">
-    <!-- 声明生成页面的工具 -->
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="辽宁捷祥信息管理系统">
+    <meta name="author" content="辽宁捷祥">
     <title>辽宁捷祥信息管理系统</title>
-    <!-- 设置页面的标题 -->
-    <link rel="canonical" href="">
-    <!-- 声明页面的规范URL -->
-    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
-        <link href="{% static 'css/cursor-theme.css' %}" rel="stylesheet">
-        <!-- Bootstrap Icons -->
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- 引入本地的Bootstrap CSS文件，使用Django的静态文件路径 -->
-    <!-- Favicons -->
+    <link href="https://fonts.googleapis.com/css?family=Outfit:400,400i,500,500i,700,700i&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,700,700i,900&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{% static "css/font-awesome.css" %}">
+    <link rel="stylesheet" type="text/css" href="{% static "css/vendors/icofont.css" %}">
+    <link rel="stylesheet" type="text/css" href="{% static "css/vendors/themify.css" %}">
+    <link rel="stylesheet" type="text/css" href="{% static "css/vendors/feather-icon.css" %}">
+    <link rel="stylesheet" type="text/css" href="{% static "css/vendors/scrollbar.css" %}">
+    <link rel="stylesheet" type="text/css" href="{% static "css/vendors/bootstrap.css" %}">
+    <link rel="stylesheet" type="text/css" href="{% static "css/style.css" %}">
+    <link id="color" rel="stylesheet" href="{% static "css/color-1.css" %}" media="screen">
+    <link rel="stylesheet" type="text/css" href="{% static "css/responsive.css" %}">
+    <!-- PWA -->
     <link rel="apple-touch-icon" href="/static/pwa/icon-192x192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="manifest" href="/manifest.json">
-    <!-- 引入网站的图标文件 -->
-    <meta name="theme-color" content="#198754">
-    <!-- 设置主题颜色 -->
-    <!-- Custom styles for this template -->
-    {% comment %} <link href="starter-template.css" rel="stylesheet">
-    <link href="{% static 'photo_list/starter-template.css' %}" rel="stylesheet">
-    <!-- 引入自定义的CSS文件，用于覆盖或扩展Bootstrap的样式 --> {% endcomment %}
+    <meta name="theme-color" content="#307EF3">
+    <style>
+        .page-body .card .card-body h2 { font-size: 16px; color: var(--theme-default); margin-bottom: 16px; }
+        .page-body .card .card-body h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+        .phonetic { color: #999; font-size: 13px; }
+        .empty { text-align: center; padding: 60px 20px; color: #aaa; font-size: 15px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .stat-box {
+            background: #fff; border-radius: 12px; padding: 20px; text-align: center;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .stat-box .num { font-size: 32px; font-weight: 700; color: #1a1a2e; }
+        .stat-box .label { font-size: 13px; color: #888; margin-top: 4px; }
+        .stat-box .sub { font-size: 12px; color: var(--theme-default); margin-top: 2px; }
+        .filter-bar { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+        .filter-bar select, .filter-bar a {
+            padding: 6px 14px; border-radius: 8px; border: 1px solid #ddd;
+            font-size: 13px; background: #fff; cursor: pointer; text-decoration: none; color: #333;
+        }
+        .filter-bar a:hover { background: #f0f0ff; border-color: var(--theme-default); }
+        .filter-bar a.active { background: var(--theme-default); color: #fff; border-color: var(--theme-default); }
+        @media (max-width: 600px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
 </head>
-<!-- 结束文档的头部区域 -->
 <body>
-<!-- 文档的主体区域，包含页面的主要内容 -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">  <!-- 修改断点为lg -->
-  <div class="container-fluid">
-    <a class="navbar-brand" href="/home"></a>
-      <a class="navbar-brand" href="/home">主页</a>
-      <button class="navbar-toggler" type="button" 
-              data-bs-toggle="collapse" 
-              data-bs-target="#navbarsExampleDefault" 
-              aria-controls="navbarsExampleDefault" 
-              aria-expanded="false" 
-              aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-        <!-- 定义一个容器，用于包含导航栏的链接和表单，当按钮被点击时，该容器会展开或折叠 -->
-          <ul class="navbar-nav me-auto mb-2 mb-md-0">
-          <!-- 定义一个无序列表，用于包含导航栏的链接，使用Bootstrap的navbar-nav类，并设置为左对齐 -->
-      
-
-
-
-
-          <li class="nav-item dropdown">
-            <!-- 定义一个下拉菜单，使用Bootstrap的nav-item和dropdown类 -->
-              <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-bs-toggle="dropdown" aria-expanded="false">设备管理</a>
-              <!-- 定义一个链接，使用Bootstrap的nav-link和dropdown-toggle类，并设置为下拉菜单的触发器 -->
-              <ul class="dropdown-menu" aria-labelledby="dropdown01">
-              </ul>
-
-            </li>
-
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-bs-toggle="dropdown" aria-expanded="false">民用爆炸物品</a>
-              <ul class="dropdown-menu" aria-labelledby="dropdown01">
-                <li><a class="dropdown-item" href="/home/blasting_stats/">统计数据</a></li>
-                <li><a class="dropdown-item" href="/home/blaster_list/">爆破员列表</a></li>
-                <li><a class="dropdown-item" href="/home/blasting_summary_list/">岩工报药</a></li>
-              </ul>
-    
-            </li>
-
-
-
-
-
-
-
-
-            <li class="nav-item dropdown">
-            <!-- 定义一个下拉菜单，使用Bootstrap的nav-item和dropdown类 -->
-              <a class="nav-link dropdown-toggle" href="#" id="dropdown02" data-bs-toggle="dropdown" aria-expanded="false">人事信息</a>
-              <!-- 定义一个链接，使用Bootstrap的nav-link和dropdown-toggle类，并设置为下拉菜单的触发器 -->
-              <ul class="dropdown-menu" aria-labelledby="dropdown01">
-              <!-- 定义一个下拉菜单的内容，使用Bootstrap的dropdown-menu类，并设置为与触发器关联 -->
-                <li><a class="dropdown-item" href="/staff_list/">员工列表</a></li>
-                <li><a class="dropdown-item" href="/upload">文件上传</a></li>
-                <li><a class="dropdown-item" href="#">Something else here</a></li>
-              </ul>
-    
-            </li>
-
-<li class="nav-item dropdown">
-              <!-- 定义一个下拉菜单，使用Bootstrap的nav-item和dropdown类 -->
-                <a class="nav-link dropdown-toggle" href="#" id="dropdown03" data-bs-toggle="dropdown" aria-expanded="false">内业资料</a>
-
-
-            <ul class="dropdown-menu"  aria-labelledby="dropdown02">
-              <!-- 定义一个下拉菜单的内容，使用Bootstrap的dropdown-menu类，并设置为与触发器关联 -->
-                <li><a class="dropdown-item" href="/home/pdf_list">上级文件</a></li>
-                <li><a class="dropdown-item" href="/home/pdf_list">项目部</a></li>
-                <li><a class="dropdown-item" href="/upload_pdf">文件上传</a></li>
-
-              </ul>
-</li>
-
-
-
-
-
-
-
-
-
-
-
-
-<li class="nav-item dropdown">
-  <!-- 定义一个下拉菜单，使用Bootstrap的nav-item和dropdown类 -->
-    <a class="nav-link dropdown-toggle" href="#" id="dropdown03" data-bs-toggle="dropdown" aria-expanded="false">矿山图纸</a>
-
-
-<ul class="dropdown-menu"  aria-labelledby="dropdown02">
-  <!-- 定义一个下拉菜单的内容，使用Bootstrap的dropdown-menu类，并设置为与触发器关联 -->
-
-    <li><a class="dropdown-item" href="/home/tu_list">项目部</a></li>
- 
-
-  </ul>
-</li>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<li class="nav-item dropdown">
-  <!-- 定义一个下拉菜单，使用Bootstrap的nav-item和dropdown类 -->
-    <a class="nav-link dropdown-toggle" href="#" id="dropdown03" data-bs-toggle="dropdown" aria-expanded="false">企业培训</a>
-
-
-<ul class="dropdown-menu"  aria-labelledby="dropdown02">
-  <!-- 定义一个下拉菜单的内容，使用Bootstrap的dropdown-menu类，并设置为与触发器关联 -->
-    <li><a class="dropdown-item" href="/home/ti">爆破三大员习题</a></li>
-    <li><a class="dropdown-item" href="/home/jskjgti">非煤矿山井工习题</a></li>
-    <li><a class="dropdown-item" href="/home/wxpzxti">危险品装卸习题</a></li>
-    <!-- <li><a class="dropdown-item" href="/home/jskjgtiti_grades">非煤矿山井工习题答题情况</a></li> -->
-    <li><a class="dropdown-item" href="/home/ti_grades">答题情况</a></li>
-
-
-
-    <li><a class="dropdown-item" href="#">三级安全教育</a></li>
-  </ul>
-</li>
-
-
-
-
-<li class="nav-item dropdown">
-  <!-- 定义一个下拉菜单，使用Bootstrap的nav-item和dropdown类 -->
-    <a class="nav-link dropdown-toggle" href="#" id="dropdown03" data-bs-toggle="dropdown" aria-expanded="false">办公软件</a>
-
-
-<ul class="dropdown-menu"  aria-labelledby="dropdown02">
-  <!-- 定义一个下拉菜单的内容，使用Bootstrap的dropdown-menu类，并设置为与触发器关联 -->
-    <li><a class="dropdown-item" href="/home/photo_list">照片排版</a></li>
-    <li><a class="dropdown-item" href="/home/idcard_list">身份证识别</a></li>
-    <li><a class="dropdown-item" href="/home/contractlabor_list">合同批量处理</a></li>
-
-
-
-  </ul>
-</li>
-
-
-<li class="nav-item dropdown">
-  <!-- 定义一个下拉菜单，使用Bootstrap的nav-item和dropdown类 -->
-    <a class="nav-link dropdown-toggle" href="#" id="dropdown03" data-bs-toggle="dropdown" aria-expanded="false">爆破业务</a>
-
-
-<ul class="dropdown-menu"  aria-labelledby="dropdown02">
-  <!-- 定义一个下拉菜单的内容，使用Bootstrap的dropdown-menu类，并设置为与触发器关联 -->
-  <li><a class="dropdown-item" href="http://218.60.149.148:8888/mbxtwlfwpt/">辽宁民爆平台</a></li>
-  <li><a class="dropdown-item" href="https://www.bpzykh.cn">爆破培训系统</a></li>
-    <li><a class="dropdown-item" href="/home/candidateprofile_list/">面试列表</a></li>
-    <li><a class="dropdown-item" href="/home/explosivestaff_list/">三大员考试资料</a></li>
-    <li><a class="dropdown-item" href="/home/weighingrecord_list/">矿石运输</a></li>
-    <li><a class="dropdown-item" href="/home/blastingcertificate_list/">爆破人员证书</a></li>
-    <li><a class="dropdown-item" href="/home/blasting_site_photo_list/">爆破现场记录</a></li>
-
-
-
-  </ul>
-</li>
-
-
-
-
-
-
-
-
-
-
-
-
-          </ul>
-          <!-- 将下拉菜单移到最右侧 -->
-          <ul class="navbar-nav ml-auto">
-            {% comment %} <li><a href="/home/Sportlist_list?ident={{request.session.info.ident}}">{{request.session.info.name}}</a></li>  {% endcomment %}
-            <img src="/static/img/{{request.session.info.name}}.png" alt="{{request.session.info.ident}}" class="img-fluid" style="width: 30px; height: 42px; margin-right: 5px;">
-            <span style="color: white;">{{request.session.info.name}}---{{request.session.info.role}}</span>
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="dropdown02" data-bs-toggle="dropdown" aria-expanded="false">账户
-
-                </a>
-
-                <ul class="dropdown-menu" aria-labelledby="dropdown02" style="left: auto; right: 0;">
-                <li><a class="dropdown-item" href="/login/">登入</a></li>
-                <li><a class="dropdown-item" href="/logout/">退出</a></li>
-
-              </ul>
-            </li>
-          </ul>
+    <!-- loader -->
+    <div class="loader-wrapper">
+        <div class="theme-loader">
+            <div class="loader-p"></div>
         </div>
-      </div>
-    </nav>
-    <main class="container">
-    <!-- 定义一个主容器，使用Bootstrap的container类 -->
-
-
-      {% block content%}
-
-<br>
-<br>
-<br>
-    
-    <div class="starter-template text-center py-5 px-3">
-        <h1 class="big-heading"></h1>
-
-        <!-- 其他内容 -->
     </div>
-    
 
-        
-        <!-- 定义一个一级标题，显示文本为"Bootstrap starter tempte" -->
-    <!-- VERSION_HISTORY_START -->
-    <div class="text-center mt-3">
-        <p class="lead" style="font-size:1.3rem;">
-            <span class="badge bg-primary fs-6 me-2">v1.5</span>
-            <span class="text-muted">2026-05-19</span>
-        </p>
-        <p class="text-muted" style="font-size:1.0rem;">blasting_site_photo_add: auto-recognize signatures via PyTorch</p>
+    <!-- tap to top -->
+    <div class="tap-top"><i data-feather="chevrons-up"></i></div>
+
+    <!-- page-wrapper -->
+    <div class="page-wrapper compact-wrapper" id="pageWrapper">
+        <!-- header -->
+        <div class="page-header">
+            <div class="header-wrapper row m-0">
+                <div class="header-logo-wrapper col-auto p-0">
+                    <div class="logo-wrapper">
+                        <a href="/home">
+                        </a>
+                    </div>
+                    <div class="toggle-sidebar">
+                        <svg class="sidebar-toggle">
+                            <use href="{% static "svg/icon-sprite.svg" %}#stroke-animation"></use>
+                        </svg>
+                    </div>
+                </div>
+                <div class="nav-right col-xxl-7 col-xl-6 col-auto box-col-6 pull-right right-header p-0 ms-auto">
+                    <ul class="nav-menus">
+                        <li class="profile-nav onhover-dropdown p-0">
+                            <div class="d-flex align-items-center profile-media">
+                                <div class="flex-grow-1">
+                                    <span>{{request.session.info.name}}</span>
+                                    <p class="mb-0">{{request.session.info.role}} <i class="middle fa fa-angle-down"></i></p>
+                                </div>
+                            </div>
+                            <ul class="profile-dropdown onhover-show-div">
+                                <li><a href="/login/"><i data-feather="log-in"></i><span>登入</span></a></li>
+                                <li><a href="/logout/"><i data-feather="log-out"></i><span>退出</span></a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <div class="mode">
+                                <svg><use href="{% static "svg/icon-sprite.svg" %}#fill-dark"></use></svg>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- page-body-wrapper -->
+        <div class="page-body-wrapper horizontal-menu">
+            <!-- sidebar -->
+            <div class="sidebar-wrapper" data-layout="fill-svg">
+                <div>
+                    <div class="logo-wrapper">
+                        <a href="/home">
+                        </a>
+                        <div class="toggle-sidebar">
+                            <svg class="sidebar-toggle">
+                                <use href="{% static "svg/icon-sprite.svg" %}#toggle-icon"></use>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="logo-icon-wrapper">
+                        <a href="/home">
+                        </a>
+                    </div>
+                    <nav class="sidebar-main">
+                        <div class="left-arrow" id="left-arrow"><i data-feather="arrow-left"></i></div>
+                        <div id="sidebar-menu">
+                            <ul class="sidebar-links" id="simple-bar">
+                                <li class="back-btn">
+                                    <div class="mobile-back text-end"><span>返回</span><i class="fa fa-angle-right ps-2"></i></div>
+                                </li>
+                                <li class="sidebar-list">
+                                    <a class="sidebar-link sidebar-title" href="/home">
+                                        <svg class="stroke-icon"><use href="{% static "svg/icon-sprite.svg" %}#stroke-home"></use></svg>
+                                        <svg class="fill-icon"><use href="{% static "svg/icon-sprite.svg" %}#fill-home"></use></svg>
+                                        <span>主页</span>
+                                    </a>
+                                </li>
+                                <!-- 民用爆炸物品 -->
+                                <li class="sidebar-list">
+                                    <a class="sidebar-link sidebar-title" href="#">
+                                        <svg class="stroke-icon"><use href="{% static "svg/icon-sprite.svg" %}#stroke-others"></use></svg>
+                                        <svg class="fill-icon"><use href="{% static "svg/icon-sprite.svg" %}#fill-others"></use></svg>
+                                        <span>民用爆炸物品</span>
+                                    </a>
+                                    <ul class="sidebar-submenu">
+                                        <li><a href="/home/blasting_stats/">统计数据</a></li>
+                                        <li><a href="/home/blaster_list/">爆破员列表</a></li>
+                                        <li><a href="/home/blasting_summary_list/">岩工报药</a></li>
+                                    </ul>
+                                </li>
+                                <!-- 人事信息 -->
+                                <li class="sidebar-list">
+                                    <a class="sidebar-link sidebar-title" href="#">
+                                        <svg class="stroke-icon"><use href="{% static "svg/icon-sprite.svg" %}#stroke-social"></use></svg>
+                                        <svg class="fill-icon"><use href="{% static "svg/icon-sprite.svg" %}#fill-social"></use></svg>
+                                        <span>人事信息</span>
+                                    </a>
+                                    <ul class="sidebar-submenu">
+                                        <li><a href="/staff_list/">员工列表</a></li>
+                                        <li><a href="/upload">文件上传</a></li>
+                                    </ul>
+                                </li>
+                                <!-- 内业资料 -->
+                                <li class="sidebar-list">
+                                    <a class="sidebar-link sidebar-title" href="#">
+                                        <svg class="stroke-icon"><use href="{% static "svg/icon-sprite.svg" %}#stroke-form"></use></svg>
+                                        <svg class="fill-icon"><use href="{% static "svg/icon-sprite.svg" %}#fill-form"></use></svg>
+                                        <span>内业资料</span>
+                                    </a>
+                                    <ul class="sidebar-submenu">
+                                        <li><a href="/home/pdf_list">上级文件</a></li>
+                                        <li><a href="/home/pdf_list">项目部</a></li>
+                                        <li><a href="/upload_pdf">文件上传</a></li>
+                                    </ul>
+                                </li>
+                                <!-- 矿山图纸 -->
+                                <li class="sidebar-list">
+                                    <a class="sidebar-link sidebar-title" href="#">
+                                        <svg class="stroke-icon"><use href="{% static "svg/icon-sprite.svg" %}#stroke-bookmark"></use></svg>
+                                        <svg class="fill-icon"><use href="{% static "svg/icon-sprite.svg" %}#fill-bookmark"></use></svg>
+                                        <span>矿山图纸</span>
+                                    </a>
+                                    <ul class="sidebar-submenu">
+                                        <li><a href="/home/tu_list">项目部</a></li>
+                                    </ul>
+                                </li>
+                                <!-- 企业培训 -->
+                                <li class="sidebar-list">
+                                    <a class="sidebar-link sidebar-title" href="#">
+                                        <svg class="stroke-icon"><use href="{% static "svg/icon-sprite.svg" %}#stroke-sample-page"></use></svg>
+                                        <svg class="fill-icon"><use href="{% static "svg/icon-sprite.svg" %}#fill-form"></use></svg>
+                                        <span>企业培训</span>
+                                    </a>
+                                    <ul class="sidebar-submenu">
+                                        <li><a href="/home/ti">爆破三大员习题</a></li>
+                                        <li><a href="/home/jskjgti">非煤矿山井工习题</a></li>
+                                        <li><a href="/home/wxpzxti">危险品装卸习题</a></li>
+                                        <li><a href="/home/ti_grades">答题情况</a></li>
+                                    </ul>
+                                </li>
+                                <!-- 办公软件 -->
+                                <li class="sidebar-list">
+                                    <a class="sidebar-link sidebar-title" href="#">
+                                        <svg class="stroke-icon"><use href="{% static "svg/icon-sprite.svg" %}#stroke-ui-kits"></use></svg>
+                                        <svg class="fill-icon"><use href="{% static "svg/icon-sprite.svg" %}#fill-Buy"></use></svg>
+                                        <span>办公软件</span>
+                                    </a>
+                                    <ul class="sidebar-submenu">
+                                        <li><a href="/home/photo_list">照片排版</a></li>
+                                        <li><a href="/home/idcard_list">身份证识别</a></li>
+                                        <li><a href="/home/contractlabor_list">合同批量处理</a></li>
+                                    </ul>
+                                </li>
+                                <!-- 爆破业务 -->
+                                <li class="sidebar-list">
+                                    <a class="sidebar-link sidebar-title" href="#">
+                                        <svg class="stroke-icon"><use href="{% static "svg/icon-sprite.svg" %}#stroke-home"></use></svg>
+                                        <svg class="fill-icon"><use href="{% static "svg/icon-sprite.svg" %}#fill-home"></use></svg>
+                                        <span>爆破业务</span>
+                                    </a>
+                                    <ul class="sidebar-submenu">
+                                        <li><a href="http://218.60.149.148:8888/mbxtwlfwpt/" target="_blank">辽宁民爆平台</a></li>
+                                        <li><a href="https://www.bpzykh.cn" target="_blank">爆破培训系统</a></li>
+                                        <li><a href="/home/candidateprofile_list/">面试列表</a></li>
+                                        <li><a href="/home/explosivestaff_list/">三大员考试资料</a></li>
+                                        <li><a href="/home/weighingrecord_list/">矿石运输</a></li>
+                                        <li><a href="/home/blastingcertificate_list/">爆破人员证书</a></li>
+                                        <li><a href="/home/blasting_site_photo_list/">爆破现场记录</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="right-arrow" id="right-arrow"><i data-feather="arrow-right"></i></div>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- page-body -->
+            <div class="page-body">
+                {% block content%}
+
+                <div class="container-fluid">
+                    <div class="row starter-main">
+                        <div class="col-sm-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h2>辽宁捷祥信息管理系统</h2>
+                                    <!-- VERSION_HISTORY_START -->
+                                    <div class="text-center mt-3">
+                                        <p class="lead" style="font-size:1.3rem;">
+                                            <span class="badge bg-primary fs-6 me-2">v1.5</span>
+                                            <span class="text-muted">2026-05-19</span>
+                                        </p>
+                                        <p class="text-muted" style="font-size:1.0rem;">blasting_site_photo_add: auto-recognize signatures via PyTorch</p>
+                                    </div>
+                                    <div class="text-center mt-3">
+                                        <p class="lead" style="font-size:1.3rem;">
+                                            <span class="badge bg-primary fs-6 me-2">v1.3</span>
+                                            <span class="text-muted">2026-05-18</span>
+                                        </p>
+                                        <p class="text-muted" style="font-size:1.0rem;">refactor: remove location input from blasting_site_photo_add template</p>
+                                    </div>
+                                    <div class="text-center mt-3">
+                                        <p class="lead" style="font-size:1.3rem;">
+                                            <span class="badge bg-primary fs-6 me-2">v1.2</span>
+                                            <span class="text-muted">2026-05-14</span>
+                                        </p>
+                                        <p class="text-muted" style="font-size:1.0rem;">首页版本历史</p>
+                                    </div>
+                                    <div class="text-center mt-3">
+                                        <p class="lead" style="font-size:1.3rem;">
+                                            <span class="badge bg-primary fs-6 me-2">v1.1</span>
+                                            <span class="text-muted">2026-05-14</span>
+                                        </p>
+                                        <p class="text-muted" style="font-size:1.0rem;">blasting_stats 表格内容居中</p>
+                                    </div>
+                                    <div class="text-center mt-3">
+                                        <p class="lead" style="font-size:1.3rem;">
+                                            <span class="badge bg-primary fs-6 me-2">v1.0</span>
+                                            <span class="text-muted">2026-05-14</span>
+                                        </p>
+                                        <p class="text-muted" style="font-size:1.0rem;">feat: 岩工报药统计/列表页多项优化</p>
+                                    </div>
+                                    <!-- VERSION_HISTORY_END -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% endblock %}
+            </div>
+
+            <!-- footer -->
+            <footer class="footer">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-6 p-0 footer-copyright">
+                            <p class="mb-0">辽宁捷祥信息管理系统</p>
+                        </div>
+                        <div class="col-md-6 p-0">
+                            <p class="heart mb-0">
+                                <svg class="footer-icon"><use href="{% static "svg/icon-sprite.svg" %}#heart"></use></svg>
+                                <a href="https://beian.miit.gov.cn/" target="_blank" class="text-decoration-none text-muted" style="color: #6c757d !important;">辽ICP备2025049911号-2</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
     </div>
-    <div class="text-center mt-3">
-        <p class="lead" style="font-size:1.3rem;">
-            <span class="badge bg-primary fs-6 me-2">v1.3</span>
-            <span class="text-muted">2026-05-18</span>
-        </p>
-        <p class="text-muted" style="font-size:1.0rem;">refactor: remove location input from blasting_site_photo_add template</p>
-    </div>
-    <div class="text-center mt-3">
-        <p class="lead" style="font-size:1.3rem;">
-            <span class="badge bg-primary fs-6 me-2">v1.2</span>
-            <span class="text-muted">2026-05-14</span>
-        </p>
-        <p class="text-muted" style="font-size:1.0rem;">首页版本历史</p>
-    </div>
-    <div class="text-center mt-3">
-        <p class="lead" style="font-size:1.3rem;">
-            <span class="badge bg-primary fs-6 me-2">v1.1</span>
-            <span class="text-muted">2026-05-14</span>
-        </p>
-        <p class="text-muted" style="font-size:1.0rem;">blasting_stats 表格内容居中</p>
-    </div>
-    <div class="text-center mt-3">
-        <p class="lead" style="font-size:1.3rem;">
-            <span class="badge bg-primary fs-6 me-2">v1.0</span>
-            <span class="text-muted">2026-05-14</span>
-        </p>
-        <p class="text-muted" style="font-size:1.0rem;">feat: 岩工报药统计/列表页多项优化</p>
-    </div>
-    <!-- VERSION_HISTORY_END -->
 
+    <!-- scripts -->
+    <script src="{% static "js/jquery.min.js" %}"></script>
+    <script src="{% static "js/bootstrap/bootstrap.bundle.min.js" %}"></script>
+    <script src="{% static "js/icons/feather-icon/feather.min.js" %}"></script>
+    <script src="{% static "js/icons/feather-icon/feather-icon.js" %}"></script>
+    <script src="{% static "js/scrollbar/simplebar.js" %}"></script>
+    <script src="{% static "js/scrollbar/custom.js" %}"></script>
+    <script src="{% static "js/config.js" %}"></script>
+    <script src="{% static "js/sidebar-menu.js" %}"></script>
+    <script src="{% static "js/sidebar-pin.js" %}"></script>
+    <script src="{% static "js/script.js" %}"></script>
 
-
-       
-        <!-- 定义一个段落，使用Bootstrap的lead类，并设置为引导文本，显示文本为"Use this document as a way to quickly start any new project. All you get is this text and a mostly barebones HTML document." -->
-      </div>
-      
-      
-      </div>
-      {% endblock %}
-      
-
-
-
-    </main><!-- /.container -->
-
- {% comment %} <footer class="text-center py-3 mt-5">
-        <a href="https://beian.miit.gov.cn/" target="_blank" class="text-decoration-none text-muted">【辽ICP备2025049911号】</a>
-    </footer> {% endcomment %}
-
-    <footer class="fixed-bottom text-center py-2" style="background-color: #f8f9fa;">
-        <a href="https://beian.miit.gov.cn/" target="_blank" class="text-decoration-none text-muted">辽ICP备2025049911号-2</a>
-    </footer>
-
-
-
-    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
-
-<!-- PWA: Service Worker + Push -->
-<script>
-if ('serviceWorker' in navigator) {;
-    navigator.serviceWorker.register('/sw.js')
-        .then(function(reg) {
-            console.log('SW registered:', reg.scope);
-            reg.pushManager.getSubscription().then(function(sub) {;
-                if (!sub && Notification.permission === 'granted') subscribeToPush(reg);;
-            });;
-        }).catch(function(err) { console.error('SW reg failed:', err); });;
-};
-function urlBase64ToUint8Array(b) {;
-    var p = '='.repeat((4 - b.length % 4) % 4);;
-    var s = (b + p).replace(/-/g, '+').replace(/_/g, '/');;
-    return Uint8Array.from(atob(s).split('').map(function(c){return c.charCodeAt(0)}));;
-};
-function subscribeToPush(reg) {;
-    fetch('/api/push/public-key/').then(function(r){return r.json()}).then(function(d){;
-        return reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey: urlBase64ToUint8Array(d.publicKey)});;
-    }).then(function(sub){;
-        fetch('/api/push/subscribe/', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(sub.toJSON())});;
-        console.log('Push subscribed');;
-    }).catch(function(e){console.error('Push sub failed:', e)});;
-};
-window.addEventListener('beforeinstallprompt', function(e){e.preventDefault(); console.log('PWA installable');});
-</script>
-    <!-- 引入本地的Bootstrap JavaScript文件，使用Django的静态文件路径 -->
-
+    <!-- PWA: Service Worker + Push -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then(function(reg) {
+                console.log('SW registered',, reg.scope);
+                reg.pushManager.getSubscription().then(function(sub) {
+                    if (!sub && Notification.permission === 'granted') subscribeToPush(reg);
+                });
+            }).catch(function(err) { console.error('SW reg failed',, err); });
+    }
+    function urlBase64ToUint8Array(b) {
+        var p = '='.repeat((4 - b.length % 4) % 4);
+        var s = (b + p).replace(/-/g, '+').replace(/_/g, '/');
+        return Uint8Array.from(atob(s).split('').map(function(c){return c.charCodeAt(0)}));
+    }
+    function subscribeToPush(reg) {
+        fetch('/api/push/public-key/').then(function(r){return r.json()}).then(function(d){
+            return reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey: urlBase64ToUint8Array(d.publicKey)});
+        }).then(function(sub){
+            fetch('/api/push/subscribe/', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(sub.toJSON())});
+            console.log('Push subscribed');
+        }).catch(function(e){console.error('Push sub failed',, e)});
+    }
+    window.addEventListener('beforeinstallprompt', function(e){e.preventDefault(); console.log('PWA installable');});
+    </script>
+</body>
+</html>
