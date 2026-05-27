@@ -1,0 +1,112 @@
+{% extends 'home.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+.result-summary { text-align: center; padding: 32px 16px; }
+.result-score { font-size: 48px; font-weight: 700; margin: 8px 0; }
+.result-score.good { color: #10B981; }
+.result-score.bad { color: #EF4444; }
+.result-stat-btn {
+  display: inline-block; padding: 8px 20px; margin: 0 8px; border-radius: 8px; font-size: 14px;
+  cursor: pointer; border: none; transition: all .15s;
+}
+.result-stat-btn.green { background: #D1FAE5; color: #065F46; }
+.result-stat-btn.green.active { background: #065F46; color: #fff; }
+.result-stat-btn.red { background: #FEE2E2; color: #991B1B; }
+.result-stat-btn.red.active { background: #991B1B; color: #fff; }
+.answer-card { border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.answer-card .card-body { padding: 14px 18px; }
+.answer-card.correct { border-left: 4px solid #10B981; }
+.answer-card.wrong { border-left: 4px solid #EF4444; }
+.answer-q { font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+.answer-detail { font-size: 13px; }
+.answer-detail .yours { color: #EF4444; }
+.answer-detail .correct-ans { color: #10B981; font-weight: 600; }
+.list-section { display: none; }
+.list-section.active { display: block; }
+.rule-box { background: #f8f9fc; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #666; }
+.rule-box span { display: inline-block; margin-right: 16px; }
+.rule-box .badge-r { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 11px; margin-right: 4px; color: #fff; }
+</style>
+
+<div class="container" style="max-width: 720px;">
+  <div class="card result-summary" style="border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+    <div class="card-body">
+      <h4 style="font-weight: 600; color: #1a1a2e;">{{ title }}</h4>
+      <div class="result-score {% if wrong == 0 %}good{% else %}bad{% endif %}">{{ total }}</div>
+      <div style="font-size: 14px; color: #888; margin-bottom: 16px;">总题数: {{ total }}</div>
+      <div>
+        <button class="result-stat-btn green active" data-target="correct-list" onclick="toggleList(this)">✓ 正确 {{ correct_list|length }}</button>
+        {% if wrong_list %}
+        <button class="result-stat-btn red" data-target="wrong-list" onclick="toggleList(this)">✗ 错题 {{ wrong_list|length }}</button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {# 扣分标准 #}
+  <div class="rule-box">
+    <strong>扣分标准</strong><br>
+    <span><span class="badge-r" style="background:#307EF3;">单选</span>错1题扣1分</span>
+    <span><span class="badge-r" style="background:#8B5CF6;">多选</span>错1题扣2分</span>
+    <span><span class="badge-r" style="background:#10B981;">判断</span>错1题扣1分</span>
+    <span>总扣分: <strong style="color:#EF4444;">{{ wrong }}</strong></span>
+  </div>
+
+  <div id="correct-list" class="list-section active">
+    <h5 style="margin: 20px 0 12px; font-weight: 600; color: #065F46;">✓ 正确</h5>
+    {% if correct_list %}
+    {% for c in correct_list %}
+    <div class="card answer-card correct">
+      <div class="card-body">
+        <div class="answer-q">{{ c.题号 }}. {{ c.题目 }}</div>
+        <div class="answer-detail">
+          <span class="correct-ans">你的答案: {{ c.我的答案 }}</span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div style="text-align:center;padding:32px;color:#aaa;">暂无正确记录</div>
+    {% endif %}
+  </div>
+
+  <div id="wrong-list" class="list-section">
+    <h5 style="margin: 20px 0 12px; font-weight: 600; color: #991B1B;">✗ 错题回顾</h5>
+    {% if wrong_list %}
+    {% for w in wrong_list %}
+    <div class="card answer-card wrong">
+      <div class="card-body">
+        <div class="answer-q">{{ w.题号 }}. {{ w.题目 }}
+          <span style="float:right;font-size:12px;color:#EF4444;">-{{ w.分值 }}分</span>
+        </div>
+        <div class="answer-detail">
+          <span class="yours">你的答案: {{ w.我的答案 }}</span><br>
+          <span class="correct-ans">正确答案: {{ w.正确答案 }}</span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div style="text-align:center;padding:32px;color:#aaa;">全部正确，无错题</div>
+    {% endif %}
+  </div>
+
+  <div style="text-align: center; padding: 24px 0 40px;">
+    <a href="{{ reload_url }}" class="btn btn-primary" style="padding: 8px 32px; border-radius: 8px;">重新出题</a>
+    <a href="{{ continue_url }}" class="btn btn-outline-secondary" style="padding: 8px 32px; border-radius: 8px; margin-left: 8px;">继续答题</a>
+  </div>
+</div>
+
+<script>
+function toggleList(btn) {
+  var target = document.getElementById(btn.dataset.target);
+  if (!target) return;
+  document.querySelectorAll('.list-section').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.result-stat-btn').forEach(function(b) { b.classList.remove('active'); });
+  target.classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+{% endblock %}

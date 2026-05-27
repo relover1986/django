@@ -157,6 +157,8 @@
                                     <ul class="sidebar-submenu">
                                         <li><a href="/staff_list/">员工列表</a></li>
                                         <li><a href="/upload">文件上传</a></li>
+                                        <li><a href="/staff/">人员管理</a></li>
+                                        <li><a href="/cert-type/">证件类型</a></li>
                                     </ul>
                                 </li>
                                 <!-- 内业资料 -->
@@ -192,9 +194,12 @@
                                     </a>
                                     <ul class="sidebar-submenu">
                                         <li><a href="/home/ti">爆破三大员习题</a></li>
+                                        <li><a href="/home/ti_new">新答题模式</a></li>
                                         <li><a href="/home/jskjgti">非煤矿山井工习题</a></li>
+                                        <li><a href="/home/jskjgti_new">新答题模式(井工)</a></li>
                                         <li><a href="/home/wxpzxti">危险品装卸习题</a></li>
-                                        <li><a href="/home/ti_grades">答题情况</a></li>
+                                        <li><a href="/home/wxpzxti_new">新答题模式(危装)</a></li>
+                                        <li><a href="/home/grades_new">答题情况</a></li>
                                     </ul>
                                 </li>
                                 <!-- 办公软件 -->
@@ -227,6 +232,20 @@
                                         <li><a href="/home/blasting_site_photo_list/">爆破现场记录</a></li>
                                     </ul>
                                 </li>
+                                <!-- 人员信息 -->
+                                <li class="sidebar-list">
+                                    <a class="sidebar-link sidebar-title" href="#">
+                                        <svg class="stroke-icon"><use href="{% static "svg/icon-sprite.svg" %}#stroke-social"></use></svg>
+                                        <svg class="fill-icon"><use href="{% static "svg/icon-sprite.svg" %}#fill-social"></use></svg>
+                                        <span>人员信息</span>
+                                    </a>
+                                    <ul class="sidebar-submenu">
+                                        <li><a href="/staff/">人员管理</a></li>
+                                        <li><a href="/cert-type/">证件类型</a></li>
+                                        <li><a href="/staff_cert/">证件列表</a></li>
+                                    </ul>
+                                </li>
+
                             </ul>
                         </div>
                         <div class="right-arrow" id="right-arrow"><i data-feather="arrow-right"></i></div>
@@ -251,6 +270,13 @@
                                             <span class="text-muted">2026-05-19</span>
                                         </p>
                                         <p class="text-muted" style="font-size:1.0rem;">blasting_site_photo_add: auto-recognize signatures via PyTorch</p>
+                                    </div>
+                                    <div class="text-center mt-3">
+                                        <p class="lead" style="font-size:1.3rem;">
+                                            <span class="badge bg-primary fs-6 me-2">v1.6</span>
+                                            <span class="text-muted">2026-05-27</span>
+                                        </p>
+                                        <p class="text-muted" style="font-size:1.0rem;">人员信息管理：4表CRUD + 附件上传</p>
                                     </div>
                                     <div class="text-center mt-3">
                                         <p class="lead" style="font-size:1.3rem;">

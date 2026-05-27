@@ -1,0 +1,50 @@
+{% extends "home.html" %}
+{% block content %}
+<div class="container-fluid pt-4">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">{{ title }}</h3>
+                    <a href="/cert-type/add/" class="btn btn-success btn-sm">
+                        <i class="bi bi-plus-lg me-1"></i>新增证件类型
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover w-100">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center">证件名称</th>
+                                    <th class="text-center">备注</th>
+                                    
+                                    <th class="text-center">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="table-group-divider">
+                                {% for ct in cert_types %}
+                                <tr class="align-middle">
+                                    <td class="text-center fw-bold">{{ ct.name }}</td>
+                                    <td class="text-center">{{ ct.remark|default:'—' }}</td>
+                                    
+                                    <td class="text-center">
+                                        <a href="/cert-type/{{ ct.id }}/edit/" class="btn btn-primary btn-sm">编辑</a>
+                                        <a href="/cert-type/{{ ct.id }}/delete/"
+                                           class="btn btn-danger btn-sm"
+                                           onclick="return confirm('确定删除 {{ ct.name }} 吗？')">删除</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted py-4">暂无证件类型</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

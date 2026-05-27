@@ -1,0 +1,274 @@
+{% extends "home.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card">
+                <div class="card-body">
+                    <!-- 标题行：标题 + 创建按钮 -->
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <h2 class="mb-0">{{ title }}</h2>
+                        <a class="btn btn-primary" href="/staff_add">
+                            <i class="fa fa-plus me-1"></i> 新 建
+                        </a>
+                    </div>
+
+                    <!-- 筛选表单 -->
+                    <div class="card bg-light border-0 mb-3">
+                        <div class="card-body py-2">
+                            <form method="get" class="row g-2 align-items-end">
+                                {% for field in filter.form %}
+                                <div class="col-auto">
+                                        <div class="input-group input-group-sm">
+                                            {{ field }}
+                                            <span class="input-group-text">{{ field.label }}</span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                                <div class="col-auto">
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="fa fa-filter me-1"></i> 筛选
+                                    </button>
+                                    <a href="/staff_list/" class="btn btn-outline-secondary btn-sm ms-1">重置</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- 表格 -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle text-center mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    {% for col in cols %}
+                                        <th class="text-nowrap">{{ col.col_name }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for obj in data %}
+                                <tr>
+                                    <td data-label="ID">{{ obj.id }}</td>
+                                    <td data-label="编号">{{ obj.ident }}</td>
+                                    <td data-label="用户名" class="fw-semibold">{{ obj.username }}</td>
+                                    <td data-label="角色">
+                                        <span class="badge bg-info text-dark">{{ obj.role }}</span>
+                                    </td>
+                                    <td data-label="部门">{{ obj.department }}</td>
+                                    <td data-label="密码">
+                                        <span class="text-muted" style="font-size:0.8rem;">••••••</span>
+                                    </td>
+                                    <!-- 头像图片：hover 放大 + 圆角 -->
+                                    <td data-label="头像">
+                                        <a href="/media/{{ obj.avatar }}" target="_blank">
+                                            <img src="/media/{{ obj.avatar }}"
+                                                 alt="头像"
+                                                 class="staff-avatar-img"
+                                                 style="width:48px; height:64px; object-fit:cover; border-radius:8px; transition: transform 0.2s ease, box-shadow 0.2s ease;">
+                                        </a>
+                                    </td>
+                                    <!-- 操作列 -->
+                                    <td data-label="操作">
+                                        <div class="d-flex justify-content-center gap-1 flex-wrap action-btn-group">
+                                            <a class="btn btn-outline-primary btn-sm" href="/staff_edit?id={{ obj.id }}">
+                                                <i class="fa fa-pencil"></i> <span class="btn-text">编辑</span>
+                                            </a>
+                                            <a class="btn btn-outline-danger btn-sm" href="/staff_delete/?id={{ obj.id }}">
+                                                <i class="fa fa-trash-o"></i> <span class="btn-text">删除</span>
+                                            </a>
+                                        </div>
+                                    </td>
+                                    <!-- 证件图片 -->
+                                    <td data-label="证件">
+                                        <a href="/static/img/{{ obj.身份 }}_{{ obj.username }}.png" target="_blank">
+                                            <img src="/static/img/{{ obj.身份 }}_{{ obj.username }}.png"
+                                                 alt="证件"
+                                                 class="staff-avatar-img"
+                                                 style="width:48px; height:64px; object-fit:cover; border-radius:8px; transition: transform 0.2s ease, box-shadow 0.2s ease;">
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="{{ cols|length }}" class="text-muted py-4 empty-row">
+                                        <i class="fa fa-inbox fa-2x d-block mb-2"></i> 暂无数据
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 分页 -->
+                    {% if is_paginated %}
+                    <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+                        <small class="text-muted">
+                            共 {{ paginator.count }} 条记录，第 {{ page_obj.number }} / {{ paginator.num_pages }} 页
+                        </small>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1">&laquo; 首页</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">上一页</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">&laquo; 首页</span></li>
+                                    <li class="page-item disabled"><span class="page-link">上一页</span></li>
+                                {% endif %}
+
+                                {% for num in paginator.page_range %}
+                                    {% if num == page_obj.number %}
+                                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">下一页</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ paginator.num_pages }}">末页 &raquo;</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">下一页</span></li>
+                                    <li class="page-item disabled"><span class="page-link">末页 &raquo;</span></li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* 图片 hover 放大效果 */
+    .staff-avatar-img:hover {
+        transform: scale(2.2);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        z-index: 10;
+        position: relative;
+    }
+    /* ========== 手机端适配 (< 768px) ========== */
+    @media (max-width: 767.98px) {
+        /* --- 表格 → 卡片 --- */
+        .table-responsive table thead {
+            display: none;
+        }
+        .table-responsive table,
+        .table-responsive table tbody,
+        .table-responsive table tbody tr {
+            display: block;
+        }
+        .table-responsive table tbody tr {
+            margin-bottom: 1rem;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 14px 12px 10px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .table-responsive table tbody tr:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .table-responsive table tbody td {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 8px 4px;
+            border: none;
+            border-bottom: 1px dashed #e9ecef;
+            text-align: left !important;
+            font-size: 0.9rem;
+        }
+        .table-responsive table tbody td:last-child {
+            border-bottom: none;
+        }
+        /* 卡片字段名（竖排：字段名在上，值在下，中间用冒号分隔） */
+        .table-responsive table tbody td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 0.75rem;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        /* 空数据行居中 */
+        .table-responsive table tbody td.empty-row {
+            display: block;
+            text-align: center !important;
+        }
+        .table-responsive table tbody td.empty-row::before {
+            display: none;
+        }
+
+        /* --- 头像 / 证件图片缩小 --- */
+        .staff-avatar-img {
+            width: 32px !important;
+            height: 44px !important;
+        }
+        .staff-avatar-img:hover {
+            transform: scale(1.8) !important;
+        }
+
+        /* --- 筛选表单自适应 --- */
+        .card-body form.row {
+            flex-direction: column;
+        }
+        .card-body form .col-auto {
+            width: 100%;
+        }
+        .card-body form .btn {
+            width: 100%;
+        }
+        .card-body form .btn + .btn,
+        .card-body form .btn + a {
+            margin-top: 6px;
+            margin-left: 0 !important;
+        }
+
+        /* --- 操作按钮竖排（纯图标模式） --- */
+        .action-btn-group {
+            flex-direction: column !important;
+            width: 100%;
+        }
+        .action-btn-group .btn {
+            width: 100%;
+            text-align: center;
+            font-size: 1rem;
+            padding: 6px 0;
+        }
+        .action-btn-group .btn-text {
+            display: none;  /* 手机端只显示图标 */
+        }
+
+        /* --- 分页紧凑 --- */
+        .pagination {
+            font-size: 0.75rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .pagination .page-link {
+            padding: 4px 7px;
+            line-height: 1.3;
+        }
+        /* 分页信息置顶 */
+        .d-flex.justify-content-between.mt-3 {
+            flex-direction: column;
+            align-items: center !important;
+            gap: 8px;
+        }
+</style>
+{% endblock %}

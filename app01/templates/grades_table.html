@@ -1,0 +1,87 @@
+{% extends 'home.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+.grades-header { text-align: center; padding: 24px 16px 12px; }
+.grades-header h4 { font-weight: 600; color: #1a1a2e; }
+.grades-tabs { text-align: center; padding: 0 16px 16px; }
+.grades-tabs .tab-btn {
+  display: inline-block; padding: 8px 20px; margin: 0 4px;
+  border-radius: 8px; font-size: 14px; cursor: pointer;
+  border: 1px solid #e5e7eb; background: #fff; color: #374151;
+  text-decoration: none; transition: all .15s;
+}
+.grades-tabs .tab-btn:hover { background: #f3f4f6; }
+.grades-tabs .tab-btn.active { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+.grades-table { padding: 0 16px 24px; }
+.grades-table table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.grades-table th { background: #f9fafb; padding: 10px 12px; text-align: center; font-weight: 600; color: #374151; border-bottom: 2px solid #e5e7eb; white-space: nowrap; }
+.grades-table td { padding: 10px 12px; text-align: center; border-bottom: 1px solid #f3f4f6; }
+.grades-table tr:hover td { background: #f9fafb; }
+.grades-table .total { font-weight: 700; color: #1a1a2e; }
+.grades-table .remain { color: #ef4444; font-weight: 500; }
+</style>
+
+<div class="container" style="max-width: 1100px;">
+  <div class="card" style="border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+    <div class="grades-header">
+      <h4>答题统计</h4>
+    </div>
+
+    <div class="grades-tabs">
+      <a href="/home/grades_new" class="tab-btn {% if active_type == '' or not active_type %}active{% endif %}">全部</a>
+      <a href="/home/grades_new?type=爆破" class="tab-btn {% if active_type == '爆破' %}active{% endif %}">爆破</a>
+      <a href="/home/grades_new?type=煤矿山井工" class="tab-btn {% if active_type == '煤矿山井工' %}active{% endif %}">井工</a>
+      <a href="/home/grades_new?type=危险品装卸" class="tab-btn {% if active_type == '危险品装卸' %}active{% endif %}">危装</a>
+    </div>
+
+    <div class="grades-table">
+      <table>
+        <thead>
+          <tr>
+            <th>姓名</th>
+            <th>总分</th>
+            {% if active_type == '' or not active_type or active_type == '爆破' %}
+            <th>爆破</th>
+            <th>爆破剩余</th>
+            {% endif %}
+            {% if active_type == '' or not active_type or active_type == '煤矿山井工' %}
+            <th>井工</th>
+            <th>井工剩余</th>
+            {% endif %}
+            {% if active_type == '' or not active_type or active_type == '危险品装卸' %}
+            <th>危装</th>
+            <th>危装剩余</th>
+            {% endif %}
+            <th>最近答题</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+          <tr>
+            <td>{{ r.username }}</td>
+            <td class="total">{{ r.total_score }}</td>
+            {% if active_type == '' or not active_type or active_type == '爆破' %}
+            <td>{{ r.score_爆破 }}</td>
+            <td class="remain">{{ r.remain_爆破 }}</td>
+            {% endif %}
+            {% if active_type == '' or not active_type or active_type == '煤矿山井工' %}
+            <td>{{ r.score_煤矿山井工 }}</td>
+            <td class="remain">{{ r.remain_煤矿山井工 }}</td>
+            {% endif %}
+            {% if active_type == '' or not active_type or active_type == '危险品装卸' %}
+            <td>{{ r.score_危险品装卸 }}</td>
+            <td class="remain">{{ r.remain_危险品装卸 }}</td>
+            {% endif %}
+            <td>{{ r.last_date }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="9" style="text-align:center;padding:32px;color:#aaa;">暂无数据</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

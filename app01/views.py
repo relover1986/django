@@ -3434,3 +3434,169 @@ def blasting_site_train_signatures(request):
     response["Cache-Control"] = "no-cache"
     response["X-Accel-Buffering"] = "no"
     return response
+
+
+# ============================================================
+# 人员管理（新）— Staff / CertType / StaffCert / StaffCertFile
+# ============================================================
+from functools import wraps
+from django.shortcuts import get_object_or_404
+from app01.forms import StaffForm, CertTypeForm, StaffCertForm
+from app01.models import Staff, CertType, StaffCert
+
+
+def login_required(view_func):
+    """兼容项目 session 认证的 login_required 装饰器"""
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.session.get('info'):
+            return redirect('/login/')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+
+@login_required
+def staff_list(request):
+    """人员列表"""
+    data = Staff.objects.all().order_by("-created_at")
+    paginator = Paginator(data, 20)
+    page_number = request.GET.get("page", 1)
+    try:
+        page_obj = paginator.page(page_number)
+    except (PageNotAnInteger, EmptyPage):
+        page_obj = paginator.page(1)
+    return render(request, "staff_list_new.html", {
+        "data": page_obj,
+        "title": "人员管理",
+        "is_paginated": True,
+        "paginator": paginator,
+        "page_obj": page_obj,
+    })
+
+
+@login_required
+def staff_add(request):
+    """新增人员"""
+    if request.method == "GET":
+        form = StaffForm()
+        return render(request, "staff_form.html", {"form": form, "title": "新增人员"})
+    form = StaffForm(request.POST)
+    if form.is_valid():
+        form.save()
+        return redirect("/staff/")
+    return render(request, "staff_form.html", {"form": form, "title": "新增人员"})
+
+
+@login_required
+def staff_edit(request, pk):
+    """编辑人员"""
+    obj = get_object_or_404(Staff, pk=pk)
+    if request.method == "GET":
+        form = StaffForm(instance=obj)
+        return render(request, "staff_form.html", {"form": form, "title": "编辑人员", "obj": obj})
+    form = StaffForm(request.POST, instance=obj)
+    if form.is_valid():
+        form.save()
+        return redirect("/staff/")
+    return render(request, "staff_form.html", {"form": form, "title": "编辑人员", "obj": obj})
+
+
+@login_required
+def staff_detail(request, pk):
+    """人员详情（含证件列表）"""
+    obj = get_object_or_404(Staff, pk=pk)
+    certs = obj.staffcert_set.all().order_by("-created_at")
+    # 为每个证件预取附件
+    for cert in certs:
+        cert.files = cert.staffcertfile_set.all()
+    return render(request, "staff_detail.html", {
+        "obj": obj,
+        "certs": certs,
+        "title": f"{obj.name} - 详情",
+    })
+
+
+@login_required
+def staff_delete(request, pk):
+    """删除人员"""
+    obj = get_object_or_404(Staff, pk=pk)
+    obj.delete()
+    return redirect("/staff/")
+
+
+@login_required
+def staff_cert_add(request, pk):
+    """为人员添加证件"""
+    staff_obj = get_object_or_404(Staff, pk=pk)
+    if request.method == "GET":
+        form = StaffCertForm(initial={"staff": staff_obj.pk})
+        return render(request, "staff_cert_form.html", {
+            "form": form, "staff_obj": staff_obj,
+            "title": f"{staff_obj.name} - 添加证件",
+        })
+    form = StaffCertForm(request.POST)
+    if form.is_valid():
+        cert = form.save(commit=False)
+        cert.staff = staff_obj
+        cert.save()
+        return redirect("/staff/{}/".format(pk))
+    return render(request, "staff_cert_form.html", {
+        "form": form, "staff_obj": staff_obj,
+        "title": f"{staff_obj.name} - 添加证件",
+    })
+
+
+@login_required
+def staff_cert_delete(request, pk):
+    """删除证件"""
+    cert = get_object_or_404(StaffCert, pk=pk)
+    staff_pk = cert.staff.pk
+    cert.delete()
+    return redirect("/staff/{}/".format(staff_pk))
+
+
+# ---------- 证件类型管理 ----------
+
+@login_required
+def cert_type_list(request):
+    """证件类型列表"""
+    data = CertType.objects.all().order_by("sort", "id")
+    return render(request, "cert_type_list.html", {
+        "data": data,
+        "title": "证件类型管理",
+    })
+
+
+@login_required
+def cert_type_add(request):
+    """新增证件类型"""
+    if request.method == "GET":
+        form = CertTypeForm()
+        return render(request, "cert_type_form.html", {"form": form, "title": "新增证件类型"})
+    form = CertTypeForm(request.POST)
+    if form.is_valid():
+        form.save()
+        return redirect("/cert-type/")
+    return render(request, "cert_type_form.html", {"form": form, "title": "新增证件类型"})
+
+
+@login_required
+def cert_type_edit(request, pk):
+    """编辑证件类型"""
+    obj = get_object_or_404(CertType, pk=pk)
+    if request.method == "GET":
+        form = CertTypeForm(instance=obj)
+        return render(request, "cert_type_form.html", {"form": form, "title": "编辑证件类型", "obj": obj})
+    form = CertTypeForm(request.POST, instance=obj)
+    if form.is_valid():
+        form.save()
+        return redirect("/cert-type/")
+    return render(request, "cert_type_form.html", {"form": form, "title": "编辑证件类型", "obj": obj})
+
+
+@login_required
+def cert_type_delete(request, pk):
+    """删除证件类型"""
+    obj = get_object_or_404(CertType, pk=pk)
+    obj.delete()
+    return redirect("/cert-type/")
