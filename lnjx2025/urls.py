@@ -39,6 +39,7 @@ from app01.views import StaffListView
 from app01.views_staff import (
     staff_list, staff_add, staff_edit, staff_detail, staff_delete,
     staff_cert_add, staff_cert_delete, staff_cert_file_add, staff_cert_list,
+    staff_cert_export_zip,
     cert_type_list, cert_type_add, cert_type_edit, cert_type_delete,
 )
 
@@ -79,6 +80,7 @@ urlpatterns = [
     path("cert-type/<int:pk>/edit/", cert_type_edit, name="cert_type_edit"),
     path("cert-type/<int:pk>/delete/", cert_type_delete, name="cert_type_delete"),
     path("staff_cert/", staff_cert_list, name="staff_cert_list"),
+    path("staff_cert/export/zip/", staff_cert_export_zip, name="staff_cert_export_zip"),
 
 
     path('upload/', views.upload_model),
@@ -189,23 +191,20 @@ urlpatterns = [
     path("logout/", login.logout),
     path("home/", views.home),
 
-    path('home/ti', lambda request: redirect('/home/ti_new')),
-    path('home/ti_new_reload', quiz.ti_new_reload),
-    path('home/ti_new', quiz.ti_new),
+    path('home/baopo_ti_new_reload', quiz.ti_new_reload),
+    path('home/baopo_ti_new', quiz.ti_new),
     path('home/ti_grades', change.grades),
     path('home/grades_new', grades.grades_new),
     path('home/ti_reload', change.questions_reload),
 
 
 
-    path('home/jskjgti', lambda request: redirect('/home/jskjgti_new')),
     path('home/jskjgti_grades', change.grades),
     path('home/jskjgti_reload', change.jskjgquestions_reload),
     path('home/jskjgti_new_reload', quiz.jskjgti_new_reload),
     path('home/jskjgti_new', quiz.jskjgti_new),
 
 
-    path('home/wxpzxti', lambda request: redirect('/home/wxpzxti_new')),
     path('home/wxpzxti_grades', change.grades),
     path('home/wxpzxti_reload', change.wxpzxquestions_reload),
     path('home/wxpzxti_new_reload', quiz.wxpzxti_new_reload),

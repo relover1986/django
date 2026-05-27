@@ -8,6 +8,21 @@ import sqlite3 as sl
 from pathlib import Path
 
 BASE = Path(__file__).parent.parent
+def _get_opt_text(options_str: str, answer: str) -> str:
+    """提取选项文字，支持 A.xxx / A xxx / Axxx 格式，支持多选 ABC"""
+    if not answer:
+        return ""
+    results = []
+    for ch in answer:
+        for opt in options_str.split():
+            clean = opt.strip()
+            if not clean:
+                continue
+            if clean[0] == ch:
+                txt = clean[1:].lstrip(". \t")
+                results.append(txt)
+                break
+    return " | ".join(results)
 
 def ti_new(request):
     title = "辽宁捷祥民用爆破三大员培训题库"
@@ -51,7 +66,7 @@ def ti_new(request):
     # POST: scoring
     quiz_data = request.session.get("quiz_data", [])
     if not quiz_data:
-        return redirect("/home/ti_new")
+        return redirect("/home/baopo_ti_new")
 
     df = pd.DataFrame(quiz_data)
     # Rebuild 题号 mapping like change.py does
@@ -64,7 +79,9 @@ def ti_new(request):
         answer = request.POST.getlist(tihao)
         answer = "".join(answer)
         rows.append({"题号": tihao, "我的答案": answer, "tihao": q["tihao"],
-                      "题目": q["题目"], "选项": q["选项"], "正确答案": q["正确答案"], "题型": q["题型"]})
+                      "题目": q["题目"], "选项": q["选项"], "正确答案": q["正确答案"], "题型": q["题型"],
+                      "我的答案文字": _get_opt_text(q["选项"], answer),
+                      "正确答案文字": _get_opt_text(q["选项"], q["正确答案"])})
 
     result_df = pd.DataFrame(rows)
     result_df["我的答案"] = result_df["我的答案"].str.replace(r"[^a-zA-Z0-9\u4e00-\u9fa5]", "", regex=True)
@@ -97,14 +114,14 @@ def ti_new(request):
         "wrong": total_deduct,
         "wrong_list": wrong_list,
         "correct_list": correct_list,
-        "reload_url": "/home/ti_new_reload",
-        "continue_url": "/home/ti_new",
+        "reload_url": "/home/baopo_ti_new_reload",
+        "continue_url": "/home/baopo_ti_new",
     })
 
 def ti_new_reload(request):
     if "quiz_data" in request.session:
         del request.session["quiz_data"]
-    return redirect("/home/ti_new")
+    return redirect("/home/baopo_ti_new")
 
 
 def jskjgti_new(request):

@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
 from django.contrib import messages
+from django.http import HttpResponse
 from functools import wraps
 from app01 import models
 from app01.forms import StaffForm, CertTypeForm, StaffCertForm, StaffCertFileForm
@@ -200,8 +201,54 @@ def staff_cert_file_add(request, pk):
 @login_required
 def staff_cert_list(request):
     certs = models.StaffCert.objects.select_related("staff", "cert_type").order_by("-created_at")
+
+    cert_type_id = request.GET.get("cert_type")
+    if cert_type_id:
+        certs = certs.filter(cert_type_id=cert_type_id)
+
+    department = request.GET.get("department")
+    if department:
+        certs = certs.filter(staff__department=department)
+
+    cert_types = models.CertType.objects.all().order_by("sort", "id")
+    departments = models.Staff.objects.values_list("department", flat=True).distinct().order_by("department")
+
     paginator = Paginator(certs, 20)
     page = paginator.get_page(request.GET.get("page"))
+
     return render(request, "staff_cert_list.html", {
-        "page_obj": page, "title": "证件列表"
+        "page_obj": page, "title": "证件列表",
+        "cert_types": cert_types,
+        "selected_type": int(cert_type_id) if cert_type_id else None,
+        "departments": departments,
+        "selected_department": department or "",
     })
+
+
+import zipfile, io
+
+@login_required
+def staff_cert_export_zip(request):
+    import os
+    from django.conf import settings
+    from app01.models import StaffCert, StaffCertFile
+
+    certs = StaffCert.objects.select_related("staff", "cert_type").all()
+    cert_type_id = request.GET.get("cert_type")
+    if cert_type_id:
+        certs = certs.filter(cert_type_id=cert_type_id)
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for cert in certs:
+            files = StaffCertFile.objects.filter(cert=cert)
+            for f in files:
+                path = os.path.join(settings.MEDIA_ROOT, str(f.file))
+                if os.path.exists(path):
+                    arcname = f"{cert.staff.name}_{cert.cert_type.name}_{f.file_type}.jpg"
+                    zf.write(path, arcname)
+
+    buf.seek(0)
+    resp = HttpResponse(buf.getvalue(), content_type="application/zip")
+    resp["Content-Disposition"] = "attachment; filename=cert_files.zip"
+    return resp
