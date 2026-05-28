@@ -1,94 +1,72 @@
 {% extends "home.html" %} {% block content %}
 
-<br />
-<br />
-<br />
-<br />
+<div class="container-fluid" style="margin-top: 80px;">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0">
+            <i data-feather="image" style="width: 20px; height: 20px; margin-right: 8px;"></i>
+            {{ title }}
+          </h5>
+          <div class="d-flex gap-2">
+            <a class="btn btn-success btn-sm" href="/home/{{ title }}_add">
+              <i data-feather="plus" style="width: 14px; height: 14px;"></i> 创建
+            </a>
+            <a href="{{ export_url }}" class="btn btn-primary btn-sm">
+              <i data-feather="download" style="width: 14px; height: 14px;"></i> 导出全部
+            </a>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  {% for col in cols %}
+                  <th class="text-center text-nowrap">{{ col.verbose_name }}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for obj in data %}
+                <tr>
+                  {% for key, cell in obj.items %}
+                  {% if key == 'uploaded_at' %}
+                  <td class="text-center text-nowrap">{{ cell|date:"Y-m-d H:i:s" }}</td>
 
-<div class="container">
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <h3 class="panel-title">
-        <span class="glyphicon glyphicon-th-list"></span>
-        {{ title }}
-      </h3>
-    </div>
-  </div>
+                  {% elif 'background' in key or 'white_bg_single' in key %}
+                  <td class="text-center">
+                    {% if cell %}
+                    <a href="/media/{{cell}}" target="_blank">
+                      <img src="/media/{{cell}}" class="img-thumbnail" style="max-width: 80px; max-height: 110px;">
+                    </a>
+                    {% endif %}
+                  </td>
 
+                  {% elif key != 'id' %}
+                  <td class="text-center">{{cell}}</td>
+                  {% endif %}
+                  {% endfor %}
 
-
-  
-  <div class="d-flex gap-2 mb-3">  <!-- 新增按钮容器 -->
-    <a class="btn btn-success btn-sm" href="/home/{{ title }}_add">
-      <i class="bi bi-plus-lg me-2"></i>创建
-    </a>
-    <a href="{{ export_url }}" class="btn btn-primary btn-sm">
-      <i class="bi bi-file-zip me-2"></i>导出全部
-    </a>
-  </div>
-
-
-
-
-  <div class="container">
-    <div class="panel-body">
-      <div class="table-responsive">
-        <table class="table table-hover table-layout-fixed">  <!-- 添加Bootstrap 5的固定布局类 -->
-          <thead>
-            {% for col in cols %}
-            <th class="text-center" style="white-space: nowrap;">{{ col.verbose_name }}</th>
-            {% endfor %}
-        </thead>
-        <tbody>
-          {% for obj in data %}
-          <tr>
-            {% for key, cell in obj.items %}
-            {% if key == 'uploaded_at' %}
-                <td class="text-center">{{ cell|date:"Y-m-d H:i:s" }}</td>
-
-                
-                {% elif 'photo' in key %}
-                <td class="text-center">
-                  <a href="/media/{{cell}}" target="_blank">
-                    <img src="/media/{{cell}}" class="img-thumbnail" style="max-width: 100px;">
-                  </a>
-                </td>
-
-      
-
-                {% elif 'background' in key %}
-                <td class="text-center">
-                  <a href="/media/{{cell}}" target="_blank">
-                    <img src="/media/{{cell}}" class="img-thumbnail" style="max-width: 100px;">
-                  </a>
-                </td>
-
-
-
-
-
-
-
-
-
-
-            {% else %}
-            <td class="text-center">{{cell}}</td>
-            {% endif %} 
-            {% endfor %}
-
-            <!-- 删除按钮保持原样 -->
-            <td class="text-center">
-              <a class="btn btn-danger btn-xs" 
-                 href="/home/{{ title }}_delete?id={{ obj.id }}">删除</a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-        </table>
+                  <td class="text-center">
+                    <a class="btn btn-outline-danger btn-sm"
+                       href="/home/{{ title }}_delete?id={{ obj.id }}"
+                       onclick="return confirm('确定删除？')">
+                      <i data-feather="trash-2" style="width: 14px; height: 14px;"></i> 删除
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>
-
-  {% endblock %}
 </div>
+
+{% csrf_token %}
+
+{% endblock %}

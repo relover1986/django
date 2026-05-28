@@ -34,7 +34,7 @@ def ti_new(request):
         data = QuestionType.objects.values("tihao", "question_type", "question", "options", "correct_answer")
         df = pd.DataFrame(data)
 
-        answered = UserAnswer.objects.values("tihao").filter(ident=ident)
+        answered = UserAnswer.objects.values("tihao").filter(ident=ident, ti_type="爆破")
         if answered.exists():
             df_answered = pd.DataFrame(answered)
             df = df.merge(df_answered, on="tihao", how="left", indicator=True)
@@ -95,8 +95,11 @@ def ti_new(request):
         records["ti_type"] = "爆破"
         records["date"] = date
         records["ident"] = ident
-        with sl.connect(BASE / "db.sqlite3") as con:
-            records.to_sql("app01_useranswer", con, index=False, if_exists="append")
+        objs = []
+        for _, r in records.iterrows():
+            objs.append(UserAnswer(ti_type=r["ti_type"], tihao=r["tihao"],
+                                   date=r["date"], ident=r["ident"]))
+        UserAnswer.objects.bulk_create(objs)
 
     # Wrong answers for display
     wrong = result_df[result_df["得分"] == "错误"].copy()
@@ -193,8 +196,11 @@ def jskjgti_new(request):
         records["ti_type"] = "非煤矿山井工"
         records["date"] = date
         records["ident"] = ident
-        with sl.connect(BASE / "db.sqlite3") as con:
-            records.to_sql("app01_useranswer", con, index=False, if_exists="append")
+        objs = []
+        for _, r in records.iterrows():
+            objs.append(UserAnswer(ti_type=r["ti_type"], tihao=r["tihao"],
+                                   date=r["date"], ident=r["ident"]))
+        UserAnswer.objects.bulk_create(objs)
 
     # Wrong answers for display
     wrong = result_df[result_df["得分"] == "错误"].copy()
@@ -292,8 +298,11 @@ def wxpzxti_new(request):
         records["ti_type"] = "危险品装卸"
         records["date"] = date
         records["ident"] = ident
-        with sl.connect(BASE / "db.sqlite3") as con:
-            records.to_sql("app01_useranswer", con, index=False, if_exists="append")
+        objs = []
+        for _, r in records.iterrows():
+            objs.append(UserAnswer(ti_type=r["ti_type"], tihao=r["tihao"],
+                                   date=r["date"], ident=r["ident"]))
+        UserAnswer.objects.bulk_create(objs)
 
     # Wrong answers for display
     wrong = result_df[result_df["得分"] == "错误"].copy()

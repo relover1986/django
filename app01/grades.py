@@ -28,9 +28,9 @@ def grades_new(request):
     stats = (
         qs.values('ident')
         .annotate(
-            score_爆破=Count('id', filter=Q(ti_type='爆破')),
-            score_煤矿山井工=Count('id', filter=Q(ti_type='煤矿山井工')),
-            score_危险品装卸=Count('id', filter=Q(ti_type='危险品装卸')),
+            score_爆破=Count('tihao', distinct=True, filter=Q(ti_type='爆破')),
+            score_煤矿山井工=Count('tihao', distinct=True, filter=Q(ti_type='煤矿山井工')),
+            score_危险品装卸=Count('tihao', distinct=True, filter=Q(ti_type='危险品装卸')),
             last_date=Max('date'),
         )
     )
@@ -51,13 +51,19 @@ def grades_new(request):
         score_wx = s['score_危险品装卸']
         total = score_bp + score_mk + score_wx
 
+        last_date = s['last_date']
+        if last_date:
+            last_date_str = last_date.strftime('%Y年%m月%d日')
+        else:
+            last_date_str = ''
+
         rows.append({
             'username': username,
             'total_score': total,
             'score_爆破': score_bp,
             'score_煤矿山井工': score_mk,
             'score_危险品装卸': score_wx,
-            'last_date': s['last_date'],
+            'last_date': last_date_str,
             'remain_爆破': TOTAL['爆破'] - score_bp,
             'remain_煤矿山井工': TOTAL['煤矿山井工'] - score_mk,
             'remain_危险品装卸': TOTAL['危险品装卸'] - score_wx,

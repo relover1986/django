@@ -163,6 +163,14 @@ class UploadedZhaopian(models.Model):
         default=''
     )
 
+    white_bg_single = models.ImageField(
+        upload_to='white_bg_single/',
+        verbose_name='白底一寸照',
+        blank=True,
+        null=True,
+        default=''
+    )
+
     uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name='上传时间')  # 添加verbose_name
 
 class IDCard(models.Model):

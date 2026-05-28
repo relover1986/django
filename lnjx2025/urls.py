@@ -118,6 +118,7 @@ urlpatterns = [
     path('home/blasting_site_low_conf_submit/', views.blasting_site_low_conf_submit),
     path('home/blasting_site_train_signatures/', views.blasting_site_train_signatures),
     path('home/photo_list/', views.photo_list),
+    path('home/generate_white_bg/', views.generate_white_bg),
     path('home/photo_export_zip/', views.photo_export_zip, name='photo_export_zip'),
 
 

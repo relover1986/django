@@ -136,7 +136,7 @@ def contractlabor_delete(request):
 def contractlabor_list(request):
     title = 'contractlabor'
     if request.method == "GET":
-        data = models.ContractLabor.objects.values().order_by('-id')[:100]
+        data = models.ContractLabor.objects.values("name", "id_number", "contract_file", "created_at").order_by('-id')[:100]
         model_fields = models.ContractLabor._meta.fields
         cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location')]
 
@@ -210,7 +210,7 @@ def api_photo_add(request):
             return Response({'error': 'No files uploaded'}, status=400)
         
         # 处理上传的照片
-        filename = model_name if model_name else os.path.splitext(file.name)[0]
+        filename = model_name[:10] if model_name else os.path.splitext(file.name)[0][:10]
             
         with Image.open(file) as img:
                 if img.mode in ('RGBA', 'LA'):
@@ -373,11 +373,11 @@ class PhotoUploadAPIView(APIView):
 
                     # 获取文件名
                     if len(files) == 1 and 'model_name' in request.data:
-                        filename = request.data['model_name']
+                        filename = request.data['model_name'][:10]
                         if len(filename) == 0:
-                            filename = os.path.splitext(file.name)[0]
+                            filename = os.path.splitext(file.name)[0][:10]
                     else:
-                        filename = os.path.splitext(file.name)[0]
+                        filename = os.path.splitext(file.name)[0][:10]
 
                     # 处理图片
                     img_io = io.BytesIO()
@@ -491,12 +491,12 @@ def photo_add(request):
 
                 if len(files) == 1:
 
-                    filename = request.POST['model_name']
+                    filename = request.POST['model_name'][:10]
                     if len(filename) == 0:
-                        filename = os.path.splitext(file.name)[0]
+                        filename = os.path.splitext(file.name)[0][:10]
 
                 else:
-                    filename = os.path.splitext(file.name)[0]
+                    filename = os.path.splitext(file.name)[0][:10]
 
                 img_io = io.BytesIO()
 
@@ -530,12 +530,20 @@ def photo_add(request):
                     }
 
                     # 生成并排版所有背景图
+                    white_bg_single_file = None
                     for name, color in background_colors.items():
                         # 生成背景
                         background = Image.new('RGB', output_size, color)
                         x = (output_size[0] - foreground.width) // 2
                         y = (output_size[1] - foreground.height) // 2
                         background.paste(foreground, (x, y), foreground)
+
+                        # 白底排版前保存单张一寸照
+                        if name == '白底':
+                            single_io = io.BytesIO()
+                            background.save(single_io, format='JPEG')
+                            white_bg_single_file = ContentFile(
+                                single_io.getvalue(), name=f"{filename}_white_single.jpg")
 
                         # 对背景图进行排版
                         rotated_bg_io = io.BytesIO()
@@ -566,7 +574,8 @@ def photo_add(request):
                             rotated_bytes, name=f"{filename}_rotated.jpg"),
                         blue_background=bg_files['blue'],
                         red_background=bg_files['red'],
-                        white_background=bg_files['white']
+                        white_background=bg_files['white'],
+                        white_bg_single=white_bg_single_file
                     )
 
         return redirect("/home/photo_list")
@@ -589,9 +598,9 @@ def photo_list(request):
     title = 'photo'
     if request.method == "GET":
         model_fields = models.UploadedZhaopian._meta.fields
-        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location')]
+        cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location', 'photo', 'rotated_photo')]
         cols.append({'verbose_name': '操作'})
-        data = models.UploadedZhaopian.objects.values().order_by(
+        data = models.UploadedZhaopian.objects.values("id", "name", "blue_background", "red_background", "white_background", "white_bg_single", "uploaded_at").order_by(
             '-uploaded_at')[:100]
         return render(request, 'photo_list.html', {
             "data": data,
@@ -599,6 +608,52 @@ def photo_list(request):
             "title": title,
             "export_url": "/home/photo_export_zip"  # 新增导出URL参数
         })
+
+
+@csrf_exempt
+@api_view(["POST"])
+def generate_white_bg(request):
+    """生成白底一寸照（不排版），存入 white_bg_single 字段"""
+    try:
+        photo_id = request.data.get("photo_id")
+        photo = UploadedZhaopian.objects.get(id=photo_id)
+
+        img = Image.open(photo.photo)
+        img = resize_photo(cut_photo(img, 1), 1)
+
+        img_io = io.BytesIO()
+        img.save(img_io, format='JPEG')
+        img_bytes = img_io.getvalue()
+
+        result = client.bodySeg(img_bytes)
+
+        if 'foreground' not in result:
+            return JsonResponse({"code": 500, "error": "bodySeg failed: no foreground"})
+
+        foreground = Image.open(io.BytesIO(base64.b64decode(result['foreground'])))
+        output_size = (295, 413)
+        foreground.thumbnail(output_size)
+
+        background = Image.new("RGB", output_size, (255, 255, 255))
+        x = (output_size[0] - foreground.width) // 2
+        y = (output_size[1] - foreground.height) // 2
+        background.paste(foreground, (x, y), foreground)
+
+        # 不排版，直接保存单张白底一寸照
+        single_io = io.BytesIO()
+        background.save(single_io, format='JPEG')
+        single_bytes = single_io.getvalue()
+
+        photo.white_bg_single.save(
+            f"{photo.id}_white_single.jpg",
+            ContentFile(single_bytes)
+        )
+        photo.save()
+
+        return JsonResponse({"code": 200, "url": photo.white_bg_single.url})
+
+    except Exception as e:
+        return JsonResponse({"code": 500, "error": str(e)})
 
 
 @资料员
@@ -714,7 +769,7 @@ def blastingcertificate_list(request):
         model_fields = models.BlastingCertificate._meta.fields
         cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location')]
         cols.append({'verbose_name': '操作'})
-        data = models.BlastingCertificate.objects.values().order_by(
+        data = models.BlastingCertificate.objects.values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at").order_by(
             '-created_at')[:100]
         return render(request, 'blastingcertificate_list.html', {
             "data": data,
@@ -1168,7 +1223,7 @@ def idcard_list(request):
         model_fields = models.IDCard._meta.fields
         cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location')]
         cols.append({'verbose_name': '操作'})
-        data = models.IDCard.objects.values().order_by('-created_at')[:100]
+        data = models.IDCard.objects.values("name", "id_number", "front_image", "back_image", "combined_image", "created_at").order_by('-created_at')[:100]
         return render(request, 'idcard_list.html', {
             "data": data,
             "cols": cols,
@@ -1256,7 +1311,7 @@ def tu_list(request):
     title = 'tu'
     if request.method == "GET":
 
-        data = models.UploadedTu.objects.values()[:100]
+        data = models.UploadedTu.objects.values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at")[:100]
 
         # print(data)
 
@@ -1303,7 +1358,7 @@ def pdf_list(request):
     title = 'pdf'
     if request.method == "GET":
 
-        data = models.UploadedPDF.objects.values()[:100]
+        data = models.UploadedPDF.objects.values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at")[:100]
 
         # print(data)
 
@@ -1332,7 +1387,7 @@ def inventory_list(request):
         model_fields = models.ExplosiveInventoryItem._meta.fields
         cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location')]
         cols.append({'verbose_name': '操作'})
-        data = models.ExplosiveInventoryItem.objects.values().order_by(
+        data = models.ExplosiveInventoryItem.objects.values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at").order_by(
             '-date')[:100]
 
         return render(request, 'inventory_list.html', {"data": data, "cols": cols, "数据库": database, 'title': title, "export_xlsx_url": "/home/inventory_export_xlsx"  # 新增XLSX导出参数
@@ -1557,7 +1612,7 @@ def categorycontent_list(request):
     title = '民爆物品'
     if request.method == "GET":
 
-        data = models.CategoryContent.objects.values()[:100]
+        data = models.CategoryContent.objects.values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at")[:100]
 
         lst = dframe(data)
         cols = []
@@ -1785,7 +1840,7 @@ def candidateprofile_delete(request):
 def candidateprofile_list(request):
     title = 'candidateprofile'
     if request.method == "GET":
-        data = models.Candidate.objects.values().order_by('-created_at')[:100]
+        data = models.Candidate.objects.values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at").order_by('-created_at')[:100]
         # 获取模型字段的verbose_name
         model_fields = models.Candidate._meta.fields
         cols = [{'verbose_name': 'id'}] + [{'verbose_name': field.verbose_name}
@@ -1920,7 +1975,7 @@ def explosivestaff_add(request):
                         # 处理身份证信息
 
                         # 添加空值检查
-                            if not all(required_files.values()):
+                            if not all(required_files.values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at")):
                                 missing = [
                                     k for k, v in required_files.items() if not v]
                                 raise ValueError(f"图片加载失败: {missing}")
@@ -2097,7 +2152,7 @@ def explosivestaff_list(request):
         model_fields = models.ExplosiveStaff._meta.fields
         cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location')]
         cols.append({'verbose_name': '操作'})
-        data = models.ExplosiveStaff.objects.values().order_by(
+        data = models.ExplosiveStaff.objects.values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at").order_by(
             '-created_at')[:100]
         return render(request, 'explosivestaff_list.html', {
             "data": data,
@@ -2227,7 +2282,7 @@ def weighingrecord_delete(request):
 def weighingrecord_list(request):
     title = 'weighingrecord'
     if request.method == "GET":
-        data = models.WeighingRecord.objects.values().order_by(
+        data = models.WeighingRecord.objects.values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at").order_by(
             'weight_number', '-created_at')
         # 获取模型字段的verbose_name
         model_fields = models.WeighingRecord._meta.fields
@@ -2281,7 +2336,7 @@ def staff_list(request):
 
         # 将 QuerySet 转换为 DataFrame
         df = pd.DataFrame.from_records(
-            models.Admin.objects.exclude(role='学前班同学').values()
+            models.Admin.objects.exclude(role='学前班同学').values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at")
         )
 
         # 根据 ident 列去重，保留最后一行
@@ -2350,7 +2405,7 @@ def staff_edit(request):
     title = '员工信息编辑'
     id = request.GET.get('id')
     row_object = models.Admin.objects.filter(id=str(id)).first()
-    print(models.Admin.objects.filter(id=str(id)).values())
+    print(models.Admin.objects.filter(id=str(id)).values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at"))
     if request.method == "GET":
 
         form = modelform.Staff(instance=row_object)
@@ -2887,7 +2942,7 @@ def blasting_site_photo_list(request):
         model_fields = models.BlastingSitePhoto._meta.fields
         cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location')]
         cols.append({'verbose_name': '操作'})
-        data = models.BlastingSitePhoto.objects.values().order_by('code')[:100]
+        data = models.BlastingSitePhoto.objects.values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at").order_by('code')[:100]
         return render(request, 'blasting_site_photo_list.html', {
             'data': data,
             'cols': cols,
@@ -3168,7 +3223,7 @@ def blasting_site_low_conf(request):
     try:
         with open(label_map_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
-            for v in data.values():
+            for v in data.values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at"):
                 if v.strip():
                     name_options.append(v.strip())
     except Exception:
