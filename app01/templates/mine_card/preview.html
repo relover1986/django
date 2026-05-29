@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A4 排版预览</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        .sheet-page {
+            margin-bottom: 2rem;
+        }
+        .sheet-page img {
+            width: 100%;
+            max-width: 900px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .page-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        .page-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body class="bg-light">
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="mb-1"><i class="fas fa-eye me-2"></i>A4 排版预览</h4>
+                    <p class="text-muted mb-0">共 {{ total }} 人，{{ sheets|length }} 页（左正面 / 右背面，每页 5 人）</p>
+                </div>
+                <div>
+                    <a href="{% url 'mine_card_index' %}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left me-1"></i>返回
+                    </a>
+                    <a href="{% url 'mine_card_download' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-download me-2"></i>下载 ZIP
+                    </a>
+                </div>
+            </div>
+
+            {% for sheet in sheets %}
+            <div class="sheet-page text-center">
+                <div class="page-wrapper">
+                    <span class="page-badge">第 {{ sheet.page }} 页 · {{ sheet.count }} 人</span>
+                    <img src="data:image/jpeg;base64,{{ sheet.b64 }}" alt="A4排版第{{ sheet.page }}页">
+                </div>
+            </div>
+            {% endfor %}
+
+            <div class="text-center mt-3 mb-5">
+                <a href="{% url 'mine_card_index' %}" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left me-1"></i>返回编辑
+                </a>
+                <a href="{% url 'mine_card_download' %}" class="btn btn-primary btn-lg px-5">
+                    <i class="fas fa-download me-2"></i>下载 ZIP
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+</body>
+</html>

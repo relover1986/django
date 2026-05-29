@@ -1,3 +1,6 @@
+import os
+import uuid
+
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.validators import RegexValidator
@@ -530,3 +533,27 @@ class StaffCertFile(models.Model):
 
     def __str__(self):
         return f"{self.cert.staff.name} - {self.cert.cert_type.name} - {self.file_type}"
+
+
+def photo_upload_path(instance, filename):
+    ext = os.path.splitext(filename)[1]
+    return f"photos/{uuid.uuid4().hex}{ext}"
+
+
+class Worker(models.Model):
+    JOB_TYPE_CHOICES = [
+        ("爆破员", "爆破员"),
+        ("安全员", "安全员"),
+        ("工程师", "工程师"),
+    ]
+    name = models.CharField("姓名", max_length=50)
+    job_type = models.CharField("工种", max_length=50, choices=JOB_TYPE_CHOICES, default="爆破员")
+    photo = models.ImageField("一寸照片", upload_to=photo_upload_path, blank=True, null=True)
+    created_at = models.DateTimeField("创建时间", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "入井人员"
+        verbose_name_plural = "入井人员"
+
+    def __str__(self):
+        return f"{self.name} - {self.job_type}"

@@ -91,6 +91,13 @@ urlpatterns = [
     path('home/contractlabor_list/', views.contractlabor_list),
     path('home/contractlabor_export_zip/', views.contractlabor_export_zip, name='labor_export'),
 
+    # 入井证
+    path('home/mine_card/', views.mine_card_index, name='mine_card_index'),
+    path('home/mine_card/delete/<int:worker_id>/', views.mine_card_delete, name='mine_card_delete'),
+    path('home/mine_card/photo/<int:worker_id>/', views.mine_card_update_photo, name='mine_card_update_photo'),
+    path('home/mine_card/preview/', views.mine_card_preview, name='mine_card_preview'),
+    path('home/mine_card/download/', views.mine_card_download, name='mine_card_download'),
+
     # 新增求职者档案路由
     path('home/candidateprofile_add/', views.candidateprofile_add),
     path('home/candidateprofile_delete/', views.candidateprofile_delete),

@@ -62,3 +62,31 @@ class StaffCertFileForm(forms.ModelForm):
                 field.widget.attrs.update({'class': 'form-select'})
             else:
                 field.widget.attrs.update({'class': 'form-control'})
+
+
+class WorkerForm(forms.ModelForm):
+    class Meta:
+        model = models.Worker
+        fields = ["name", "job_type"]
+        labels = {"name": "姓名", "job_type": "工种"}
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "请输入姓名"}),
+            "job_type": forms.Select(attrs={"class": "form-control"}),
+        }
+
+
+class ExcelUploadForm(forms.Form):
+    excel = forms.FileField(label="上传Excel", widget=forms.FileInput(attrs={
+        "class": "form-control",
+        "accept": ".xlsx,.xls",
+    }))
+
+
+class PhotoForm(forms.ModelForm):
+    class Meta:
+        model = models.Worker
+        fields = ["photo"]
+        labels = {"photo": ""}
+        widgets = {
+            "photo": forms.FileInput(attrs={"class": "photo-file-input d-none", "accept": "image/*"}),
+        }
