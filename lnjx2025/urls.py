@@ -57,30 +57,31 @@ urlpatterns = [
         'document_root': os.path.join(BASE_DIR, '.well-known/acme-challenge'),
     }),
 
-    path("staff_add/", views.staff_add),
-    path("staff_delete/", views.staff_delete),
-    path("staff_edit/", views.staff_edit),
-    path('staff_list/', StaffListView.as_view(template_name='staff_list_v2.html'), name='staff_list'),
+    path("home/admin_add/", views.admin_add),
+    path("home/admin_edit/", views.admin_edit),
+    path("home/admin_delete/", views.admin_delete),
+    path("staff_edit/", views.admin_edit),  # 已废弃，保留兼容
+    path('home/admin/', StaffListView.as_view(template_name='staff_list_v2.html'), name='staff_list'),
     # path("staff_edit_handle/", views.staff_edit_handle),
     # path("staff_search/", views.staff_search),
 
     # 人员管理（新）
-    path("staff/", staff_list, name="staff_list_new"),
-    path("staff/add/", staff_add, name="staff_add"),
-    path("staff/<int:pk>/edit/", staff_edit, name="staff_edit"),
-    path("staff/<int:pk>/", staff_detail, name="staff_detail"),
-    path("staff/<int:pk>/delete/", staff_delete, name="staff_delete"),
-    path("staff/<int:pk>/cert/add/", staff_cert_add, name="staff_cert_add"),
-    path("staff_cert/<int:pk>/delete/", staff_cert_delete, name="staff_cert_delete"),
-    path("staff_cert/<int:pk>/file/add/", staff_cert_file_add, name="staff_cert_file_add"),
+    path("home/staff/", staff_list, name="staff_list_new"),
+    path("home/staff/add/", staff_add, name="staff_add"),
+    path("home/staff/<int:pk>/edit/", staff_edit, name="staff_edit"),
+    path("home/staff/<int:pk>/", staff_detail, name="staff_detail"),
+    path("home/staff/<int:pk>/delete/", staff_delete, name="staff_delete"),
+    path("home/staff/<int:pk>/cert/add/", staff_cert_add, name="staff_cert_add"),
+    path("home/staff_cert/<int:pk>/delete/", staff_cert_delete, name="staff_cert_delete"),
+    path("home/staff_cert/<int:pk>/file/add/", staff_cert_file_add, name="staff_cert_file_add"),
 
     # 证件类型管理
     path("cert-type/", cert_type_list, name="cert_type_list"),
     path("cert-type/add/", cert_type_add, name="cert_type_add"),
     path("cert-type/<int:pk>/edit/", cert_type_edit, name="cert_type_edit"),
     path("cert-type/<int:pk>/delete/", cert_type_delete, name="cert_type_delete"),
-    path("staff_cert/", staff_cert_list, name="staff_cert_list"),
-    path("staff_cert/export/zip/", staff_cert_export_zip, name="staff_cert_export_zip"),
+    path("home/staff_cert/", staff_cert_list, name="staff_cert_list"),
+    path("home/staff_cert/export/zip/", staff_cert_export_zip, name="staff_cert_export_zip"),
 
 
     path('upload/', views.upload_model),

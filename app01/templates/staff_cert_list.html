@@ -5,9 +5,9 @@
         <div class="card-header">
             <h3 class="card-title mb-0">{{ title }}</h3>
             {% if selected_type %}
-            <a href="/staff_cert/export/zip/?cert_type={{ selected_type }}" class="btn btn-primary btn-sm ms-3">导出压缩包</a>
+            <a href="/home/staff_cert/export/zip/?cert_type={{ selected_type }}" class="btn btn-primary btn-sm ms-3">导出压缩包</a>
             {% else %}
-            <a href="/staff_cert/export/zip/" class="btn btn-primary btn-sm ms-3">导出压缩包</a>
+            <a href="/home/staff_cert/export/zip/" class="btn btn-primary btn-sm ms-3">导出压缩包</a>
             {% endif %}
         </div>
         <div class="card-body">
@@ -27,7 +27,7 @@
                     {% endfor %}
                 </select>
                 {% if selected_type or selected_department %}
-                <a href="/staff_cert/" class="btn btn-outline-secondary btn-sm">清除</a>
+                <a href="/home/staff_cert/" class="btn btn-outline-secondary btn-sm">清除</a>
                 {% endif %}
             </form>
             <div class="table-responsive">
@@ -45,7 +45,7 @@
                     <tbody>
                         {% for c in page_obj %}
                         <tr>
-                            <td><a href="/staff/{{ c.staff.id }}/">{{ c.staff.name }}</a></td>
+                            <td><a href="/home/staff/{{ c.staff.id }}/">{{ c.staff.name }}</a></td>
                             <td>{{ c.cert_type.name }}</td>
                             <td>{{ c.cert_number|default:"-" }}</td>
                             <td>{{ c.issue_date|date:"Y-m-d"|default:"-" }}</td>

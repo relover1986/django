@@ -28,6 +28,60 @@
     <meta name="theme-color" content="#307EF3">
     <style>
         .page-body .card .card-body h2 { font-size: 16px; color: var(--theme-default); margin-bottom: 16px; }
+
+        /* ===== 手机侧边栏触摸滚动修复 ===== */
+        @media (max-width: 991.98px) {
+            .page-wrapper.compact-wrapper .page-body-wrapper div.sidebar-wrapper .sidebar-main {
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                touch-action: pan-y !important;
+                overscroll-behavior: contain !important;
+                max-height: calc(100vh - 80px);
+            }
+            .page-wrapper.compact-wrapper .page-body-wrapper div.sidebar-wrapper .sidebar-main .sidebar-links {
+                overflow: visible !important;
+            }
+            .page-wrapper.compact-wrapper .page-body-wrapper div.sidebar-wrapper .sidebar-main .sidebar-links .sidebar-list .sidebar-submenu {
+                position: relative !important;
+                z-index: auto !important;
+            }
+            .sidebar-wrapper .simplebar-content-wrapper {
+                overflow: visible !important;
+                touch-action: pan-y !important;
+            }
+        }
+
+        /* ===== 侧边栏修补：触摸穿透 + bg-overlay ===== */
+        @media (max-width: 991.98px) {
+            .page-wrapper.compact-wrapper .page-body-wrapper div.sidebar-wrapper {
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                touch-action: pan-y !important;
+                overscroll-behavior: contain !important;
+                z-index: 1000 !important;
+            }
+            .page-wrapper.compact-wrapper .page-body-wrapper div.sidebar-wrapper .sidebar-main {
+                overflow: visible !important;
+            }
+            /* 修复 SimpleBar 指针穿透 */
+            .sidebar-wrapper .simplebar-placeholder,
+            .sidebar-wrapper .simplebar-track {
+                pointer-events: auto !important;
+            }
+        }
+        .bg-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.3);
+            z-index: 999;
+            display: none;
+        }
+        .bg-overlay.active {
+            display: block;
+        }
         .page-body .card .card-body h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
         .phonetic { color: #999; font-size: 13px; }
         .empty { text-align: center; padding: 60px 20px; color: #aaa; font-size: 15px; }
@@ -155,7 +209,7 @@
                                         <span>账号管理</span>
                                     </a>
                                     <ul class="sidebar-submenu">
-                                        <li><a href="/staff_list/">员工列表</a></li>
+                                        <li><a href="/home/admin/">员工列表</a></li>
                                         <li><a href="/upload">文件上传</a></li>
                                     </ul>
                                 </li>
@@ -236,9 +290,9 @@
                                         <span>人员信息</span>
                                     </a>
                                     <ul class="sidebar-submenu">
-                                        <li><a href="/staff/">人员管理</a></li>
+                                        <li><a href="/home/staff/">人员管理</a></li>
                                         <li><a href="/cert-type/">证件类型</a></li>
-                                        <li><a href="/staff_cert/">证件列表</a></li>
+                                        <li><a href="/home/staff_cert/">证件列表</a></li>
                                     </ul>
                                 </li>
 
@@ -376,5 +430,15 @@
     }
     window.addEventListener('beforeinstallprompt', function(e){e.preventDefault(); console.log('PWA installable');});
     </script>
+<script>
+// 阻止侧边栏内部点击冒泡，防止意外关闭侧边栏
+$(function() {
+    if ($(window).width() <= 991) {
+        $(".sidebar-wrapper").on("click touchend touchmove", function(e) {
+            e.stopPropagation();
+        });
+    }
+});
+</script>
 </body>
 </html>

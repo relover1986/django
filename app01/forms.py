@@ -5,7 +5,7 @@ from app01 import models
 class StaffForm(forms.ModelForm):
     class Meta:
         model = models.Staff
-        fields = ['name', 'phone', 'department', 'status']
+        fields = ["name", "id_number", "phone", "department", "status"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -67,12 +67,16 @@ class StaffCertFileForm(forms.ModelForm):
 class WorkerForm(forms.ModelForm):
     class Meta:
         model = models.Worker
-        fields = ["name", "job_type"]
+        fields = ["name", "job_type", "photo"]
         labels = {"name": "姓名", "job_type": "工种"}
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "请输入姓名"}),
-            "job_type": forms.Select(attrs={"class": "form-control"}),
+            "job_type": forms.TextInput(attrs={"class": "form-control", "placeholder": "选择或输入工种", "list": "job-type-list"}),
+            "photo": forms.FileInput(attrs={"class": "d-none", "accept": "image/*", "id": "manual-photo-input"}),
         }
+
+    def clean_job_type(self):
+        return self.cleaned_data["job_type"]  # 允许手动输入自定义工种
 
 
 class ExcelUploadForm(forms.Form):

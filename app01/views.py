@@ -2321,10 +2321,7 @@ class StaffListView(FilterView, ListView):
             {'col_name': '用户名'},
             {'col_name': '身份'},
             {'col_name': '部门'},
-            {'col_name': '密码'},
-            {'col_name': '图片'},
             {'col_name': '操作'},
-            {'col_name': '证件'},
         ]
         return context
 
@@ -2359,7 +2356,7 @@ def staff_list(request):
 
 
 @资料员
-def staff_add(request):
+def admin_add(request):
 
     title = '新建员工信息'
     if request.method == "GET":
@@ -2389,23 +2386,22 @@ def staff_add(request):
 
         return render(request, 'create.html', {"form": form, "标题": title})
 
-    return redirect("/staff_list")
+    return redirect("/home/admin")
 
 
 @最高权限
-def staff_delete(request):
+def admin_delete(request):
 
     id = request.GET.get('id')
     models.Admin.objects.filter(id=str(id)).delete()
-    return redirect("/staff_list")
+    return redirect("/home/admin")
 
 
 @最高权限
-def staff_edit(request):
-    title = '员工信息编辑'
+def admin_edit(request):
     id = request.GET.get('id')
     row_object = models.Admin.objects.filter(id=str(id)).first()
-    print(models.Admin.objects.filter(id=str(id)).values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at"))
+    title = f'员工信息编辑 - {row_object.username}' if row_object else '员工信息编辑'
     if request.method == "GET":
 
         form = modelform.Staff(instance=row_object)
@@ -2425,7 +2421,7 @@ def staff_edit(request):
         title = '输入错误'
         form.errors
         return render(request, 'change.html', {"form": form, "title": title})
-    return redirect("/staff_list")
+    return redirect("/home/admin")
 
 
 #     ⌘ + K → ⌘ + J       # macOS ⌘ + Shift + ]
@@ -3538,12 +3534,12 @@ def staff_add(request):
     form = StaffForm(request.POST)
     if form.is_valid():
         form.save()
-        return redirect("/staff/")
+        return redirect("/home/admin/")
     return render(request, "staff_form.html", {"form": form, "title": "新增人员"})
 
 
 @login_required
-def staff_edit(request, pk):
+def staff_edit_v2(request, pk):
     """编辑人员"""
     obj = get_object_or_404(Staff, pk=pk)
     if request.method == "GET":
@@ -3552,7 +3548,7 @@ def staff_edit(request, pk):
     form = StaffForm(request.POST, instance=obj)
     if form.is_valid():
         form.save()
-        return redirect("/staff/")
+        return redirect("/home/admin/")
     return render(request, "staff_form.html", {"form": form, "title": "编辑人员", "obj": obj})
 
 
@@ -3572,11 +3568,11 @@ def staff_detail(request, pk):
 
 
 @login_required
-def staff_delete(request, pk):
+def staff_delete_v2(request, pk):
     """删除人员"""
     obj = get_object_or_404(Staff, pk=pk)
     obj.delete()
-    return redirect("/staff/")
+    return redirect("/home/admin/")
 
 
 @login_required
@@ -3692,7 +3688,7 @@ def mine_card_index(request):
                 messages.error(request, f"导入失败：{e}")
 
     if request.method == "POST" and "name" in request.POST:
-        worker_form = WorkerForm(request.POST)
+        worker_form = WorkerForm(request.POST, request.FILES)
         if worker_form.is_valid():
             worker_form.save()
             messages.success(request, "已添加")
@@ -3703,6 +3699,8 @@ def mine_card_index(request):
         "excel_form": excel_form,
         "worker_form": worker_form,
         "photo_forms": {w.id: PhotoForm(instance=w) for w in workers},
+        "worker_names_json": json.dumps(list(models.Worker.objects.values_list("name", flat=True).distinct().order_by("name"))),
+        "job_type_choices_json": json.dumps([c[0] for c in models.Worker.JOB_TYPE_CHOICES]),
     })
 
 

@@ -9,7 +9,7 @@
                     <!-- 标题行：标题 + 创建按钮 -->
                     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                         <h2 class="mb-0">{{ title }}</h2>
-                        <a class="btn btn-primary" href="/staff_add">
+                        <a class="btn btn-primary" href="/home/admin_add">
                             <i class="fa fa-plus me-1"></i> 新 建
                         </a>
                     </div>
@@ -30,7 +30,7 @@
                                     <button type="submit" class="btn btn-primary btn-sm">
                                         <i class="fa fa-filter me-1"></i> 筛选
                                     </button>
-                                    <a href="/staff_list/" class="btn btn-outline-secondary btn-sm ms-1">重置</a>
+                                    <a href="/home/admin/" class="btn btn-outline-secondary btn-sm ms-1">重置</a>
                                 </div>
                             </form>
                         </div>
@@ -56,38 +56,17 @@
                                         <span class="badge bg-info text-dark">{{ obj.role }}</span>
                                     </td>
                                     <td data-label="部门">{{ obj.department }}</td>
-                                    <td data-label="密码">
-                                        <span class="text-muted" style="font-size:0.8rem;">••••••</span>
-                                    </td>
-                                    <!-- 头像图片：hover 放大 + 圆角 -->
-                                    <td data-label="头像">
-                                        <a href="/media/{{ obj.avatar }}" target="_blank">
-                                            <img src="/media/{{ obj.avatar }}"
-                                                 alt="头像"
-                                                 class="staff-avatar-img"
-                                                 style="width:48px; height:64px; object-fit:cover; border-radius:8px; transition: transform 0.2s ease, box-shadow 0.2s ease;">
-                                        </a>
-                                    </td>
-                                    <!-- 操作列 -->
                                     <td data-label="操作">
                                         <div class="d-flex justify-content-center gap-1 flex-wrap action-btn-group">
-                                            <a class="btn btn-outline-primary btn-sm" href="/staff_edit?id={{ obj.id }}">
+                                            <a class="btn btn-outline-primary btn-sm" href="/home/admin_edit/?id={{ obj.id }}">
                                                 <i class="fa fa-pencil"></i> <span class="btn-text">编辑</span>
                                             </a>
-                                            <a class="btn btn-outline-danger btn-sm" href="/staff_delete/?id={{ obj.id }}">
+                                            <a class="btn btn-outline-danger btn-sm" href="/home/admin_delete/?id={{ obj.id }}">
                                                 <i class="fa fa-trash-o"></i> <span class="btn-text">删除</span>
                                             </a>
                                         </div>
                                     </td>
-                                    <!-- 证件图片 -->
-                                    <td data-label="证件">
-                                        <a href="/static/img/{{ obj.身份 }}_{{ obj.username }}.png" target="_blank">
-                                            <img src="/static/img/{{ obj.身份 }}_{{ obj.username }}.png"
-                                                 alt="证件"
-                                                 class="staff-avatar-img"
-                                                 style="width:48px; height:64px; object-fit:cover; border-radius:8px; transition: transform 0.2s ease, box-shadow 0.2s ease;">
-                                        </a>
-                                    </td>
+                                
                                 </tr>
                                 {% empty %}
                                 <tr>

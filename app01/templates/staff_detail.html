@@ -8,8 +8,8 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title mb-0">{{ staff.name }} - 基本信息</h3>
                     <div>
-                        <a href="/staff/{{ staff.id }}/edit/" class="btn btn-primary btn-sm">编辑</a>
-                        <a href="/staff/" class="btn btn-outline-secondary btn-sm">返回</a>
+                        <a href="/home/staff/{{ staff.id }}/edit/" class="btn btn-primary btn-sm">编辑</a>
+                        <a href="/home/staff/" class="btn btn-outline-secondary btn-sm">返回</a>
                     </div>
                 </div>
                 <div class="card-body">
@@ -43,7 +43,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title mb-0">证件列表</h3>
-                    <a href="/staff/{{ staff.id }}/cert/add/" class="btn btn-success btn-sm">
+                    <a href="/home/staff/{{ staff.id }}/cert/add/" class="btn btn-success btn-sm">
                         <i class="bi bi-plus-lg me-1"></i>添加证件
                     </a>
                 </div>
@@ -65,7 +65,7 @@
                                             {{ cert.status }}
                                         </span>
                                     </div>
-                                    <a href="/staff_cert/{{ cert.id }}/delete/"
+                                    <a href="/home/staff_cert/{{ cert.id }}/delete/"
                                        class="btn btn-danger btn-sm"
                                        onclick="return confirm('确定删除此证件吗？')">删除</a>
                                 </div>
@@ -81,7 +81,7 @@
 
                                 {% if cert.id %}
                                 <div class="mt-2">
-                                    <a href="/staff_cert/{{ cert.id }}/file/add/" class="btn btn-outline-primary btn-sm">
+                                    <a href="/home/staff_cert/{{ cert.id }}/file/add/" class="btn btn-outline-primary btn-sm">
                                         上传附件
                                     </a>
                                 </div>

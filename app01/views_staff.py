@@ -50,7 +50,7 @@ def staff_add(request):
         form = StaffForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('/staff/')
+            return redirect('/home/staff/')
     else:
         form = StaffForm()
     return render(request, 'staff_form.html', {
@@ -82,7 +82,7 @@ def staff_edit(request, pk):
         form = StaffForm(request.POST, instance=staff)
         if form.is_valid():
             form.save()
-            return redirect('/staff/')
+            return redirect('/home/staff/')
     else:
         form = StaffForm(instance=staff)
     return render(request, 'staff_form.html', {
@@ -95,7 +95,7 @@ def staff_delete(request, pk):
     """删除人员"""
     staff = get_object_or_404(models.Staff, pk=pk)
     staff.delete()
-    return redirect('/staff/')
+    return redirect('/home/staff/')
 
 
 # ================================================================

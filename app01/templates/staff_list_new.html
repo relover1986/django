@@ -6,7 +6,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title mb-0">{{ title }}</h3>
-                    <a href="/staff/add/" class="btn btn-success btn-sm">
+                    <a href="/home/staff/add/" class="btn btn-success btn-sm">
                         <i class="bi bi-plus-lg me-1"></i>新增人员
                     </a>
                 </div>
@@ -18,7 +18,7 @@
                                placeholder="搜索姓名...">
                         <button type="submit" class="btn btn-primary btn-sm">搜索</button>
                         {% if search %}
-                            <a href="/staff/" class="btn btn-outline-secondary btn-sm">清除</a>
+                            <a href="/home/staff/" class="btn btn-outline-secondary btn-sm">清除</a>
                         {% endif %}
                     </form>
 
@@ -40,7 +40,7 @@
                                 {% for obj in page_obj %}
                                 <tr class="align-middle">
                                     <td class="text-center">
-                                        <a href="/staff/{{ obj.id }}/" class="text-decoration-none fw-bold">
+                                        <a href="/home/staff/{{ obj.id }}/" class="text-decoration-none fw-bold">
                                             {{ obj.name }}
                                         </a>
                                     </td>
@@ -60,8 +60,8 @@
                                     </td>
                                     <td class="text-center">{{ obj.created_at|date:"Y-m-d H:i" }}</td>
                                     <td class="text-center">
-                                        <a href="/staff/{{ obj.id }}/edit/" class="btn btn-primary btn-sm">编辑</a>
-                                        <a href="/staff/{{ obj.id }}/delete/"
+                                        <a href="/home/staff/{{ obj.id }}/edit/" class="btn btn-primary btn-sm">编辑</a>
+                                        <a href="/home/staff/{{ obj.id }}/delete/"
                                            class="btn btn-danger btn-sm"
                                            onclick="return confirm('确定删除 {{ obj.name }} 吗？')">删除</a>
                                     </td>
