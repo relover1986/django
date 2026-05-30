@@ -4,6 +4,8 @@ from io import BytesIO
 from math import ceil
 from django.conf import settings
 from PIL import Image, ImageDraw, ImageFont
+import rembg
+from batch_id_photo import align_photo
 
 # ---------- 单卡常量 ----------
 AVATAR_W, AVATAR_H = 130, 189
@@ -16,6 +18,12 @@ NAME_FONT_SIZE = 42
 INFO_FONT_SIZE = 36
 BACK_NAME_SIZE = 110       # 大字
 BACK_MSG_SIZE = 96         # 大字
+
+BG_COLOR_MAP = {
+    "white": (255, 255, 255),
+    "blue":  (0, 112, 192),
+    "red":   (237, 28, 36),
+}
 
 UNIT_TEXT = "单位：辽宁捷祥矿业工程公司"
 PROJ_TEXT = "驻宏鹏矿业项目部"
@@ -41,6 +49,36 @@ _BOLD_CANDIDATES = [
     "/System/Library/Fonts/Supplemental/STHeiti Bold.ttc",
     "/System/Library/Fonts/PingFang.ttc",
 ]
+
+
+def _parse_hex_color(hex_color: str) -> tuple:
+    """解析 #RRGGBB 格式为 (R, G, B) 元组"""
+    h = hex_color.lstrip("#")
+    return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+
+
+def apply_photo_background(photo_path: str, bg_mode: str = "none", bg_color: str = "") -> Image.Image:
+    """根据 bg_mode 处理头像背景，本地 rembg 模型，不调用 API"""
+    img = Image.open(photo_path)
+
+    if bg_mode == "none":
+        return img.convert("RGB")
+
+    rgba = rembg.remove(img)
+
+    if bg_mode == "white":
+        bg_rgb = BG_COLOR_MAP["white"]
+    elif bg_mode == "blue":
+        bg_rgb = BG_COLOR_MAP["blue"]
+    elif bg_mode == "red":
+        bg_rgb = BG_COLOR_MAP["red"]
+    else:
+        color = bg_color if bg_color else "#2196F3"
+        bg_rgb = _parse_hex_color(color)
+
+    bg = Image.new("RGB", rgba.size, bg_rgb)
+    bg.paste(rgba, (0, 0), rgba.split()[3])
+    return bg
 
 
 def _find_font():
@@ -82,7 +120,7 @@ def generate_label(photo_path: str, name: str, job_type: str) -> BytesIO:
     img = Image.open(bg_path).convert("RGB")
     draw = ImageDraw.Draw(img)
 
-    avatar = Image.open(photo_path).convert("RGB")
+    avatar = align_photo(photo_path)  # 人脸对齐后返回 PIL Image (RGB, 295×413)
     avatar_resized = avatar.resize((AVATAR_W, AVATAR_H), Image.LANCZOS)
     img.paste(avatar_resized, (AVATAR_X, AVATAR_Y))
 

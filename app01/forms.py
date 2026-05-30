@@ -70,8 +70,8 @@ class WorkerForm(forms.ModelForm):
         fields = ["name", "job_type", "photo"]
         labels = {"name": "姓名", "job_type": "工种"}
         widgets = {
-            "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "请输入姓名"}),
-            "job_type": forms.TextInput(attrs={"class": "form-control", "placeholder": "选择或输入工种", "list": "job-type-list"}),
+            "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "请输入姓名", "form": "manual-form"}),
+            "job_type": forms.TextInput(attrs={"class": "form-control", "placeholder": "选择或输入工种", "list": "job-type-list", "form": "manual-form"}),
             "photo": forms.FileInput(attrs={"class": "d-none", "accept": "image/*", "id": "manual-photo-input"}),
         }
 

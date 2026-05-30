@@ -14,7 +14,7 @@
             font-weight: 600;
             padding: 10px 16px;
         }
-        .section-card .card-body.compact { padding: 10px 16px; }
+        .section-card .card-body.compact { padding: 20px 24px; }
         .excel-drop-zone {
             border: 2px dashed #60a5fa;
             border-radius: 10px;
@@ -41,8 +41,8 @@
             background: #f0fdf4;
             border-style: solid;
         }
-        .excel-drop-zone .placeholder { color: #98a2b3; font-size: 12px; }
-        .excel-drop-zone .placeholder i { font-size: 20px; display: block; margin-bottom: 4px; color: #60a5fa; }
+        .excel.drop-zone .placeholder { color: #98a2b3; font-size: 13px; }
+        .excel-drop-zone .placeholder i { font-size: 28px; display: block; margin-bottom: 6px; color: #60a5fa; }
         .excel-drop-zone .file-name { font-size: 13px; font-weight: 500; color: #16a34a; margin-top: 2px; }
         .excel-drop-zone input[type=file] {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -51,11 +51,11 @@
         .drop-zone {
             border: 2px dashed #60a5fa;
             border-radius: 10px;
-            padding: 6px;
+            padding: 10px;
             text-align: center;
             cursor: pointer;
             transition: all .2s;
-            min-height: 80px;
+            min-height: 110px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -73,12 +73,12 @@
             border-style: solid;
         }
         .drop-zone img.preview {
-            max-height: 72px;
+            max-height: 96px;
             max-width: 100%;
             border-radius: 6px;
         }
-        .drop-zone .placeholder { color: #98a2b3; font-size: 12px; }
-        .drop-zone .placeholder i { font-size: 22px; display: block; margin-bottom: 4px; color: #60a5fa; }
+        .drop-zone .placeholder { color: #98a2b3; font-size: 13px; }
+        .drop-zone .placeholder i { font-size: 28px; display: block; margin-bottom: 4px; color: #60a5fa; }
         .photo-form { margin: 0; }
         .name-input-wrap {
             position: relative;
@@ -200,13 +200,13 @@
         </div>
     </div>
 
-    <div class="card section-card mb-3">
+    <div class="card section-card mb-4">
         <div class="card-header bg-primary text-white py-2">
             <span class="step-num">1</span>导入人员
         </div>
         <div class="card-body compact d-flex flex-column" style="gap:8px;">
             <!-- ====== 上半部：标签+按钮 ====== -->
-            <div class="row g-2 flex-shrink-0">
+            <div class="row g-4 flex-shrink-0">
                 <!-- 左侧：Excel 标签+按钮 -->
                 <div class="col-md-6 d-flex align-items-center">
                     <div class="d-flex align-items-center gap-2 w-100">
@@ -221,8 +221,9 @@
                     </div>
                 </div>
                 <!-- 右侧：手动添加标签+按钮 -->
-                <div class="col-md-6 d-flex align-items-center" style="border-left: 1px solid #e5e7eb; padding-left: 12px;">
-                    <div class="d-flex align-items-center gap-2 w-100">
+                <div class="col-md-6 d-flex align-items-center" style="border-left: 1px solid #e5e7eb; padding-left: 20px; padding-right: 20px;">
+                    <form method="post" id="manual-form" class="d-flex align-items-center gap-2 w-100">
+                        {% csrf_token %}
                         <label class="form-label fw-medium text-secondary compact-label mb-0 text-nowrap">或手动添加一人</label>
                         <div class="name-input-wrap" style="max-width:110px;">
                                         {{ worker_form.name }}
@@ -234,13 +235,10 @@
                                         <i class="fas fa-caret-down dropdown-arrow" onclick="toggleJobDropdown()"></i>
                                         <div class="name-suggestions" id="job-suggestions"></div>
                                     </div>
-                        <form method="post" id="manual-form" class="d-inline ms-auto">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-primary btn-sm">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </form>
-                    </div>
+                        <button type="submit" class="btn btn-outline-primary btn-sm ms-auto flex-shrink-0">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </form>
                 </div>
             </div>
 
@@ -289,14 +287,14 @@
     </div>
 
     {% if workers %}
-    <div class="card section-card mb-3">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center py-2" style="border-bottom: 1px solid #e5e7eb;">
-            <span class="fw-semibold" style="color: #1e293b; font-size: 14px;">
+    <div class="card section-card mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center" style="border-bottom: 1px solid #e5e7eb;">
+            <span class="fw-semibold" style="color: #1e293b;">
                 <span class="step-num" style="background: #2563eb;">2</span>
                 上传照片
                 <span class="badge bg-secondary ms-2">{{ workers|length }} 人</span>
             </span>
-            <span class="text-muted" style="font-size: 12px;">
+            <span class="text-muted" style="font-size: 13px;">
                 <i class="fas fa-mouse-pointer me-1"></i>点击或拖拽上传
             </span>
         </div>
@@ -304,20 +302,20 @@
             <table class="table table-hover mb-0" style="border-collapse: separate;">
                 <thead class="table-light">
                     <tr>
-                        <th style="width:40px;" class="text-muted small">#</th>
-                        <th style="width:80px;" class="small">姓名</th>
-                        <th style="width:70px;" class="small">工种</th>
-                        <th class="small">一寸照片</th>
-                        <th style="width:50px;" class="small"></th>
+                        <th style="width:56px;" class="text-muted">#</th>
+                        <th style="width:100px;">姓名</th>
+                        <th style="width:90px;">工种</th>
+                        <th>一寸照片</th>
+                        <th style="width:60px;"></th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for w in workers %}
                     <tr>
-                        <td class="text-muted text-center small">{{ forloop.counter }}</td>
-                        <td class="fw-semibold small">{{ w.name }}</td>
-                        <td><span class="badge bg-info bg-opacity-10 text-info-emphasis px-2 py-1 rounded-pill small">{{ w.job_type }}</span></td>
-                        <td style="max-width: 260px;">
+                        <td class="text-muted text-center">{{ forloop.counter }}</td>
+                        <td class="fw-semibold">{{ w.name }}</td>
+                        <td><span class="badge bg-info bg-opacity-10 text-info-emphasis px-3 py-1 rounded-pill">{{ w.job_type }}</span></td>
+                        <td style="max-width: 340px;">
                             <form method="post" enctype="multipart/form-data" action="{% url 'mine_card_update_photo' w.id %}" class="photo-form" id="pf-{{ w.id }}">
                                 {% csrf_token %}
                                 <div class="drop-zone{% if w.photo %} has-img{% endif %}"
@@ -330,15 +328,16 @@
                                     {% else %}
                                         <div class="placeholder">
                                             <i class="fas fa-cloud-upload-alt"></i>
-                                            拖拽或点击
+                                            拖拽图片到此处<br><span style="font-size:12px;">或点击选择</span>
                                         </div>
                                     {% endif %}
                                 </div>
                                 <input type="file" name="photo" accept="image/*" id="file-{{ w.id }}" class="d-none" onchange="handleFileSelect(this, {{ w.id }})">
+
                             </form>
                         </td>
                         <td class="text-center">
-                            <a href="{% url 'mine_card_delete' w.id %}" class="btn btn-sm btn-outline-danger border-0 px-1" onclick="return confirm('确定删除 {{ w.name }}？')" title="删除">
+                            <a href="{% url 'mine_card_delete' w.id %}" class="btn btn-sm btn-outline-danger border-0" onclick="return confirm('确定删除 {{ w.name }}？')" title="删除">
                                 <i class="fas fa-trash-alt"></i>
                             </a>
                         </td>

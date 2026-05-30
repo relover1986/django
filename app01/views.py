@@ -17,6 +17,7 @@ from collections import defaultdict
 from app01.jiami import md5
 from .func import *
 from .photo import *
+from batch_id_photo import align_photo
 from django_filters.views import FilterView
 from django.views.generic import ListView
 import pandas as pd
@@ -211,94 +212,109 @@ def api_photo_add(request):
         
         # 处理上传的照片
         filename = model_name[:10] if model_name else os.path.splitext(file.name)[0][:10]
-            
-        with Image.open(file) as img:
-                if img.mode in ('RGBA', 'LA'):
-                    img = img.convert('RGB')  # 移除Alpha通道
-                
-                img = resize_photo(cut_photo(img, 1), 1)
-                img_io = io.BytesIO()
-                img.save(img_io, format='JPEG')
-                img_bytes = img_io.getvalue()
-                
-                result = client.bodySeg(img_bytes)
-                
-                if 'foreground' in result:
-                    # 转换前景图
-                    foreground = Image.open(io.BytesIO(
-                        base64.b64decode(result['foreground'])))
-                    
-                    # 一寸照片标准尺寸
-                    output_size = (295, 413)
-                    foreground.thumbnail(output_size)
-                    
-                    # 创建三种背景色
-                    background_colors = {
-                        '蓝底': (67, 142, 219),
-                        '红底': (255, 0, 0),
-                        '白底': (255, 255, 255)
-                    }
-                    
-                    # 存储排版后的背景图
-                    bg_files = {
-                        'blue': None,
-                        'red': None,
-                        'white': None
-                    }
-                    
-                    # 生成并排版所有背景图
-                    for name, color in background_colors.items():
-                        # 生成背景
-                        background = Image.new('RGB', output_size, color)
-                        x = (output_size[0] - foreground.width) // 2
-                        y = (output_size[1] - foreground.height) // 2
-                        background.paste(foreground, (x, y), foreground)
-                        
-                        # 对背景图进行排版
-                        rotated_bg_io = io.BytesIO()
-                        排版(background, rotated_bg_io)
-                        rotated_bg_bytes = rotated_bg_io.getvalue()
-                        
-                        # 根据背景类型存储
-                        if name == '蓝底':
-                            bg_files['blue'] = ContentFile(
-                                rotated_bg_bytes, name=f"{filename}_blue.jpg")
-                        elif name == '红底':
-                            bg_files['red'] = ContentFile(
-                                rotated_bg_bytes, name=f"{filename}_red.jpg")
-                        elif name == '白底':
-                            bg_files['white'] = ContentFile(
-                                rotated_bg_bytes, name=f"{filename}_white.jpg")
-                    
-                    # 对原始图进行排版
-                    rotated_io = io.BytesIO()
-                    排版(img, rotated_io)
-                    rotated_bytes = rotated_io.getvalue()
-                    
-                    # 创建模型实例并保存所有图片
-                    uploaded_photo = UploadedZhaopian.objects.create(
-                        name=filename,
-                        photo=ContentFile(img_bytes, name=f"{filename}.jpg"),
-                        rotated_photo=ContentFile(
-                            rotated_bytes, name=f"{filename}_rotated.jpg"),
-                        blue_background=bg_files['blue'],
-                        red_background=bg_files['red'],
-                        white_background=bg_files['white']
-                    )
-                    
-                    # 构建照片URL
-                    photo_data = {
-                        'id': uploaded_photo.id,
-                        'name': uploaded_photo.name,
-                        'photo': uploaded_photo.photo.url if uploaded_photo.photo else '',
-                        'rotated_photo': uploaded_photo.rotated_photo.url if uploaded_photo.rotated_photo else '',
-                        'blue_background': uploaded_photo.blue_background.url if uploaded_photo.blue_background else '',
-                        'red_background': uploaded_photo.red_background.url if uploaded_photo.red_background else '',
-                        'white_background': uploaded_photo.white_background.url if uploaded_photo.white_background else ''
-                    }
-                else:
-                    return Response({'error': 'Failed to segment image foreground'}, status=500)
-        
+
+        # 人脸对齐：先保存到临时文件，对齐后替换原图
+        import tempfile as _tf
+        _tmp = _tf.NamedTemporaryFile(suffix='.jpg', delete=False)
+        for chunk in file.chunks():
+            _tmp.write(chunk)
+        _tmp_path = _tmp.name
+        _tmp.close()
+        try:
+            _aligned = align_photo(_tmp_path)
+            if _aligned is not None:
+                img = _aligned
+            else:
+                img = Image.open(_tmp_path).convert('RGB')
+        finally:
+            os.unlink(_tmp_path)
+
+        if img.mode in ('RGBA', 'LA'):
+            img = img.convert('RGB')  # 移除Alpha通道
+
+        img = resize_photo(cut_photo(img, 1), 1)
+        img_io = io.BytesIO()
+        img.save(img_io, format='JPEG')
+        img_bytes = img_io.getvalue()
+
+        result = client.bodySeg(img_bytes)
+
+        if 'foreground' in result:
+            # 转换前景图
+            foreground = Image.open(io.BytesIO(
+                base64.b64decode(result['foreground'])))
+
+            # 一寸照片标准尺寸
+            output_size = (295, 413)
+            foreground.thumbnail(output_size)
+
+            # 创建三种背景色
+            background_colors = {
+                '蓝底': (67, 142, 219),
+                '红底': (255, 0, 0),
+                '白底': (255, 255, 255)
+            }
+
+            # 存储排版后的背景图
+            bg_files = {
+                'blue': None,
+                'red': None,
+                'white': None
+            }
+
+            # 生成并排版所有背景图
+            for name, color in background_colors.items():
+                # 生成背景
+                background = Image.new('RGB', output_size, color)
+                x = (output_size[0] - foreground.width) // 2
+                y = (output_size[1] - foreground.height) // 2
+                background.paste(foreground, (x, y), foreground)
+
+                # 对背景图进行排版
+                rotated_bg_io = io.BytesIO()
+                排版(background, rotated_bg_io)
+                rotated_bg_bytes = rotated_bg_io.getvalue()
+
+                # 根据背景类型存储
+                if name == '蓝底':
+                    bg_files['blue'] = ContentFile(
+                        rotated_bg_bytes, name=f"{filename}_blue.jpg")
+                elif name == '红底':
+                    bg_files['red'] = ContentFile(
+                        rotated_bg_bytes, name=f"{filename}_red.jpg")
+                elif name == '白底':
+                    bg_files['white'] = ContentFile(
+                        rotated_bg_bytes, name=f"{filename}_white.jpg")
+
+            # 对原始图进行排版
+            rotated_io = io.BytesIO()
+            排版(img, rotated_io)
+            rotated_bytes = rotated_io.getvalue()
+
+            # 创建模型实例并保存所有图片
+            uploaded_photo = UploadedZhaopian.objects.create(
+                name=filename,
+                photo=ContentFile(img_bytes, name=f"{filename}.jpg"),
+                rotated_photo=ContentFile(
+                    rotated_bytes, name=f"{filename}_rotated.jpg"),
+                blue_background=bg_files['blue'],
+                red_background=bg_files['red'],
+                white_background=bg_files['white']
+            )
+
+            # 构建照片URL
+            photo_data = {
+                'id': uploaded_photo.id,
+                'name': uploaded_photo.name,
+                'photo': uploaded_photo.photo.url if uploaded_photo.photo else '',
+                'rotated_photo': uploaded_photo.rotated_photo.url if uploaded_photo.rotated_photo else '',
+                'blue_background': uploaded_photo.blue_background.url if uploaded_photo.blue_background else '',
+                'red_background': uploaded_photo.red_background.url if uploaded_photo.red_background else '',
+                'white_background': uploaded_photo.white_background.url if uploaded_photo.white_background else ''
+            }
+        else:
+            return Response({'error': 'Failed to segment image foreground'}, status=500)
+
         return Response({
             'code': 200,
             'message': 'Photo uploaded successfully',
@@ -367,90 +383,105 @@ class PhotoUploadAPIView(APIView):
         
         for file in files:
             try:
-                with Image.open(file) as img:
-                    if img.mode in ('RGBA', 'LA'):
-                        img = img.convert('RGB')  # 移除Alpha通道
-
-                    # 获取文件名
-                    if len(files) == 1 and 'model_name' in request.data:
-                        filename = request.data['model_name'][:10]
-                        if len(filename) == 0:
-                            filename = os.path.splitext(file.name)[0][:10]
+                # 人脸对齐：先保存到临时文件，对齐后替换原图
+                import tempfile as _tf
+                _tmp = _tf.NamedTemporaryFile(suffix='.jpg', delete=False)
+                for chunk in file.chunks():
+                    _tmp.write(chunk)
+                _tmp_path = _tmp.name
+                _tmp.close()
+                try:
+                    _aligned = align_photo(_tmp_path)
+                    if _aligned is not None:
+                        img = _aligned
                     else:
+                        img = Image.open(_tmp_path).convert('RGB')
+                finally:
+                    os.unlink(_tmp_path)
+
+                if img.mode in ('RGBA', 'LA'):
+                    img = img.convert('RGB')  # 移除Alpha通道
+
+                # 获取文件名
+                if len(files) == 1 and 'model_name' in request.data:
+                    filename = request.data['model_name'][:10]
+                    if len(filename) == 0:
                         filename = os.path.splitext(file.name)[0][:10]
+                else:
+                    filename = os.path.splitext(file.name)[0][:10]
 
-                    # 处理图片
-                    img_io = io.BytesIO()
-                    img = resize_photo(cut_photo(img, 1), 1)  # 使用您现有的函数
-                    img.save(img_io, format='JPEG')
-                    img_bytes = img_io.getvalue()
+                # 处理图片
+                img_io = io.BytesIO()
+                img = resize_photo(cut_photo(img, 1), 1)  # 使用您现有的函数
+                img.save(img_io, format='JPEG')
+                img_bytes = img_io.getvalue()
 
-                    # 人体分割
-                    result = client.bodySeg(img_bytes)  # 使用您现有的client
+                # 人体分割
+                result = client.bodySeg(img_bytes)  # 使用您现有的client
 
-                    if 'foreground' in result:
-                        # 处理前景图
-                        foreground = Image.open(io.BytesIO(
-                            base64.b64decode(result['foreground'])))
+                if 'foreground' in result:
+                    # 处理前景图
+                    foreground = Image.open(io.BytesIO(
+                        base64.b64decode(result['foreground'])))
 
-                        # 一寸照片标准尺寸
-                        output_size = (295, 413)
-                        foreground.thumbnail(output_size)
+                    # 一寸照片标准尺寸
+                    output_size = (295, 413)
+                    foreground.thumbnail(output_size)
 
-                        # 创建三种背景色
-                        background_colors = {
-                            '蓝底': (67, 142, 219),
-                            '红底': (255, 0, 0),
-                            '白底': (255, 255, 255)
-                        }
+                    # 创建三种背景色
+                    background_colors = {
+                        '蓝底': (67, 142, 219),
+                        '红底': (255, 0, 0),
+                        '白底': (255, 255, 255)
+                    }
 
-                        # 存储排版后的背景图
-                        bg_files = {
-                            'blue': None,
-                            'red': None,
-                            'white': None
-                        }
+                    # 存储排版后的背景图
+                    bg_files = {
+                        'blue': None,
+                        'red': None,
+                        'white': None
+                    }
 
-                        # 生成并排版所有背景图
-                        for name, color in background_colors.items():
-                            background = Image.new('RGB', output_size, color)
-                            x = (output_size[0] - foreground.width) // 2
-                            y = (output_size[1] - foreground.height) // 2
-                            background.paste(foreground, (x, y), foreground)
+                    # 生成并排版所有背景图
+                    for name, color in background_colors.items():
+                        background = Image.new('RGB', output_size, color)
+                        x = (output_size[0] - foreground.width) // 2
+                        y = (output_size[1] - foreground.height) // 2
+                        background.paste(foreground, (x, y), foreground)
 
-                            rotated_bg_io = io.BytesIO()
-                            排版(background, rotated_bg_io)  # 使用您现有的函数
-                            rotated_bg_bytes = rotated_bg_io.getvalue()
+                        rotated_bg_io = io.BytesIO()
+                        排版(background, rotated_bg_io)  # 使用您现有的函数
+                        rotated_bg_bytes = rotated_bg_io.getvalue()
 
-                            if name == '蓝底':
-                                bg_files['blue'] = ContentFile(
-                                    rotated_bg_bytes, name=f"{filename}_blue.jpg")
-                            elif name == '红底':
-                                bg_files['red'] = ContentFile(
-                                    rotated_bg_bytes, name=f"{filename}_red.jpg")
-                            elif name == '白底':
-                                bg_files['white'] = ContentFile(
-                                    rotated_bg_bytes, name=f"{filename}_white.jpg")
+                        if name == '蓝底':
+                            bg_files['blue'] = ContentFile(
+                                rotated_bg_bytes, name=f"{filename}_blue.jpg")
+                        elif name == '红底':
+                            bg_files['red'] = ContentFile(
+                                rotated_bg_bytes, name=f"{filename}_red.jpg")
+                        elif name == '白底':
+                            bg_files['white'] = ContentFile(
+                                rotated_bg_bytes, name=f"{filename}_white.jpg")
 
-                        # 对原始图进行排版
-                        rotated_io = io.BytesIO()
-                        排版(img, rotated_io)  # 使用您现有的函数
-                        rotated_bytes = rotated_io.getvalue()
+                    # 对原始图进行排版
+                    rotated_io = io.BytesIO()
+                    排版(img, rotated_io)  # 使用您现有的函数
+                    rotated_bytes = rotated_io.getvalue()
 
-                        # 创建模型实例
-                        uploaded_photo = UploadedZhaopian.objects.create(
-                            name=filename,
-                            photo=ContentFile(img_bytes, name=f"{filename}.jpg"),
-                            rotated_photo=ContentFile(
-                                rotated_bytes, name=f"{filename}_rotated.jpg"),
-                            blue_background=bg_files['blue'],
-                            red_background=bg_files['red'],
-                            white_background=bg_files['white']
-                        )
+                    # 创建模型实例
+                    uploaded_photo = UploadedZhaopian.objects.create(
+                        name=filename,
+                        photo=ContentFile(img_bytes, name=f"{filename}.jpg"),
+                        rotated_photo=ContentFile(
+                            rotated_bytes, name=f"{filename}_rotated.jpg"),
+                        blue_background=bg_files['blue'],
+                        red_background=bg_files['red'],
+                        white_background=bg_files['white']
+                    )
 
-                        # 序列化返回数据
-                        serializer = UploadedZhaopianSerializer(uploaded_photo)
-                        results.append(serializer.data)
+                    # 序列化返回数据
+                    serializer = UploadedZhaopianSerializer(uploaded_photo)
+                    results.append(serializer.data)
 
             except Exception as e:
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -484,99 +515,113 @@ def photo_add(request):
 
         for file in files:
 
-            with Image.open(file) as img:
-
-                if img.mode in ('RGBA', 'LA'):
-                    img = img.convert('RGB')  # 移除Alpha通道
-
-                if len(files) == 1:
-
-                    filename = request.POST['model_name'][:10]
-                    if len(filename) == 0:
-                        filename = os.path.splitext(file.name)[0][:10]
-
+            # 人脸对齐：先保存到临时文件，对齐后替换原图
+            import tempfile as _tf
+            _tmp = _tf.NamedTemporaryFile(suffix='.jpg', delete=False)
+            for chunk in file.chunks():
+                _tmp.write(chunk)
+            _tmp_path = _tmp.name
+            _tmp.close()
+            try:
+                _aligned = align_photo(_tmp_path)
+                if _aligned is not None:
+                    img = _aligned
                 else:
+                    img = Image.open(_tmp_path).convert('RGB')
+            finally:
+                os.unlink(_tmp_path)
+
+            if img.mode in ('RGBA', 'LA'):
+                img = img.convert('RGB')  # 移除Alpha通道
+
+            if len(files) == 1:
+
+                filename = request.POST['model_name'][:10]
+                if len(filename) == 0:
                     filename = os.path.splitext(file.name)[0][:10]
 
-                img_io = io.BytesIO()
+            else:
+                filename = os.path.splitext(file.name)[0][:10]
 
-                img = resize_photo(cut_photo(img, 1), 1)
-                img.save(img_io, format='JPEG')
-                img_bytes = img_io.getvalue()  # 直接获取字节数据
+            img_io = io.BytesIO()
 
-                result = client.bodySeg(img_bytes)
+            img = resize_photo(cut_photo(img, 1), 1)
+            img.save(img_io, format='JPEG')
+            img_bytes = img_io.getvalue()  # 直接获取字节数据
 
-                if 'foreground' in result:
-                    # 转换前景图
-                    foreground = Image.open(io.BytesIO(
-                        base64.b64decode(result['foreground'])))
+            result = client.bodySeg(img_bytes)
 
-                    # 一寸照片标准尺寸
-                    output_size = (295, 413)
-                    foreground.thumbnail(output_size)
+            if 'foreground' in result:
+                # 转换前景图
+                foreground = Image.open(io.BytesIO(
+                    base64.b64decode(result['foreground'])))
 
-                    # 创建三种背景色
-                    background_colors = {
-                        '蓝底': (67, 142, 219),
-                        '红底': (255, 0, 0),
-                        '白底': (255, 255, 255)
-                    }
+                # 一寸照片标准尺寸
+                output_size = (295, 413)
+                foreground.thumbnail(output_size)
 
-                    # 存储排版后的背景图
-                    bg_files = {
-                        'blue': None,
-                        'red': None,
-                        'white': None
-                    }
+                # 创建三种背景色
+                background_colors = {
+                    '蓝底': (67, 142, 219),
+                    '红底': (255, 0, 0),
+                    '白底': (255, 255, 255)
+                }
 
-                    # 生成并排版所有背景图
-                    white_bg_single_file = None
-                    for name, color in background_colors.items():
-                        # 生成背景
-                        background = Image.new('RGB', output_size, color)
-                        x = (output_size[0] - foreground.width) // 2
-                        y = (output_size[1] - foreground.height) // 2
-                        background.paste(foreground, (x, y), foreground)
+                # 存储排版后的背景图
+                bg_files = {
+                    'blue': None,
+                    'red': None,
+                    'white': None
+                }
 
-                        # 白底排版前保存单张一寸照
-                        if name == '白底':
-                            single_io = io.BytesIO()
-                            background.save(single_io, format='JPEG')
-                            white_bg_single_file = ContentFile(
-                                single_io.getvalue(), name=f"{filename}_white_single.jpg")
+                # 生成并排版所有背景图
+                white_bg_single_file = None
+                for name, color in background_colors.items():
+                    # 生成背景
+                    background = Image.new('RGB', output_size, color)
+                    x = (output_size[0] - foreground.width) // 2
+                    y = (output_size[1] - foreground.height) // 2
+                    background.paste(foreground, (x, y), foreground)
 
-                        # 对背景图进行排版
-                        rotated_bg_io = io.BytesIO()
-                        排版(background, rotated_bg_io)
-                        rotated_bg_bytes = rotated_bg_io.getvalue()
+                    # 白底排版前保存单张一寸照
+                    if name == '白底':
+                        single_io = io.BytesIO()
+                        background.save(single_io, format='JPEG')
+                        white_bg_single_file = ContentFile(
+                            single_io.getvalue(), name=f"{filename}_white_single.jpg")
 
-                        # 根据背景类型存储
-                        if name == '蓝底':
-                            bg_files['blue'] = ContentFile(
-                                rotated_bg_bytes, name=f"{filename}_blue.jpg")
-                        elif name == '红底':
-                            bg_files['red'] = ContentFile(
-                                rotated_bg_bytes, name=f"{filename}_red.jpg")
-                        elif name == '白底':
-                            bg_files['white'] = ContentFile(
-                                rotated_bg_bytes, name=f"{filename}_white.jpg")
+                    # 对背景图进行排版
+                    rotated_bg_io = io.BytesIO()
+                    排版(background, rotated_bg_io)
+                    rotated_bg_bytes = rotated_bg_io.getvalue()
 
-                    # 对原始图进行排版
-                    rotated_io = io.BytesIO()
-                    排版(img, rotated_io)
-                    rotated_bytes = rotated_io.getvalue()
+                    # 根据背景类型存储
+                    if name == '蓝底':
+                        bg_files['blue'] = ContentFile(
+                            rotated_bg_bytes, name=f"{filename}_blue.jpg")
+                    elif name == '红底':
+                        bg_files['red'] = ContentFile(
+                            rotated_bg_bytes, name=f"{filename}_red.jpg")
+                    elif name == '白底':
+                        bg_files['white'] = ContentFile(
+                            rotated_bg_bytes, name=f"{filename}_white.jpg")
 
-                    # 创建模型实例并保存所有图片
-                    models.UploadedZhaopian.objects.create(
-                        name=filename,
-                        photo=ContentFile(img_bytes, name=f"{filename}.jpg"),
-                        rotated_photo=ContentFile(
-                            rotated_bytes, name=f"{filename}_rotated.jpg"),
-                        blue_background=bg_files['blue'],
-                        red_background=bg_files['red'],
-                        white_background=bg_files['white'],
-                        white_bg_single=white_bg_single_file
-                    )
+                # 对原始图进行排版
+                rotated_io = io.BytesIO()
+                排版(img, rotated_io)
+                rotated_bytes = rotated_io.getvalue()
+
+                # 创建模型实例并保存所有图片
+                models.UploadedZhaopian.objects.create(
+                    name=filename,
+                    photo=ContentFile(img_bytes, name=f"{filename}.jpg"),
+                    rotated_photo=ContentFile(
+                        rotated_bytes, name=f"{filename}_rotated.jpg"),
+                    blue_background=bg_files['blue'],
+                    red_background=bg_files['red'],
+                    white_background=bg_files['white'],
+                    white_bg_single=white_bg_single_file
+                )
 
         return redirect("/home/photo_list")
 
@@ -618,7 +663,12 @@ def generate_white_bg(request):
         photo_id = request.data.get("photo_id")
         photo = UploadedZhaopian.objects.get(id=photo_id)
 
-        img = Image.open(photo.photo)
+        # 人脸对齐
+        _aligned = align_photo(photo.photo.path)
+        if _aligned is not None:
+            img = _aligned
+        else:
+            img = Image.open(photo.photo.path).convert('RGB')
         img = resize_photo(cut_photo(img, 1), 1)
 
         img_io = io.BytesIO()
@@ -3714,9 +3764,34 @@ def mine_card_delete(request, worker_id):
 
 
 def mine_card_update_photo(request, worker_id):
-    """单行上传照片"""
+    """单行上传照片（上传时自动 retina-face 人脸对齐）"""
     worker = get_object_or_404(models.Worker, id=worker_id)
     if request.method == "POST":
+        # --- 上传时自动 retina-face 人脸对齐 ---
+        if "photo" in request.FILES:
+            from django.core.files.uploadedfile import InMemoryUploadedFile
+            from batch_id_photo import align_photo
+            import tempfile
+
+            uploaded = request.FILES["photo"]
+            file_content = uploaded.read()
+
+            with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
+                tmp.write(file_content)
+                tmp_path = tmp.name
+
+            try:
+                aligned = align_photo(tmp_path)
+                buf = io.BytesIO()
+                aligned.save(buf, format="JPEG", quality=95)
+                buf.seek(0)
+                request.FILES["photo"] = InMemoryUploadedFile(
+                    buf, "photo", uploaded.name, uploaded.content_type,
+                    buf.getbuffer().nbytes, None
+                )
+            finally:
+                os.unlink(tmp_path)
+
         form = PhotoForm(request.POST, request.FILES, instance=worker)
         if form.is_valid():
             form.save()
