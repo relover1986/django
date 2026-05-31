@@ -17,7 +17,6 @@ from collections import defaultdict
 from app01.jiami import md5
 from .func import *
 from .photo import *
-from batch_id_photo import align_photo
 from django_filters.views import FilterView
 from django.views.generic import ListView
 import pandas as pd
@@ -213,28 +212,13 @@ def api_photo_add(request):
         # 处理上传的照片
         filename = model_name[:10] if model_name else os.path.splitext(file.name)[0][:10]
 
-        # 人脸对齐：先保存到临时文件，对齐后替换原图
-        import tempfile as _tf
-        _tmp = _tf.NamedTemporaryFile(suffix='.jpg', delete=False)
-        for chunk in file.chunks():
-            _tmp.write(chunk)
-        _tmp_path = _tmp.name
-        _tmp.close()
-        try:
-            _aligned = align_photo(_tmp_path)
-            if _aligned is not None:
-                img = _aligned
-            else:
-                img = Image.open(_tmp_path).convert('RGB')
-        finally:
-            os.unlink(_tmp_path)
-
-        if img.mode in ('RGBA', 'LA'):
-            img = img.convert('RGB')  # 移除Alpha通道
+        img = Image.open(file)
+        if img.mode in ('RGBA', 'LA', 'P'):
+            img = img.convert('RGB')
 
         img = resize_photo(cut_photo(img, 1), 1)
         img_io = io.BytesIO()
-        img.save(img_io, format='JPEG')
+        img.save(img_io, format='JPEG', quality=45, optimize=True, subsampling='4:2:0')
         img_bytes = img_io.getvalue()
 
         result = client.bodySeg(img_bytes)
@@ -391,11 +375,7 @@ class PhotoUploadAPIView(APIView):
                 _tmp_path = _tmp.name
                 _tmp.close()
                 try:
-                    _aligned = align_photo(_tmp_path)
-                    if _aligned is not None:
-                        img = _aligned
-                    else:
-                        img = Image.open(_tmp_path).convert('RGB')
+                    img = Image.open(_tmp_path).convert('RGB')
                 finally:
                     os.unlink(_tmp_path)
 
@@ -523,11 +503,7 @@ def photo_add(request):
             _tmp_path = _tmp.name
             _tmp.close()
             try:
-                _aligned = align_photo(_tmp_path)
-                if _aligned is not None:
-                    img = _aligned
-                else:
-                    img = Image.open(_tmp_path).convert('RGB')
+                img = Image.open(_tmp_path).convert('RGB')
             finally:
                 os.unlink(_tmp_path)
 
@@ -663,12 +639,7 @@ def generate_white_bg(request):
         photo_id = request.data.get("photo_id")
         photo = UploadedZhaopian.objects.get(id=photo_id)
 
-        # 人脸对齐
-        _aligned = align_photo(photo.photo.path)
-        if _aligned is not None:
-            img = _aligned
-        else:
-            img = Image.open(photo.photo.path).convert('RGB')
+        img = Image.open(photo.photo.path).convert('RGB')
         img = resize_photo(cut_photo(img, 1), 1)
 
         img_io = io.BytesIO()
@@ -3725,7 +3696,7 @@ def mine_card_index(request):
     """首页：Excel 导入 + 人员列表 + 逐行照片上传"""
     workers = models.Worker.objects.all().order_by("id")
     excel_form = ExcelUploadForm()
-    worker_form = WorkerForm()
+    worker_form = WorkerForm(initial={"job_type": ""})
 
     if request.method == "POST" and "excel" in request.FILES:
         excel_form = ExcelUploadForm(request.POST, request.FILES)
@@ -3744,13 +3715,15 @@ def mine_card_index(request):
             messages.success(request, "已添加")
             return redirect("mine_card_index")
 
+    job_types = list(models.JobType.objects.values_list("name", flat=True).order_by("name"))
     return render(request, "mine_card/upload.html", {
         "workers": workers,
         "excel_form": excel_form,
         "worker_form": worker_form,
         "photo_forms": {w.id: PhotoForm(instance=w) for w in workers},
         "worker_names_json": json.dumps(list(models.Worker.objects.values_list("name", flat=True).distinct().order_by("name"))),
-        "job_type_choices_json": json.dumps([c[0] for c in models.Worker.JOB_TYPE_CHOICES]),
+        "job_type_choices_json": json.dumps(job_types),
+        "job_types": job_types,
     })
 
 
@@ -3764,33 +3737,36 @@ def mine_card_delete(request, worker_id):
 
 
 def mine_card_update_photo(request, worker_id):
-    """单行上传照片（上传时自动 retina-face 人脸对齐）"""
+    """单行上传照片 → 固定一寸标准 295×413，JPEG quality=45，清 EXIF"""
+    from io import BytesIO
+    from PIL import Image
+
     worker = get_object_or_404(models.Worker, id=worker_id)
-    if request.method == "POST":
-        # --- 上传时自动 retina-face 人脸对齐 ---
-        if "photo" in request.FILES:
-            from django.core.files.uploadedfile import InMemoryUploadedFile
-            from batch_id_photo import align_photo
-            import tempfile
+    if request.method == "POST" and "photo" in request.FILES:
+        from django.core.files.uploadedfile import InMemoryUploadedFile
 
-            uploaded = request.FILES["photo"]
-            file_content = uploaded.read()
+        uploaded = request.FILES["photo"]
+        img = Image.open(uploaded)
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
 
-            with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
-                tmp.write(file_content)
-                tmp_path = tmp.name
+        # 等比缩放覆盖 295×413，再中心裁剪
+        tw, th = 295, 413
+        w, h = img.size
+        scale = max(tw / w, th / h)
+        img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+        left = (img.width - tw) // 2
+        top = (img.height - th) // 2
+        img = img.crop((left, top, left + tw, top + th))
 
-            try:
-                aligned = align_photo(tmp_path)
-                buf = io.BytesIO()
-                aligned.save(buf, format="JPEG", quality=95)
-                buf.seek(0)
-                request.FILES["photo"] = InMemoryUploadedFile(
-                    buf, "photo", uploaded.name, uploaded.content_type,
-                    buf.getbuffer().nbytes, None
-                )
-            finally:
-                os.unlink(tmp_path)
+        buf = BytesIO()
+        img.save(buf, format="JPEG", quality=45,
+                 optimize=True, subsampling="4:2:0")
+        buf.seek(0)
+        request.FILES["photo"] = InMemoryUploadedFile(
+            buf, "photo", uploaded.name, "image/jpeg",
+            buf.getbuffer().nbytes, None
+        )
 
         form = PhotoForm(request.POST, request.FILES, instance=worker)
         if form.is_valid():
@@ -3866,15 +3842,10 @@ def _mine_card_parse_excel(excel_file):
             job_type = str(row[1]).strip() if len(row) > 1 and row[1] else ""
             if not name:
                 continue
-            if job_type and job_type not in valid_jobs:
-                for vj in valid_jobs:
-                    if job_type in vj or vj in job_type:
-                        job_type = vj
-                        break
-                else:
-                    job_type = "爆破员"
-            elif not job_type:
+            if not job_type:
                 job_type = "爆破员"
+            # 工种去重写入 JobType 模型
+            models.JobType.objects.get_or_create(name=job_type, defaults={"responsibilities": ""})
             models.Worker.objects.create(name=name, job_type=job_type)
             imported += 1
 

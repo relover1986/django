@@ -1,3 +1,4 @@
+import re
 import os
 import uuid
 
@@ -536,8 +537,23 @@ class StaffCertFile(models.Model):
 
 
 def photo_upload_path(instance, filename):
-    ext = os.path.splitext(filename)[1]
-    return f"photos/{uuid.uuid4().hex}{ext}"
+    """用姓名+_入井证命名"""
+    name = re.sub(r"[^\w\u4e00-\u9fff-]", "", instance.name)
+    return f"photos/{name}_入井证.jpg"
+
+class JobType(models.Model):
+    """工种模型"""
+    name = models.CharField("工种", max_length=50, unique=True)
+    responsibilities = models.TextField("岗位职责", blank=True, default="")
+
+    class Meta:
+        verbose_name = "工种"
+        verbose_name_plural = "工种"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
 
 
 class Worker(models.Model):

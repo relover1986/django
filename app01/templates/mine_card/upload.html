@@ -220,22 +220,22 @@
                         </form>
                     </div>
                 </div>
-                <!-- 右侧：手动添加标签+按钮 -->
-                <div class="col-md-6 d-flex align-items-center" style="border-left: 1px solid #e5e7eb; padding-left: 20px; padding-right: 20px;">
-                    <form method="post" id="manual-form" class="d-flex align-items-center gap-2 w-100">
+                <!-- 右侧：手动添加（标签在上，输入框在下） -->
+                <div class="col-md-6 d-flex flex-column justify-content-center" style="border-left: 1px solid #e5e7eb; padding-left: 20px; padding-right: 20px;">
+                    <div class="fw-medium text-secondary compact-label mb-1">或手动添加一人</div>
+                    <form method="post" id="manual-form" class="d-flex align-items-center gap-2">
                         {% csrf_token %}
-                        <label class="form-label fw-medium text-secondary compact-label mb-0 text-nowrap">或手动添加一人</label>
-                        <div class="name-input-wrap" style="max-width:110px;">
-                                        {{ worker_form.name }}
-                                        <i class="fas fa-caret-down dropdown-arrow" onclick="toggleNameDropdown()"></i>
-                                        <div class="name-suggestions" id="name-suggestions"></div>
-                                    </div>
-                                    <div class="name-input-wrap" style="max-width:90px;">
-                                        {{ worker_form.job_type }}
-                                        <i class="fas fa-caret-down dropdown-arrow" onclick="toggleJobDropdown()"></i>
-                                        <div class="name-suggestions" id="job-suggestions"></div>
-                                    </div>
-                        <button type="submit" class="btn btn-outline-primary btn-sm ms-auto flex-shrink-0">
+                        <div class="name-input-wrap" style="max-width:145px;">
+                            {{ worker_form.name }}
+                            <i class="fas fa-caret-down dropdown-arrow" onclick="toggleNameDropdown()"></i>
+                            <div class="name-suggestions" id="name-suggestions"></div>
+                        </div>
+                        <div class="name-input-wrap" style="max-width:145px;">
+                            {{ worker_form.job_type }}
+                            <i class="fas fa-caret-down dropdown-arrow" onclick="toggleJobDropdown()"></i>
+                            <div class="name-suggestions" id="job-suggestions"></div>
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary btn-sm flex-shrink-0">
                             <i class="fas fa-plus"></i>
                         </button>
                     </form>
@@ -277,9 +277,7 @@
                 </div>
             </div>
             <datalist id="job-type-list">
-                            <option value="爆破员">
-                            <option value="安全员">
-                            <option value="工程师">
+                            {% for jt in job_types %}<option value="{{ jt }}">{% endfor %}
                         </datalist>
                 </div>
             </div>

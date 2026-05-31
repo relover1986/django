@@ -5,7 +5,6 @@ from math import ceil
 from django.conf import settings
 from PIL import Image, ImageDraw, ImageFont
 import rembg
-from batch_id_photo import align_photo
 
 # ---------- 单卡常量 ----------
 AVATAR_W, AVATAR_H = 130, 189
@@ -120,9 +119,10 @@ def generate_label(photo_path: str, name: str, job_type: str) -> BytesIO:
     img = Image.open(bg_path).convert("RGB")
     draw = ImageDraw.Draw(img)
 
-    avatar = align_photo(photo_path)  # 人脸对齐后返回 PIL Image (RGB, 295×413)
-    avatar_resized = avatar.resize((AVATAR_W, AVATAR_H), Image.LANCZOS)
-    img.paste(avatar_resized, (AVATAR_X, AVATAR_Y))
+    # 直接缩放照片，不做人脸对齐（照片上传时已处理过）
+    photo = Image.open(photo_path).convert("RGB")
+    photo_resized = photo.resize((AVATAR_W, AVATAR_H), Image.LANCZOS)
+    img.paste(photo_resized, (AVATAR_X, AVATAR_Y))
 
     title_font = _load_font(TITLE_FONT_SIZE)
     name_font = _load_font(NAME_FONT_SIZE)
@@ -152,7 +152,7 @@ def generate_label(photo_path: str, name: str, job_type: str) -> BytesIO:
     draw.text((nx, name_y), label_text, fill=(0, 0, 0), font=name_font)
 
     buf = BytesIO()
-    img.save(buf, format="JPEG", quality=95)
+    img.save(buf, format="JPEG", quality=85)
     buf.seek(0)
     return buf
 
@@ -183,7 +183,7 @@ def generate_back_label(name: str) -> BytesIO:
     draw.text((mx, my), msg, fill=(0, 0, 0), font=msg_font)
 
     buf = BytesIO()
-    img.save(buf, format="JPEG", quality=95)
+    img.save(buf, format="JPEG", quality=85)
     buf.seek(0)
     return buf
 
