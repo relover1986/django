@@ -19,14 +19,8 @@
                     <option value="{{ ct.id }}" {% if selected_type == ct.id %}selected{% endif %}>{{ ct.name }}</option>
                     {% endfor %}
                 </select>
-                <label class="form-label mb-0 ms-2">部门：</label>
-                <select name="department" class="form-select form-select-sm" style="max-width:160px;" onchange="this.form.submit()">
-                    <option value="">全部</option>
-                    {% for dept in departments %}
-                    <option value="{{ dept }}" {% if selected_department == dept %}selected{% endif %}>{{ dept }}</option>
-                    {% endfor %}
-                </select>
-                {% if selected_type or selected_department %}
+                <span class="badge bg-info ms-2">当前部门：{{ department }}</span>
+                {% if selected_type %}
                 <a href="/home/staff_cert/" class="btn btn-outline-secondary btn-sm">清除</a>
                 {% endif %}
             </form>

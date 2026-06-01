@@ -1,0 +1,70 @@
+{% extends "home.html" %}
+{% block content %}
+<br><br><br>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">📊 本部门答题统计 — {{ dept_name }}</h5>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if qr_base64 %}
+                        <div class="text-center">
+                            <small class="text-muted d-block">答题入口</small>
+                            <img src="data:image/png;base64,{{ qr_base64 }}"
+                                 alt="答题入口二维码"
+                                 style="width:100px;height:100px;"
+                                 class="img-fluid">
+                        </div>
+                        {% endif %}
+                        <a href="/home/" class="btn btn-outline-secondary btn-sm">← 回首页</a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if dept_stats %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center">姓名</th>
+                                    <th class="text-center">手机号</th>
+                                    <th class="text-center">爆破答对</th>
+                                    <th class="text-center">爆破剩余</th>
+                                    <th class="text-center">井工答对</th>
+                                    <th class="text-center">井工剩余</th>
+                                    <th class="text-center">危装答对</th>
+                                    <th class="text-center">危装剩余</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for s in dept_stats %}
+                                <tr>
+                                    <td class="text-center fw-semibold">{{ s.name }}</td>
+                                    <td class="text-center">{{ s.phone }}</td>
+                                    <td class="text-center text-success">{{ s.score_baopo }}</td>
+                                    <td class="text-center {% if s.remain_baopo > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">{{ s.remain_baopo }}</td>
+                                    <td class="text-center text-success">{{ s.score_jingong }}</td>
+                                    <td class="text-center {% if s.remain_jingong > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">{{ s.remain_jingong }}</td>
+                                    <td class="text-center text-success">{{ s.score_weizhuang }}</td>
+                                    <td class="text-center {% if s.remain_weizhuang > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">{{ s.remain_weizhuang }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer text-muted small text-center">
+                        共 {{ dept_stats|length }} 人，按剩余题数从多到少排序
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <div style="font-size: 48px; color: #d0d5dd; margin-bottom: 12px;">📋</div>
+                        <h6>暂无本部门人员答题数据</h6>
+                        <p class="small">本部门在职人员尚未开始答题</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
