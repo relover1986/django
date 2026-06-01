@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import (
+from app01.models import (
     Admin, QuestionType, JskjgQuestion, WxpzxQuestion,
     UserAnswer, Tihao, LoginRecords, ExplosiveInventoryItem,
     CategoryContent, UploadedPDF, UploadedTu, UploadedZhaopian,
