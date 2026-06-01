@@ -1,45 +1,175 @@
 {% extends "home.html" %}
-<!-- 继承自名为 "home.html" 的基础模板 -->
-
 {% block content %}
-<!-- 开始定义名为 "content" 的块，用于在基础模板中插入内容 -->
-<br />
-<!-- 插入一个换行符 -->
-<br />
-<!-- 插入一个换行符 -->
-<br />
-<!-- 插入一个换行符 -->
-<br />
-<!-- 插入一个换行符 -->
-<br />
-<!-- 插入一个换行符 -->
-<form method="post" enctype="multipart/form-data">
-  <!-- 创建一个表单，使用 POST 方法提交数据，并设置 enctype 为 "multipart/form-data" 以支持文件上传 -->
-  {% csrf_token %}
-  <!-- 插入 Django 的跨站请求伪造保护令牌 -->
-  <!-- 下拉菜单，显示 Django 模型中的表名 -->
-  <!-- 此处应添加下拉菜单的代码 -->
-  <!-- 文件上传输入框，只允许上传 .xlsx 文件 -->
-  <div class="card">
-    <div class="card-header">
-      <h3 class="card-title">也可以找个纯白背景墙拍一寸照,请端正拍照,输入框内填写姓名</h3>
-    </div>
+<style>
+.drop-zone {
+    border: 2px dashed #c0c0c0;
+    border-radius: 12px;
+    padding: 50px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    background: #fafbfc;
+    position: relative;
+}
+.drop-zone.dragover {
+    border-color: #4f8ef7;
+    background: #eef4ff;
+    box-shadow: 0 0 0 3px rgba(79,142,247,.15);
+}
+.drop-zone .icon {
+    font-size: 48px; color: #a0aec0; margin-bottom: 12px;
+}
+.drop-zone .text { color: #718096; font-size: 15px; }
+.drop-zone .text strong { color: #4f8ef7; }
+.drop-zone .hint { color: #a0aec0; font-size: 13px; margin-top: 6px; }
+.drop-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer;
+}
+.preview-list {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px;
+}
+.preview-item {
+    position: relative; width: 80px; height: 112px;
+    border-radius: 6px; overflow: hidden; border: 1px solid #e0e0e0;
+    background: #f5f5f5;
+}
+.preview-item img {
+    width: 100%; height: 100%; object-fit: cover;
+}
+.preview-item .remove-btn {
+    position: absolute; top: 2px; right: 2px;
+    width: 20px; height: 20px; border-radius: 50%; border: none;
+    background: rgba(0,0,0,.5); color: #fff; font-size: 12px;
+    line-height: 20px; text-align: center; cursor: pointer;
+    display: none;
+}
+.preview-item:hover .remove-btn { display: block; }
+.preview-item .filename {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,.5); color: #fff; font-size: 10px;
+    padding: 2px 4px; text-overflow: ellipsis; overflow: hidden;
+    white-space: nowrap;
+}
+.alert-error {
+    background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c;
+    padding: 10px 16px; border-radius: 8px; margin-bottom: 12px; font-size: 14px;
+}
+</style>
 
-  <input type="text" id="file_upload" name="model_name" />
-
-  <label for="file_upload">上传照片:</label>
-  <!-- 创建一个标签，用于描述文件上传输入框 -->
-  <input type="file" id="file_upload" name="file"  multiple />
-  <!-- 创建一个文件上传输入框，设置 id 为 "file_upload"，name 为 "file"，accept 属性限制只能上传 .pdf 文件，并允许选择多个文件 -->
-  <br />
-  <br />
-  <!-- 插入两个换行符 -->
-  <!-- 上传按钮 -->
-  <input type="submit" value="上传" />
-  <!-- 创建一个提交按钮，显示文本为 "上传" -->
-
+<br><br><br>
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">📸 一寸照上传 — 支持拖拽</h3>
+    <p class="text-muted mb-0" style="font-size:13px;">
+      找个纯白背景墙端正拍照，支持拖文件/点选，可批量上传
+    </p>
   </div>
-</form>
-<!-- 结束表单定义 -->
+  <div class="card-body">
+    {% if error %}
+    <div class="alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" id="uploadForm">
+      {% csrf_token %}
+
+      <div class="mb-3">
+        <label class="form-label">姓名（单张上传时填写，批量传自动取文件名）</label>
+        <input type="text" class="form-control" name="model_name" id="modelName"
+               placeholder="留空则自动使用文件名" style="max-width:300px;">
+      </div>
+
+      <div class="drop-zone" id="dropZone">
+        <div class="icon">📁</div>
+        <div class="text">拖放照片到此处，或 <strong>点击选择文件</strong></div>
+        <div class="hint">支持 JPG / PNG，多选最多10张</div>
+        <input type="file" name="file" id="fileInput" multiple accept="image/jpeg,image/png">
+      </div>
+
+      <div class="preview-list" id="previewList"></div>
+
+      <div class="mt-3">
+        <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+          ↑ 上传 <span id="fileCount"></span>
+        </button>
+        <a href="/home/photo_list/" class="btn btn-outline-secondary ms-2">← 返回列表</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const MAX_FILES = 10;
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const previewList = document.getElementById('previewList');
+const submitBtn = document.getElementById('submitBtn');
+const fileCount = document.getElementById('fileCount');
+let selectedFiles = [];
+
+['dragenter', 'dragover'].forEach(evt => {
+    dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+});
+['dragleave', 'drop'].forEach(evt => {
+    dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.remove('dragover'); });
+});
+dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    if (files.length) addFiles(files);
+});
+
+fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) addFiles(Array.from(fileInput.files));
+    fileInput.value = '';
+});
+
+function addFiles(files) {
+    const available = MAX_FILES - selectedFiles.length;
+    if (available <= 0) {
+        alert('\u5df2\u8fbe\u4e0a\u4f20\u4e0a\u9650 ' + MAX_FILES + ' \u5f20\uff0c\u8bf7\u5148\u79fb\u9664\u5df2\u6709\u6587\u4ef6');
+        return;
+    }
+    const canAdd = files.slice(0, available);
+    if (canAdd.length < files.length) {
+        alert('\u6700\u591a\u53ea\u80fd\u4e0a\u4f20 ' + MAX_FILES + ' \u5f20\uff0c\u591a\u4f59\u7684\u5df2\u8df3\u8fc7');
+    }
+    selectedFiles = selectedFiles.concat(canAdd);
+    renderPreviews();
+}
+
+function removeFile(index) {
+    selectedFiles.splice(index, 1);
+    renderPreviews();
+}
+
+function renderPreviews() {
+    previewList.innerHTML = '';
+    selectedFiles.forEach((file, i) => {
+        const url = URL.createObjectURL(file);
+        const div = document.createElement('div');
+        div.className = 'preview-item';
+        div.innerHTML = `
+            <img src="${url}" alt="${file.name}">
+            <button type="button" class="remove-btn" onclick="removeFile(${i})">\u2715</button>
+            <div class="filename">${file.name.slice(0, 20)}</div>
+        `;
+        previewList.appendChild(div);
+    });
+    const n = selectedFiles.length;
+    fileCount.textContent = n ? `(${n}/${MAX_FILES})` : '';
+    submitBtn.disabled = n === 0;
+}
+
+document.getElementById('uploadForm').addEventListener('submit', e => {
+    if (selectedFiles.length === 0) {
+        e.preventDefault();
+        alert('\u8bf7\u5148\u9009\u62e9\u6216\u62d6\u62fd\u7167\u7247');
+        return;
+    }
+    const dt = new DataTransfer();
+    selectedFiles.forEach(f => dt.items.add(f));
+    fileInput.files = dt.files;
+});
+</script>
 {% endblock %}
-<!-- 结束名为 "content" 的块定义 -->

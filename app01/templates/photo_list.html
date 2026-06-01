@@ -1,4 +1,10 @@
-{% extends "home.html" %} {% block content %}
+{% extends "home.html" %}
+{% block content %}
+
+<style>
+.check-col { width: 36px; }
+.th-check { text-align: center; }
+</style>
 
 <div class="container-fluid" style="margin-top: 80px;">
   <div class="row">
@@ -10,6 +16,9 @@
             {{ title }}
           </h5>
           <div class="d-flex gap-2">
+            <button class="btn btn-outline-danger btn-sm" id="batchDeleteBtn" disabled onclick="batchDelete()">
+              <i data-feather="trash-2" style="width: 14px; height: 14px;"></i> 批量删除
+            </button>
             <a class="btn btn-success btn-sm" href="/home/{{ title }}_add">
               <i data-feather="plus" style="width: 14px; height: 14px;"></i> 创建
             </a>
@@ -18,11 +27,63 @@
             </a>
           </div>
         </div>
+
+        {% if request.GET.msg %}
+        <div class="alert alert-success alert-dismissible fade show m-3 mb-0" role="alert">
+          {{ request.GET.msg }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+
+        <!-- 翻页 -->
+        <div class="card-body py-2 border-bottom">
+          <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+              共 {{ data.paginator.count }} 条
+              {% if data.paginator.num_pages > 1 %}
+              ，第 {{ data.number }} / {{ data.paginator.num_pages }} 页
+              {% endif %}
+            </small>
+            <nav>
+              <ul class="pagination pagination-sm mb-0">
+                {% if data.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page=1">«</a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ data.previous_page_number }}">‹</a>
+                </li>
+                {% endif %}
+
+                {% if data.paginator.num_pages > 1 %}
+                {% for n in data.paginator.page_range %}
+                  {% if n >= data.number|add:-3 and n <= data.number|add:3 %}
+                  <li class="page-item {% if n == data.number %}active{% endif %}">
+                    <a class="page-link" href="?page={{ n }}">{{ n }}</a>
+                  </li>
+                  {% endif %}
+                {% endfor %}
+                {% endif %}
+
+                {% if data.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ data.next_page_number }}">›</a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ data.paginator.num_pages }}">»</a>
+                </li>
+                {% endif %}
+              </ul>
+            </nav>
+          </div>
+        </div>
+
         <div class="card-body p-0">
           <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0" id="photoTable">
               <thead class="table-light">
                 <tr>
+                  <th class="check-col th-check"><input type="checkbox" id="checkAll" onchange="toggleAll()"></th>
                   {% for col in cols %}
                   <th class="text-center text-nowrap">{{ col.verbose_name }}</th>
                   {% endfor %}
@@ -30,17 +91,25 @@
               </thead>
               <tbody>
                 {% for obj in data %}
-                <tr>
+                <tr data-id="{{ obj.id }}">
+                  <td class="text-center"><input type="checkbox" class="row-check" value="{{ obj.id }}" onchange="updateBatchBtn()"></td>
                   {% for key, cell in obj.items %}
                   {% if key == 'uploaded_at' %}
                   <td class="text-center text-nowrap">{{ cell|date:"Y-m-d H:i:s" }}</td>
 
-                  {% elif 'background' in key or 'white_bg_single' in key %}
+                  {% elif key == 'white_bg_single' %}
                   <td class="text-center">
                     {% if cell %}
                     <a href="/media/{{cell}}" target="_blank">
                       <img src="/media/{{cell}}" class="img-thumbnail" style="max-width: 80px; max-height: 110px;">
                     </a>
+                    {% endif %}
+                  </td>
+
+                  {% elif 'background' in key %}
+                  <td class="text-center">
+                    {% if cell %}
+                    <a href="/media/{{cell}}" target="_blank" class="btn btn-sm btn-outline-secondary">{{ key|cut:"_background" }}</a>
                     {% endif %}
                   </td>
 
@@ -62,11 +131,44 @@
             </table>
           </div>
         </div>
+
       </div>
     </div>
   </div>
 </div>
 
 {% csrf_token %}
+
+<script>
+function toggleAll() {
+    const checked = document.getElementById('checkAll').checked;
+    document.querySelectorAll('.row-check').forEach(cb => cb.checked = checked);
+    updateBatchBtn();
+}
+
+function updateBatchBtn() {
+    const n = document.querySelectorAll('.row-check:checked').length;
+    document.getElementById('batchDeleteBtn').disabled = n === 0;
+    document.getElementById('batchDeleteBtn').innerHTML =
+        '<i data-feather="trash-2" style="width: 14px; height: 14px;"></i> 批量删除' + (n ? ' (' + n + ')' : '');
+}
+
+function batchDelete() {
+    const ids = Array.from(document.querySelectorAll('.row-check:checked')).map(cb => cb.value);
+    if (!ids.length) return;
+    if (!confirm('确定删除选中的 ' + ids.length + ' 条记录？')) return;
+    fetch('/home/photo_batch_delete/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: 'ids=' + ids.join(',')
+    }).then(r => {
+        if (r.ok) location.reload();
+        else alert('删除失败');
+    });
+}
+</script>
 
 {% endblock %}

@@ -39,7 +39,7 @@ def login(request):
         now = arrow.now().shift(hours=0).strftime("%Y-%m-%d %H:%M:%S")
 
         
-        request.session['info']={'ident':user.ident,'name':user.username,'role':user.role,'time':arrow.now().shift(hours=0).strftime("%Y-%m-%d %H:%M:%S"),'类型':'登录'}
+        request.session['info']={'ident':user.ident,'name':user.username,'role':user.role,'department':user.department,'time':arrow.now().shift(hours=0).strftime("%Y-%m-%d %H:%M:%S"),'类型':'登录'}
         request.session.set_expiry(60*60*24*7)
         
         user_ip = request.META.get('REMOTE_ADDR')  

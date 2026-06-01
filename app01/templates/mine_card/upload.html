@@ -79,6 +79,8 @@
         }
         .drop-zone .placeholder { color: #98a2b3; font-size: 13px; }
         .drop-zone .placeholder i { font-size: 28px; display: block; margin-bottom: 4px; color: #60a5fa; }
+        .check-col { width: 36px; }
+        .th-check { text-align: center; }
         .photo-form { margin: 0; }
         .name-input-wrap {
             position: relative;
@@ -292,14 +294,20 @@
                 上传照片
                 <span class="badge bg-secondary ms-2">{{ workers|length }} 人</span>
             </span>
-            <span class="text-muted" style="font-size: 13px;">
-                <i class="fas fa-mouse-pointer me-1"></i>点击或拖拽上传
-            </span>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-outline-danger btn-sm" id="batchDeleteBtn" disabled onclick="batchDelete()">
+                    <i class="fas fa-trash-alt"></i> 批量删除
+                </button>
+                <span class="text-muted" style="font-size: 13px;">
+                    <i class="fas fa-mouse-pointer me-1"></i>点击或拖拽上传
+                </span>
+            </div>
         </div>
         <div class="p-0">
             <table class="table table-hover mb-0" style="border-collapse: separate;">
                 <thead class="table-light">
                     <tr>
+                        <th class="check-col th-check"><input type="checkbox" id="checkAll" onchange="toggleAll()"></th>
                         <th style="width:56px;" class="text-muted">#</th>
                         <th style="width:100px;">姓名</th>
                         <th style="width:90px;">工种</th>
@@ -310,6 +318,7 @@
                 <tbody>
                     {% for w in workers %}
                     <tr>
+                        <td class="text-center"><input type="checkbox" class="row-check" value="{{ w.id }}" onchange="updateBatchBtn()"></td>
                         <td class="text-muted text-center">{{ forloop.counter }}</td>
                         <td class="fw-semibold">{{ w.name }}</td>
                         <td><span class="badge bg-info bg-opacity-10 text-info-emphasis px-3 py-1 rounded-pill">{{ w.job_type }}</span></td>
@@ -590,5 +599,36 @@ function showPreview(workerId, file) {
     reader.readAsDataURL(file);
 }
 </script>
+
+<script>
+function toggleAll() {
+    const checked = document.getElementById('checkAll').checked;
+    document.querySelectorAll('.row-check').forEach(cb => cb.checked = checked);
+    updateBatchBtn();
+}
+function updateBatchBtn() {
+    const n = document.querySelectorAll('.row-check:checked').length;
+    document.getElementById('batchDeleteBtn').disabled = n === 0;
+    document.getElementById('batchDeleteBtn').innerHTML =
+        '<i class="fas fa-trash-alt"></i> 批量删除' + (n ? ' (' + n + ')' : '');
+}
+function batchDelete() {
+    const ids = Array.from(document.querySelectorAll('.row-check:checked')).map(cb => cb.value);
+    if (!ids.length) return;
+    if (!confirm('确定删除选中的 ' + ids.length + ' 条记录？')) return;
+    fetch('/home/mine_card/batch_delete/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: 'ids=' + ids.join(',')
+    }).then(r => {
+        if (r.ok) location.reload();
+        else alert('删除失败');
+    });
+}
+</script>
+
 </body>
 </html>

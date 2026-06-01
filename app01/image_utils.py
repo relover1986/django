@@ -7,8 +7,8 @@ from PIL import Image, ImageDraw, ImageFont
 import rembg
 
 # ---------- 单卡常量 ----------
-AVATAR_W, AVATAR_H = 130, 189
-AVATAR_X, AVATAR_Y = 30, 25
+AVATAR_W, AVATAR_H = 200, 280
+AVATAR_X, AVATAR_Y = 160, 25
 
 CARD_W, CARD_H = 856, 540
 
@@ -131,7 +131,7 @@ def generate_label(photo_path: str, name: str, job_type: str) -> BytesIO:
     title = "正在作业"
     tb = draw.textbbox((0, 0), title, font=title_font)
     tx = (CARD_W - tb[2] - tb[0]) // 2
-    draw.text((tx, 35), title, fill=(0, 0, 0), font=title_font)
+    draw.text((tx + 130, 85), title, fill=(0, 0, 0), font=title_font)
     title_bottom = 35 + tb[3] + 10
 
     ub = draw.textbbox((0, 0), UNIT_TEXT, font=info_font)
@@ -147,7 +147,7 @@ def generate_label(photo_path: str, name: str, job_type: str) -> BytesIO:
     label_text = f"姓名：{name}              工种：{job_type}"
     nb = draw.textbbox((0, 0), label_text, font=name_font)
     name_h = nb[3] - nb[1]
-    name_y = title_bottom + (block_y_start - title_bottom - name_h) // 2
+    name_y = title_bottom + (block_y_start - title_bottom - name_h) // 2 + 110
     nx = (CARD_W - nb[2] - nb[0]) // 2
     draw.text((nx, name_y), label_text, fill=(0, 0, 0), font=name_font)
 

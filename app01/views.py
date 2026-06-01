@@ -1,4 +1,5 @@
 from django.shortcuts import render, HttpResponse, redirect
+import time
 import torch
 import torch.nn as nn
 import json
@@ -83,8 +84,8 @@ def contractlabor_add(request):
     if request.method == 'POST':
         # 删除原来的 model_name 获取逻辑
         files = request.FILES.getlist('file')
-
         for file in files:
+            time.sleep(0.1)
             if file.name.endswith('.xlsx'):
                 wb = load_workbook(file)
             elif file.name.endswith('.docx'):
@@ -366,6 +367,7 @@ class PhotoUploadAPIView(APIView):
             return Response({'error': 'No files provided'}, status=status.HTTP_400_BAD_REQUEST)
         
         for file in files:
+            time.sleep(0.1)
             try:
                 # 人脸对齐：先保存到临时文件，对齐后替换原图
                 import tempfile as _tf
@@ -492,114 +494,116 @@ def photo_add(request):
     if request.method == 'POST':
         # 删除原来的 model_name 获取逻辑
         files = request.FILES.getlist('file')
+        if len(files) > 10:
+            return render(request, 'photo_add.html', {'model_names': [], 'error': '最多上传10张照片'})
+
+        import traceback as _tb
+        success = 0
+        failed = 0
 
         for file in files:
-
-            # 人脸对齐：先保存到临时文件，对齐后替换原图
-            import tempfile as _tf
-            _tmp = _tf.NamedTemporaryFile(suffix='.jpg', delete=False)
-            for chunk in file.chunks():
-                _tmp.write(chunk)
-            _tmp_path = _tmp.name
-            _tmp.close()
+            time.sleep(0.1)
             try:
-                img = Image.open(_tmp_path).convert('RGB')
-            finally:
-                os.unlink(_tmp_path)
+                # 人脸对齐：先保存到临时文件，对齐后替换原图
+                import tempfile as _tf
+                _tmp = _tf.NamedTemporaryFile(suffix='.jpg', delete=False)
+                for chunk in file.chunks():
+                    _tmp.write(chunk)
+                _tmp_path = _tmp.name
+                _tmp.close()
+                try:
+                    img = Image.open(_tmp_path).convert('RGB')
+                finally:
+                    os.unlink(_tmp_path)
 
-            if img.mode in ('RGBA', 'LA'):
-                img = img.convert('RGB')  # 移除Alpha通道
+                if img.mode in ('RGBA', 'LA'):
+                    img = img.convert('RGB')  # 移除Alpha通道
 
-            if len(files) == 1:
-
-                filename = request.POST['model_name'][:10]
-                if len(filename) == 0:
+                if len(files) == 1:
+                    filename = request.POST['model_name'][:10]
+                    if len(filename) == 0:
+                        filename = os.path.splitext(file.name)[0][:10]
+                else:
                     filename = os.path.splitext(file.name)[0][:10]
 
-            else:
-                filename = os.path.splitext(file.name)[0][:10]
+                img_io = io.BytesIO()
+                img = resize_photo(cut_photo(img, 1), 1)
+                img.save(img_io, format='JPEG')
+                img_bytes = img_io.getvalue()
 
-            img_io = io.BytesIO()
+                result = client.bodySeg(img_bytes)
+                has_foreground = 'foreground' in result
 
-            img = resize_photo(cut_photo(img, 1), 1)
-            img.save(img_io, format='JPEG')
-            img_bytes = img_io.getvalue()  # 直接获取字节数据
+                if has_foreground:
+                    foreground = Image.open(io.BytesIO(
+                        base64.b64decode(result['foreground'])))
+                    output_size = (295, 413)
+                    foreground.thumbnail(output_size)
 
-            result = client.bodySeg(img_bytes)
+                    background_colors = {
+                        '蓝底': (67, 142, 219),
+                        '红底': (255, 0, 0),
+                        '白底': (255, 255, 255)
+                    }
+                    bg_files = {'blue': None, 'red': None, 'white': None}
+                    white_bg_single_file = None
 
-            if 'foreground' in result:
-                # 转换前景图
-                foreground = Image.open(io.BytesIO(
-                    base64.b64decode(result['foreground'])))
+                    for name, color in background_colors.items():
+                        background = Image.new('RGB', output_size, color)
+                        x = (output_size[0] - foreground.width) // 2
+                        y = (output_size[1] - foreground.height) // 2
+                        background.paste(foreground, (x, y), foreground)
 
-                # 一寸照片标准尺寸
-                output_size = (295, 413)
-                foreground.thumbnail(output_size)
+                        if name == '白底':
+                            single_io = io.BytesIO()
+                            background.save(single_io, format='JPEG')
+                            white_bg_single_file = ContentFile(
+                                single_io.getvalue(), name=f"{filename}_white_single.jpg")
 
-                # 创建三种背景色
-                background_colors = {
-                    '蓝底': (67, 142, 219),
-                    '红底': (255, 0, 0),
-                    '白底': (255, 255, 255)
-                }
+                        rotated_bg_io = io.BytesIO()
+                        排版(background, rotated_bg_io)
+                        rotated_bg_bytes = rotated_bg_io.getvalue()
 
-                # 存储排版后的背景图
-                bg_files = {
-                    'blue': None,
-                    'red': None,
-                    'white': None
-                }
+                        if name == '蓝底':
+                            bg_files['blue'] = ContentFile(rotated_bg_bytes, name=f"{filename}_blue.jpg")
+                        elif name == '红底':
+                            bg_files['red'] = ContentFile(rotated_bg_bytes, name=f"{filename}_red.jpg")
+                        elif name == '白底':
+                            bg_files['white'] = ContentFile(rotated_bg_bytes, name=f"{filename}_white.jpg")
 
-                # 生成并排版所有背景图
-                white_bg_single_file = None
-                for name, color in background_colors.items():
-                    # 生成背景
-                    background = Image.new('RGB', output_size, color)
-                    x = (output_size[0] - foreground.width) // 2
-                    y = (output_size[1] - foreground.height) // 2
-                    background.paste(foreground, (x, y), foreground)
+                    rotated_io = io.BytesIO()
+                    排版(img, rotated_io)
+                    rotated_bytes = rotated_io.getvalue()
 
-                    # 白底排版前保存单张一寸照
-                    if name == '白底':
-                        single_io = io.BytesIO()
-                        background.save(single_io, format='JPEG')
-                        white_bg_single_file = ContentFile(
-                            single_io.getvalue(), name=f"{filename}_white_single.jpg")
+                    models.UploadedZhaopian.objects.create(
+                        name=filename,
+                        photo=ContentFile(img_bytes, name=f"{filename}.jpg"),
+                        rotated_photo=ContentFile(rotated_bytes, name=f"{filename}_rotated.jpg"),
+                        blue_background=bg_files['blue'],
+                        red_background=bg_files['red'],
+                        white_background=bg_files['white'],
+                        white_bg_single=white_bg_single_file
+                    )
+                else:
+                    # bodySeg 失败，至少保存原始照片
+                    rotated_io = io.BytesIO()
+                    排版(img, rotated_io)
+                    rotated_bytes = rotated_io.getvalue()
+                    models.UploadedZhaopian.objects.create(
+                        name=filename,
+                        photo=ContentFile(img_bytes, name=f"{filename}.jpg"),
+                        rotated_photo=ContentFile(rotated_bytes, name=f"{filename}_rotated.jpg"),
+                    )
+                success += 1
+            except Exception as _e:
+                failed += 1
+                print(f"[photo_add] 处理失败 {file.name}: {_e}")
+                _tb.print_exc()
 
-                    # 对背景图进行排版
-                    rotated_bg_io = io.BytesIO()
-                    排版(background, rotated_bg_io)
-                    rotated_bg_bytes = rotated_bg_io.getvalue()
-
-                    # 根据背景类型存储
-                    if name == '蓝底':
-                        bg_files['blue'] = ContentFile(
-                            rotated_bg_bytes, name=f"{filename}_blue.jpg")
-                    elif name == '红底':
-                        bg_files['red'] = ContentFile(
-                            rotated_bg_bytes, name=f"{filename}_red.jpg")
-                    elif name == '白底':
-                        bg_files['white'] = ContentFile(
-                            rotated_bg_bytes, name=f"{filename}_white.jpg")
-
-                # 对原始图进行排版
-                rotated_io = io.BytesIO()
-                排版(img, rotated_io)
-                rotated_bytes = rotated_io.getvalue()
-
-                # 创建模型实例并保存所有图片
-                models.UploadedZhaopian.objects.create(
-                    name=filename,
-                    photo=ContentFile(img_bytes, name=f"{filename}.jpg"),
-                    rotated_photo=ContentFile(
-                        rotated_bytes, name=f"{filename}_rotated.jpg"),
-                    blue_background=bg_files['blue'],
-                    red_background=bg_files['red'],
-                    white_background=bg_files['white'],
-                    white_bg_single=white_bg_single_file
-                )
-
-        return redirect("/home/photo_list")
+        msg = f"上传完成：成功 {success} 张"
+        if failed:
+            msg += f"，{failed} 张处理失败（已跳过）"
+        return redirect(f"/home/photo_list?msg={msg}")
 
     else:
         model_names = models.UploadedZhaopian.objects.values_list(
@@ -608,26 +612,41 @@ def photo_add(request):
 
 
 def photo_delete(request):
-
     id = request.GET.get('id')
     models.UploadedZhaopian.objects.filter(id=str(id)).delete()
     return redirect("/home/photo_list")
 
 
-def photo_list(request):
+@csrf_exempt
+def photo_batch_delete(request):
+    if request.method == 'POST':
+        ids = request.POST.get('ids', '')
+        if ids:
+            id_list = [i.strip() for i in ids.split(',') if i.strip()]
+            deleted, _ = models.UploadedZhaopian.objects.filter(id__in=id_list).delete()
+            return JsonResponse({'code': 200, 'deleted': deleted})
+    return JsonResponse({'error': 'invalid request'}, status=400)
 
+
+def photo_list(request):
     title = 'photo'
     if request.method == "GET":
         model_fields = models.UploadedZhaopian._meta.fields
         cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location', 'photo', 'rotated_photo')]
         cols.append({'verbose_name': '操作'})
-        data = models.UploadedZhaopian.objects.values("id", "name", "blue_background", "red_background", "white_background", "white_bg_single", "uploaded_at").order_by(
-            '-uploaded_at')[:100]
+        from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+        queryset = models.UploadedZhaopian.objects.values("id", "name", "blue_background", "red_background", "white_background", "white_bg_single", "uploaded_at").order_by('-uploaded_at')
+        paginator = Paginator(queryset, 20)
+        page = request.GET.get('page', 1)
+        try:
+            data = paginator.page(page)
+        except (PageNotAnInteger, EmptyPage):
+            data = paginator.page(1)
         return render(request, 'photo_list.html', {
             "data": data,
             "cols": cols,
             "title": title,
-            "export_url": "/home/photo_export_zip"  # 新增导出URL参数
+            "export_url": "/home/photo_export_zip",
         })
 
 
@@ -728,8 +747,8 @@ def blastingcertificate_add(request):
     title = 'tu'
     if request.method == 'POST':
         files = request.FILES.getlist('file')
-
         for file in files:
+            time.sleep(0.1)
             with Image.open(file) as img:
                 if img.mode in ('RGBA', 'LA'):
                     img = img.convert('RGB')
@@ -1308,6 +1327,7 @@ def tu_add(request):
         files = request.FILES.getlist('file')  # 获取所有上传的文件
 
         for file in files:
+            time.sleep(0.1)
             # 处理每个文件，例如保存到数据库或文件系统
             models.UploadedTu.objects.create(
                 model_name=model_name, pdf_file=file)
@@ -1355,6 +1375,7 @@ def pdf_add(request):
         files = request.FILES.getlist('file')  # 获取所有上传的文件
 
         for file in files:
+            time.sleep(0.1)
             # 处理每个文件，例如保存到数据库或文件系统
             models.UploadedPDF.objects.create(
                 model_name=model_name, pdf_file=file)
@@ -3159,6 +3180,7 @@ def blasting_site_photo_add(request):
             return img, ident
 
         for file in files:
+            time.sleep(0.1)
             file_bytes = np.frombuffer(file.read(), np.uint8)
             img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
             if img is None:
@@ -3694,7 +3716,8 @@ from app01.image_utils import (
 
 def mine_card_index(request):
     """首页：Excel 导入 + 人员列表 + 逐行照片上传"""
-    workers = models.Worker.objects.all().order_by("id")
+    dept = request.session.get("info", {}).get("department", "")
+    workers = models.Worker.objects.filter(department=dept).order_by("id")
     excel_form = ExcelUploadForm()
     worker_form = WorkerForm(initial={"job_type": ""})
 
@@ -3702,16 +3725,18 @@ def mine_card_index(request):
         excel_form = ExcelUploadForm(request.POST, request.FILES)
         if excel_form.is_valid():
             try:
-                imported = _mine_card_parse_excel(request.FILES["excel"])
+                imported = _mine_card_parse_excel(request.FILES["excel"], department=dept)
                 messages.success(request, f"成功导入 {imported} 人")
                 return redirect("mine_card_index")
             except Exception as e:
                 messages.error(request, f"导入失败：{e}")
 
     if request.method == "POST" and "name" in request.POST:
-        worker_form = WorkerForm(request.POST, request.FILES)
         if worker_form.is_valid():
-            worker_form.save()
+            worker = worker_form.save(commit=False)
+            if dept:
+                worker.department = dept
+            worker.save()
             messages.success(request, "已添加")
             return redirect("mine_card_index")
 
@@ -3735,6 +3760,20 @@ def mine_card_delete(request, worker_id):
     worker.delete()
     return redirect("mine_card_index")
 
+@csrf_exempt
+def mine_card_batch_delete(request):
+    """批量删除人员"""
+    if request.method == "POST":
+        ids = request.POST.get("ids", "")
+        if ids:
+            id_list = [i.strip() for i in ids.split(",") if i.strip().isdigit()]
+            workers = models.Worker.objects.filter(id__in=id_list)
+            for w in workers:
+                if w.photo and os.path.exists(w.photo.path):
+                    os.remove(w.photo.path)
+            deleted, _ = workers.delete()
+            return JsonResponse({"code": 200, "deleted": deleted})
+    return JsonResponse({"error": "invalid request"}, status=400)
 
 def mine_card_update_photo(request, worker_id):
     """单行上传照片 → 固定一寸标准 295×413，JPEG quality=45，清 EXIF"""
@@ -3774,10 +3813,13 @@ def mine_card_update_photo(request, worker_id):
     return redirect("mine_card_index")
 
 
-def _mine_card_workers_with_photos():
+def _mine_card_workers_with_photos(department=None):
     """返回有有效照片文件的人员列表（DB 记录 + 文件都存在）"""
     result = []
-    for w in models.Worker.objects.filter(photo__isnull=False).order_by("id"):
+    qs = models.Worker.objects.filter(photo__isnull=False)
+    if department:
+        qs = qs.filter(department=department)
+    for w in qs.order_by("id"):
         try:
             if w.photo and os.path.exists(w.photo.path):
                 result.append(w)
@@ -3788,7 +3830,8 @@ def _mine_card_workers_with_photos():
 
 def mine_card_preview(request):
     """A4 排版预览页"""
-    workers = _mine_card_workers_with_photos()
+    dept = request.session.get("info", {}).get("department", "")
+    workers = _mine_card_workers_with_photos(department=dept)
     if not workers:
         messages.warning(request, "请先上传照片")
         return redirect("mine_card_index")
@@ -3804,7 +3847,8 @@ def mine_card_preview(request):
 
 def mine_card_download(request):
     """下载 A4 排版 ZIP"""
-    workers = _mine_card_workers_with_photos()
+    dept = request.session.get("info", {}).get("department", "")
+    workers = _mine_card_workers_with_photos(department=dept)
     if not workers:
         return redirect("mine_card_index")
 
@@ -3818,7 +3862,7 @@ def mine_card_download(request):
     return response
 
 
-def _mine_card_parse_excel(excel_file):
+def _mine_card_parse_excel(excel_file, department=""):
     """解析 Excel，返回导入数量"""
     import openpyxl
 
@@ -3846,7 +3890,7 @@ def _mine_card_parse_excel(excel_file):
                 job_type = "爆破员"
             # 工种去重写入 JobType 模型
             models.JobType.objects.get_or_create(name=job_type, defaults={"responsibilities": ""})
-            models.Worker.objects.create(name=name, job_type=job_type)
+            models.Worker.objects.create(name=name, job_type=job_type, department=department)
             imported += 1
 
     if imported == 0:

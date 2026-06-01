@@ -35,6 +35,7 @@ from app01 import quiz
 from app01 import grades
 
 from app01 import login
+from app01 import staff_login
 from app01.views import StaffListView
 from app01.views_staff import (
     staff_list, staff_add, staff_edit, staff_detail, staff_delete,
@@ -95,6 +96,7 @@ urlpatterns = [
     # 入井证
     path('home/mine_card/', views.mine_card_index, name='mine_card_index'),
     path('home/mine_card/delete/<int:worker_id>/', views.mine_card_delete, name='mine_card_delete'),
+    path('home/mine_card/batch_delete/', views.mine_card_batch_delete, name='mine_card_batch_delete'),
     path('home/mine_card/photo/<int:worker_id>/', views.mine_card_update_photo, name='mine_card_update_photo'),
     path('home/mine_card/preview/', views.mine_card_preview, name='mine_card_preview'),
     path('home/mine_card/download/', views.mine_card_download, name='mine_card_download'),
@@ -116,6 +118,7 @@ urlpatterns = [
 
     path('home/photo_add/', views.photo_add),
     path('home/photo_delete/', views.photo_delete),
+    path('home/photo_batch_delete/', views.photo_batch_delete),
 
     # 爆破现场记录
     path('home/blasting_site_photo_add/', views.blasting_site_photo_add),
@@ -198,6 +201,7 @@ urlpatterns = [
     path("login/", login.login),
     # path("register/", views.register),
     path("logout/", login.logout),
+    path("staff_login/", staff_login.staff_login, name='staff_login'),
     path("home/", views.home),
 
     path('home/baopo_ti_new_reload', quiz.ti_new_reload),

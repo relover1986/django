@@ -461,6 +461,7 @@ class Staff(models.Model):
     name = models.CharField(max_length=32, verbose_name="姓名")
     id_number = models.CharField(max_length=18, verbose_name="身份证号", unique=True)
     phone = models.CharField(max_length=11, verbose_name="手机号", blank=True)
+    password = models.CharField(max_length=128, verbose_name="密码", default='')
     department = models.CharField(max_length=64, verbose_name="部门", blank=True)
     status = models.CharField(
         max_length=16, verbose_name="状态", default="在职",
@@ -565,6 +566,7 @@ class Worker(models.Model):
     name = models.CharField("姓名", max_length=50)
     job_type = models.CharField("工种", max_length=50, choices=JOB_TYPE_CHOICES, default="爆破员")
     photo = models.ImageField("一寸照片", upload_to=photo_upload_path, blank=True, null=True)
+    department = models.CharField("所属部门", max_length=64, default='', blank=True)
     created_at = models.DateTimeField("创建时间", auto_now_add=True)
 
     class Meta:
