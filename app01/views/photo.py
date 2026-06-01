@@ -548,44 +548,17 @@ def photo_list(request):
 @api_view(["POST"])
 def generate_white_bg(request):
     """生成白底一寸照（不排版），存入 white_bg_single 字段"""
+    from app01.services.photo_service import generate_white_bg_single
     try:
         photo_id = request.data.get("photo_id")
         photo = UploadedZhaopian.objects.get(id=photo_id)
-
-        img = Image.open(photo.photo.path).convert('RGB')
-        img = resize_photo(cut_photo(img, 1), 1)
-
-        img_io = io.BytesIO()
-        img.save(img_io, format='JPEG')
-        img_bytes = img_io.getvalue()
-
-        result = client.bodySeg(img_bytes)
-
-        if 'foreground' not in result:
-            return JsonResponse({"code": 500, "error": "bodySeg failed: no foreground"})
-
-        foreground = Image.open(io.BytesIO(base64.b64decode(result['foreground'])))
-        output_size = (295, 413)
-        foreground.thumbnail(output_size)
-
-        background = Image.new("RGB", output_size, (255, 255, 255))
-        x = (output_size[0] - foreground.width) // 2
-        y = (output_size[1] - foreground.height) // 2
-        background.paste(foreground, (x, y), foreground)
-
-        # 不排版，直接保存单张白底一寸照
-        single_io = io.BytesIO()
-        background.save(single_io, format='JPEG')
-        single_bytes = single_io.getvalue()
-
+        single_bytes = generate_white_bg_single(photo.photo.path)
         photo.white_bg_single.save(
             f"{photo.id}_white_single.jpg",
             ContentFile(single_bytes)
         )
         photo.save()
-
         return JsonResponse({"code": 200, "url": photo.white_bg_single.url})
-
     except Exception as e:
         return JsonResponse({"code": 500, "error": str(e)})
 
