@@ -8,14 +8,7 @@ from app01.forms import StaffForm, CertTypeForm, StaffCertForm, StaffCertFileFor
 
 
 # ========== login_required decorator ==========
-def login_required(view_func):
-    """简易登录校验：检查 session 中是否有用户信息"""
-    @wraps(view_func)
-    def _wrapper(request, *args, **kwargs):
-        if not request.session.get('info'):
-            return redirect('/login/')
-        return view_func(request, *args, **kwargs)
-    return _wrapper
+from app01.permissions import login_required
 
 
 # ================================================================
@@ -200,18 +193,14 @@ def staff_cert_file_add(request, pk):
 
 @login_required
 def staff_cert_list(request):
-    certs = models.StaffCert.objects.select_related("staff", "cert_type").order_by("-created_at")
+    dept = request.session.get("info", {}).get("department", "")
+    certs = models.StaffCert.objects.select_related("staff", "cert_type").filter(staff__department=dept).order_by("-created_at")
 
     cert_type_id = request.GET.get("cert_type")
     if cert_type_id:
         certs = certs.filter(cert_type_id=cert_type_id)
 
-    department = request.GET.get("department")
-    if department:
-        certs = certs.filter(staff__department=department)
-
     cert_types = models.CertType.objects.all().order_by("sort", "id")
-    departments = models.Staff.objects.values_list("department", flat=True).distinct().order_by("department")
 
     paginator = Paginator(certs, 20)
     page = paginator.get_page(request.GET.get("page"))
@@ -220,8 +209,7 @@ def staff_cert_list(request):
         "page_obj": page, "title": "证件列表",
         "cert_types": cert_types,
         "selected_type": int(cert_type_id) if cert_type_id else None,
-        "departments": departments,
-        "selected_department": department or "",
+        "department": dept,
     })
 
 
@@ -233,7 +221,8 @@ def staff_cert_export_zip(request):
     from django.conf import settings
     from app01.models import StaffCert, StaffCertFile
 
-    certs = StaffCert.objects.select_related("staff", "cert_type").all()
+    dept = request.session.get("info", {}).get("department", "")
+    certs = StaffCert.objects.select_related("staff", "cert_type").filter(staff__department=dept)
     cert_type_id = request.GET.get("cert_type")
     if cert_type_id:
         certs = certs.filter(cert_type_id=cert_type_id)

@@ -203,14 +203,7 @@ from app01.forms import StaffForm, CertTypeForm, StaffCertForm
 from app01.models import Staff, CertType, StaffCert
 
 
-def login_required(view_func):
-    """兼容项目 session 认证的 login_required 装饰器"""
-    @wraps(view_func)
-    def _wrapped_view(request, *args, **kwargs):
-        if not request.session.get('info'):
-            return redirect('/login/')
-        return view_func(request, *args, **kwargs)
-    return _wrapped_view
+from app01.permissions import login_required
 
 
 @login_required

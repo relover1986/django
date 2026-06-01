@@ -168,17 +168,7 @@ def 最高权限(fun):
             return render(request,'change.html',{"title":title })  
     return check
 
-def 资料员(fun):
-    print(fun.__name__)
-    def check(request):
-        if "爆破工程技术人员" in request.session.get('info').get('role') or "资料员" in request.session.get('info').get('role'):
-            return fun(request)
-        else:
-
-            title="没有权限!"
-
-            return render(request,'change.html',{"title":title }) 
-    return check
+from app01.permissions import 资料员
 
 
 def tu_128(file,username):

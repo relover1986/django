@@ -22,7 +22,8 @@ from .other import explosivestaff_export_xlsx, explosivestaff_export_zip
 from .other import weighingrecord_add, weighingrecord_delete, weighingrecord_list
 from .other import idcard_batch_upload
 # staff
-from .staff import StaffListView, staff_list, admin_add, admin_delete, admin_edit, login_required
+from .staff import StaffListView, staff_list, admin_add, admin_delete, admin_edit
+from app01.permissions import login_required
 from .staff import staff_add, staff_edit_v2, staff_delete_v2, staff_detail, staff_cert_add, staff_cert_delete
 from .staff import cert_type_list, cert_type_add, cert_type_edit, cert_type_delete
 # blasting_stats
