@@ -1,7 +1,7 @@
 from django.urls import path
 from app01 import views
 from app01.views import StaffListView
-from app01.views_staff import (
+from app01.views.staff import (
     staff_list, staff_add, staff_edit, staff_detail, staff_delete,
     staff_cert_add, staff_cert_delete, staff_cert_file_add, staff_cert_list,
     staff_cert_export_zip,

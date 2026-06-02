@@ -199,7 +199,7 @@ def admin_edit(request):
 # ========== idcard_batch_upload ==========
 from functools import wraps
 from django.shortcuts import get_object_or_404
-from app01.forms import StaffForm, CertTypeForm, StaffCertForm
+from app01.forms import StaffForm, CertTypeForm, StaffCertForm, StaffCertFileForm
 from app01.models import Staff, CertType, StaffCert
 
 
@@ -351,6 +351,105 @@ def cert_type_delete(request, pk):
     obj = get_object_or_404(CertType, pk=pk)
     obj.delete()
     return redirect("/cert-type/")
+
+
+# ============================================================
+#  merged from views_staff.py — 5 functions
+# ============================================================
+
+@login_required
+def staff_edit(request, pk):
+    """编辑人员"""
+    staff = get_object_or_404(models.Staff, pk=pk)
+    if request.method == 'POST':
+        form = StaffForm(request.POST, instance=staff)
+        if form.is_valid():
+            form.save()
+            return redirect('/home/staff/')
+    else:
+        form = StaffForm(instance=staff)
+    return render(request, 'staff_form.html', {
+        'form': form, 'title': f'编辑人员 - {staff.name}'
+    })
+
+
+@login_required
+def staff_delete(request, pk):
+    """删除人员"""
+    staff = get_object_or_404(models.Staff, pk=pk)
+    staff.delete()
+    return redirect('/home/staff/')
+
+
+@login_required
+def staff_cert_file_add(request, pk):
+    """上传证件附件"""
+    cert = get_object_or_404(models.StaffCert, pk=pk)
+    staff = cert.staff
+    if request.method == "POST":
+        form = StaffCertFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            f = form.save(commit=False)
+            f.cert = cert
+            f.save()
+            return redirect("staff_detail", pk=staff.pk)
+    else:
+        form = StaffCertFileForm()
+    return render(request, "staff_cert_file_add.html", {
+        "form": form, "cert": cert, "staff": staff, "title": "上传证件附件"
+    })
+
+
+@login_required
+def staff_cert_list(request):
+    """证件列表"""
+    dept = request.session.get("info", {}).get("department", "")
+    certs = models.StaffCert.objects.select_related("staff", "cert_type").filter(staff__department=dept).order_by("-created_at")
+
+    cert_type_id = request.GET.get("cert_type")
+    if cert_type_id:
+        certs = certs.filter(cert_type_id=cert_type_id)
+
+    cert_types = models.CertType.objects.all().order_by("sort", "id")
+
+    paginator = Paginator(certs, 20)
+    page = paginator.get_page(request.GET.get("page"))
+
+    return render(request, "staff_cert_list.html", {
+        "page_obj": page, "title": "证件列表",
+        "cert_types": cert_types,
+        "selected_type": int(cert_type_id) if cert_type_id else None,
+        "department": dept,
+    })
+
+
+@login_required
+def staff_cert_export_zip(request):
+    """导出证件附件为ZIP"""
+    import os
+    from django.conf import settings
+    from app01.models import StaffCert, StaffCertFile
+
+    dept = request.session.get("info", {}).get("department", "")
+    certs = StaffCert.objects.select_related("staff", "cert_type").filter(staff__department=dept)
+    cert_type_id = request.GET.get("cert_type")
+    if cert_type_id:
+        certs = certs.filter(cert_type_id=cert_type_id)
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for cert in certs:
+            files = StaffCertFile.objects.filter(cert=cert)
+            for f in files:
+                path = os.path.join(settings.MEDIA_ROOT, str(f.file))
+                if os.path.exists(path):
+                    arcname = f"{cert.staff.name}_{cert.cert_type.name}_{f.file_type}.jpg"
+                    zf.write(path, arcname)
+
+    buf.seek(0)
+    resp = HttpResponse(buf.getvalue(), content_type="application/zip")
+    resp["Content-Disposition"] = "attachment; filename=cert_files.zip"
+    return resp
 
 
 # ============================================================
