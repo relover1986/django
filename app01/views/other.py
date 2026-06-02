@@ -197,7 +197,7 @@ def inventory_add(request):
 
         form = ExplosiveInventoryItemForm()
 
-        return render(request, 'create.html', {'form': form, '标题': title})
+        return render(request, 'card_form.html', {'form': form, '标题': title})
 
     if request.method == 'POST':
         form = ExplosiveInventoryItemForm(request.POST)
@@ -209,7 +209,7 @@ def inventory_add(request):
         else:
 
             form.errors
-            return render(request, 'create.html', {'form': form, '标题': title})
+            return render(request, 'card_form.html', {'form': form, '标题': title})
 
     return redirect("/home/inventory_list")
 
@@ -232,7 +232,7 @@ def inventory_edit(request):
 
         form = modelform.ExplosiveInventoryItemForm(instance=row_object)
 
-        return render(request, 'create.html', {"form": form, "标题": title})
+        return render(request, 'card_form.html', {"form": form, "标题": title})
 
     form = modelform.ExplosiveInventoryItemForm(
         data=request.POST, instance=row_object)
@@ -243,7 +243,7 @@ def inventory_edit(request):
     else:
         title = '输入错误'
         form.errors
-        return render(request, 'create.html', {'form': form})
+        return render(request, 'card_form.html', {'form': form})
     return redirect("/home/inventory_list")
 
 
@@ -426,7 +426,7 @@ def categorycontent_create(request):
 
         form = modelform.CategoryContentForm()
 
-        return render(request, 'create.html', {'form': form, '标题': title})
+        return render(request, 'card_form.html', {'form': form, '标题': title})
 
     if request.method == 'POST':
         form = modelform. CategoryContentForm(request.POST)
@@ -436,7 +436,7 @@ def categorycontent_create(request):
 
         else:
             form.errors
-            return render(request, 'create.html', {'form': form, '标题': title})
+            return render(request, 'card_form.html', {'form': form, '标题': title})
 
     return redirect("/home/categorycontent_list")
 
@@ -457,7 +457,7 @@ def categorycontent_edit(request):
 
         form = modelform.CategoryContentForm(instance=row_object)
 
-        return render(request, 'create.html', {"form": form, "标题": title})
+        return render(request, 'card_form.html', {"form": form, "标题": title})
 
     form = modelform.CategoryContentForm(
         data=request.POST, instance=row_object)
@@ -468,7 +468,7 @@ def categorycontent_edit(request):
     else:
         title = '输入错误'
         form.errors
-        return render(request, 'create.html', {'form': form})
+        return render(request, 'card_form.html', {'form': form})
     return redirect("/home/categorycontent_list")
 
 
@@ -1050,7 +1050,7 @@ def weighingrecord_add(request):
 
         form = modelform.WeighingRecordForm()
 
-        return render(request, 'create.html', {'form': form, '标题': title})
+        return render(request, 'card_form.html', {'form': form, '标题': title})
 
     if request.method == 'POST':
         form = modelform.WeighingRecordForm(
@@ -1063,7 +1063,7 @@ def weighingrecord_add(request):
         else:
 
             form.errors
-            return render(request, 'create.html', {'form': form, '标题': title})
+            return render(request, 'card_form.html', {'form': form, '标题': title})
 
     return redirect("/home/weighingrecord_list")
 
@@ -1351,4 +1351,14 @@ def idcard_batch_upload(request):
         import shutil
         shutil.rmtree(temp_dir, ignore_errors=True)
 
+
+def test_upload(request):
+    from django import forms
+    class TestUploadForm(forms.Form):
+        file = forms.ImageField(label='选择图片')
+    if request.method == 'POST':
+        form = TestUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            return HttpResponse('上传成功')
+    return render(request, 'upload_base.html', {'form': TestUploadForm(), 'title': '测试上传'})
 

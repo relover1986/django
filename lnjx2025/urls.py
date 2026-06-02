@@ -8,6 +8,8 @@ from django.conf.urls.static import static
 from django.shortcuts import redirect
 from django.urls import re_path
 from django.views.static import serve
+from schema_graph.views import Schema
+from lnjx2025.urls_tail import architecture_diagram_view
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -66,6 +68,11 @@ urlpatterns = [
 
     # Fallback app01.urls (currently empty)
     path('', include('app01.urls')),
+
+    # Schema ER 图
+    # Architecture diagram
+    path('arch/', architecture_diagram_view),
+    path('schema/', Schema.as_view()),
 ]
 
 if settings.DEBUG:

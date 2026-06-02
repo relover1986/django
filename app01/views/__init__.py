@@ -20,7 +20,7 @@ from .other import save_image_to_field, process_photo, apply_orientation
 from .other import explosivestaff_add, explosivestaff_delete, explosivestaff_list
 from .other import explosivestaff_export_xlsx, explosivestaff_export_zip
 from .other import weighingrecord_add, weighingrecord_delete, weighingrecord_list
-from .other import idcard_batch_upload
+from .other import idcard_batch_upload, test_upload
 # staff
 from .staff import StaffListView, staff_list, admin_add, admin_delete, admin_edit
 from app01.permissions import login_required

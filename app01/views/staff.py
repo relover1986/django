@@ -130,7 +130,7 @@ def admin_add(request):
     title = '新建员工信息'
     if request.method == "GET":
         form = modelform.Staff()
-        return render(request, 'create.html', {"form": form, "标题": title})
+        return render(request, 'card_form.html', {"form": form, "标题": title})
     print("request.FILES:", request.FILES)
     form = modelform.Staff(data=request.POST, files=request.FILES)
 
@@ -153,7 +153,7 @@ def admin_add(request):
 
         title = '输入错误'
 
-        return render(request, 'create.html', {"form": form, "标题": title})
+        return render(request, 'card_form.html', {"form": form, "标题": title})
 
     return redirect("/home/admin")
 

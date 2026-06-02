@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Django Architecture Diagram</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  body{margin:0;background:#1a1a2e;color:#eee;font-family:sans-serif}
+  .bar{padding:12px 20px;background:#16213e;border-bottom:1px solid #0f3460;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+  .bar h1{margin:0;font-size:18px}
+  .stats{font-size:13px;color:#888}
+  #dia{padding:20px;overflow:auto}
+  .mermaid svg{font-size:22px!important;max-width:none!important}
+  .mermaid .label{font-size:20px!important;font-weight:600}
+  .mermaid .node rect,.mermaid .node circle{stroke-width:3}
+  .mermaid .cluster-label text{font-size:18px!important}
+</style>
+</head>
+<body>
+<div class="bar">
+  <h1>django Architecture Diagram</h1>
+  <span class="stats">192 routes / 192 views / 159 models / 61 templates</span>
+</div>
+<div id="dia"><pre class="mermaid">graph TB
+  classDef route fill:#1a5276,stroke:#2980b9,color:#fff
+  classDef view fill:#7d3c98,stroke:#af7ac5,color:#fff
+  classDef model fill:#1e8449,stroke:#27ae60,color:#fff
+  classDef template fill:#b7950b,stroke:#f1c40f,color:#fff
+  r0["/"]:::route
+  v0["(lambda)"]:::view
+  r1["/.well-known/acme-challenge/:id"]:::route
+  v1["serve"]:::view
+  r2["/login/"]:::route
+  v2["login"]:::view
+  m2_0["Admin"]:::model
+  m2_1["LoginRecords"]:::model
+  t2_0["create.html"]:::template
+  r3["/logout/"]:::route
+  v3["logout"]:::view
+  m3_0["LoginRecords"]:::model
+  r4["/staff_login/"]:::route
+  v4["staff_login"]:::view
+  m4_0["Staff"]:::model
+  t4_0["staff_login.html"]:::template
+  r5["/home/"]:::route
+  v5["home"]:::view
+  m5_0["JskjgQuestion"]:::model
+  m5_1["QuestionType"]:::model
+  m5_2["Staff"]:::model
+  m5_3["UserAnswer"]:::model
+  m5_4["WxpzxQuestion"]:::model
+  t5_0["home.html"]:::template
+  r6["/home/department_quiz_stats/"]:::route
+  v6["department_quiz_stats"]:::view
+  m6_0["JskjgQuestion"]:::model
+  m6_1["QuestionType"]:::model
+  m6_2["Staff"]:::model
+  m6_3["UserAnswer"]:::model
+  m6_4["WxpzxQuestion"]:::model
+  t6_0["department_quiz_stats.html"]:::template
+  r7["/home/admin_add/"]:::route
+  v7["check"]:::view
+  r8["/home/admin_edit/"]:::route
+  v8["check"]:::view
+  r9["/home/admin_delete/"]:::route
+  v9["check"]:::view
+  r10["/staff_edit/"]:::route
+  v10["check"]:::view
+  r11["/home/admin/"]:::route
+  v11["StaffListView"]:::view
+  m11_0["Admin"]:::model
+  t11_0["staff_list.html"]:::template
+  r12["/home/staff/"]:::route
+  v12["staff_list"]:::view
+  m12_0["Staff"]:::model
+  t12_0["staff_list_new.html"]:::template
+  r13["/home/staff/add/"]:::route
+  v13["staff_add"]:::view
+  t13_0["staff_form.html"]:::template
+  r14["/home/staff/:id/edit/"]:::route
+  v14["staff_edit"]:::view
+  m14_0["Staff"]:::model
+  t14_0["staff_form.html"]:::template
+  r15["/home/staff/:id/"]:::route
+  v15["staff_detail"]:::view
+  t15_0["staff_detail.html"]:::template
+  r16["/home/staff/:id/delete/"]:::route
+  v16["staff_delete"]:::view
+  m16_0["Staff"]:::model
+  r17["/home/staff/:id/cert/add/"]:::route
+  v17["staff_cert_add"]:::view
+  t17_0["staff_cert_form.html"]:::template
+  r18["/home/staff_cert/:id/delete/"]:::route
+  v18["staff_cert_delete"]:::view
+  r19["/home/staff_cert/:id/file/add/"]:::route
+  v19["staff_cert_file_add"]:::view
+  m19_0["StaffCert"]:::model
+  t19_0["staff_cert_file_add.html"]:::template
+  r20["/cert-type/"]:::route
+  v20["cert_type_list"]:::view
+  m20_0["CertType"]:::model
+  t20_0["cert_type_list.html"]:::template
+  r21["/cert-type/add/"]:::route
+  v21["cert_type_add"]:::view
+  t21_0["cert_type_form.html"]:::template
+  r22["/cert-type/:id/edit/"]:::route
+  v22["cert_type_edit"]:::view
+  t22_0["cert_type_form.html"]:::template
+  r23["/cert-type/:id/delete/"]:::route
+  v23["cert_type_delete"]:::view
+  r24["/home/staff_cert/"]:::route
+  v24["staff_cert_list"]:::view
+  m24_0["CertType"]:::model
+  m24_1["StaffCert"]:::model
+  t24_0["staff_cert_list.html"]:::template
+  r25["/home/staff_cert/export/zip/"]:::route
+  v25["staff_cert_export_zip"]:::view
+  m25_0["StaffCert"]:::model
+  m25_1["StaffCertFile"]:::model
+  r26["/home/contractlabor_add/"]:::route
+  v26["contractlabor_add"]:::view
+  m26_0["ContractLabor"]:::model
+  t26_0["contractlabor_add.html"]:::template
+  r27["/home/contractlabor_delete/"]:::route
+  v27["contractlabor_delete"]:::view
+  m27_0["ContractLabor"]:::model
+  r28["/home/contractlabor_list/"]:::route
+  v28["contractlabor_list"]:::view
+  m28_0["ContractLabor"]:::model
+  t28_0["contractlabor_list.html"]:::template
+  r29["/home/contractlabor_export_zip/"]:::route
+  v29["check"]:::view
+  r30["/home/mine_card/"]:::route
+  v30["mine_card_index"]:::view
+  m30_0["JobType"]:::model
+  m30_1["Worker"]:::model
+  t30_0["upload.html"]:::template
+  r31["/home/mine_card/delete/:id/"]:::route
+  v31["mine_card_delete"]:::view
+  m31_0["Worker"]:::model
+  r32["/home/mine_card/batch_delete/"]:::route
+  v32["mine_card_batch_delete"]:::view
+  m32_0["Worker"]:::model
+  r33["/home/mine_card/photo/:id/"]:::route
+  v33["mine_card_update_photo"]:::view
+  m33_0["Worker"]:::model
+  r34["/home/mine_card/preview/"]:::route
+  v34["mine_card_preview"]:::view
+  t34_0["preview.html"]:::template
+  r35["/home/mine_card/download/"]:::route
+  v35["mine_card_download"]:::view
+  r36["/home/photo_add/"]:::route
+  v36["photo_add"]:::view
+  m36_0["UploadedZhaopian"]:::model
+  t36_0["photo_add.html"]:::template
+  r37["/home/photo_delete/"]:::route
+  v37["photo_delete"]:::view
+  m37_0["UploadedZhaopian"]:::model
+  r38["/home/photo_batch_delete/"]:::route
+  v38["photo_batch_delete"]:::view
+  m38_0["UploadedZhaopian"]:::model
+  r39["/home/photo_list/"]:::route
+  v39["photo_list"]:::view
+  m39_0["UploadedZhaopian"]:::model
+  t39_0["photo_list.html"]:::template
+  r40["/home/generate_white_bg/"]:::route
+  v40["WrappedAPIView"]:::view
+  r41["/home/photo_export_zip/"]:::route
+  v41["check"]:::view
+  r42["/api/photo/upload/"]:::route
+  v42["PhotoUploadAPIView"]:::view
+  m42_0["UploadedZhaopian"]:::model
+  r43["/api/photo/list/"]:::route
+  v43["PhotoListAPIView"]:::view
+  m43_0["UploadedZhaopian"]:::model
+  r44["/api/photo/detail/:id/"]:::route
+  v44["PhotoDetailAPIView"]:::view
+  m44_0["UploadedZhaopian"]:::model
+  r45["/api/photo/delete/:id/"]:::route
+  v45["PhotoDeleteAPIView"]:::view
+  m45_0["UploadedZhaopian"]:::model
+  r46["/home/blasting_site_photo_add/"]:::route
+  v46["blasting_site_photo_add"]:::view
+  m46_0["BlastingSitePhoto"]:::model
+  t46_0["blasting_site_photo_add.html"]:::template
+  r47["/home/blasting_site_photo_delete/"]:::route
+  v47["blasting_site_photo_delete"]:::view
+  m47_0["BlastingSitePhoto"]:::model
+  r48["/home/blasting_site_photo_list/"]:::route
+  v48["blasting_site_photo_list"]:::view
+  m48_0["BlastingSitePhoto"]:::model
+  t48_0["blasting_site_photo_list.html"]:::template
+  r49["/home/blasting_site_low_conf/"]:::route
+  v49["blasting_site_low_conf"]:::view
+  t49_0["blasting_site_low_conf.html"]:::template
+  r50["/home/blasting_site_low_conf_delete/"]:::route
+  v50["blasting_site_low_conf_delete"]:::view
+  r51["/home/blasting_site_low_conf_submit/"]:::route
+  v51["blasting_site_low_conf_submit"]:::view
+  r52["/home/blasting_site_train_signatures/"]:::route
+  v52["blasting_site_train_signatures"]:::view
+  r53["/home/blastingcertificate_add/"]:::route
+  v53["blastingcertificate_add"]:::view
+  m53_0["BlastingCertificate"]:::model
+  t53_0["blastingcertificate_add.html"]:::template
+  r54["/home/blastingcertificate_delete/"]:::route
+  v54["blastingcertificate_delete"]:::view
+  m54_0["BlastingCertificate"]:::model
+  r55["/home/blastingcertificate_list/"]:::route
+  v55["blastingcertificate_list"]:::view
+  m55_0["BlastingCertificate"]:::model
+  t55_0["blastingcertificate_list.html"]:::template
+  r56["/home/blastingcertificate_export_zip/"]:::route
+  v56["check"]:::view
+  r57["/home/blastingcertificate_export_xlsx/"]:::route
+  v57["check"]:::view
+  r58["/home/blaster_list/"]:::route
+  v58["blaster_list"]:::view
+  m58_0["Blaster"]:::model
+  t58_0["blaster_list.html"]:::template
+  r59["/home/blaster_add/"]:::route
+  v59["blaster_add"]:::view
+  m59_0["Blaster"]:::model
+  t59_0["blaster_add.html"]:::template
+  r60["/home/blasting_summary_list/"]:::route
+  v60["blasting_summary_list"]:::view
+  m60_0["Blaster"]:::model
+  m60_1["BlastingSummary"]:::model
+  t60_0["blasting_summary_list.html"]:::template
+  r61["/home/blasting_summary_add/"]:::route
+  v61["blasting_summary_add"]:::view
+  m61_0["BlastingSummary"]:::model
+  t61_0["blasting_summary_add.html"]:::template
+  r62["/home/blasting_summary_delete/:id/"]:::route
+  v62["blasting_summary_delete"]:::view
+  m62_0["BlastingSummary"]:::model
+  r63["/home/blasting_summary_assign_blaster/"]:::route
+  v63["blasting_summary_assign_blaster"]:::view
+  m63_0["BlastingSummary"]:::model
+  r64["/home/blasting_stats/"]:::route
+  v64["blasting_stats"]:::view
+  t64_0["blasting_stats.html"]:::template
+  r65["/home/idcard_add/"]:::route
+  v65["idcard_add"]:::view
+  m65_0["IDCard"]:::model
+  t65_0["idcard_add.html"]:::template
+  r66["/home/idcard_delete/"]:::route
+  v66["idcard_delete"]:::view
+  m66_0["IDCard"]:::model
+  r67["/home/idcard_list/"]:::route
+  v67["idcard_list"]:::view
+  m67_0["IDCard"]:::model
+  t67_0["idcard_list.html"]:::template
+  r68["/home/idcard_batch_upload/"]:::route
+  v68["idcard_batch_upload"]:::view
+  m68_0["IDCard"]:::model
+  r69["/home/idcard_export_zip/"]:::route
+  v69["check"]:::view
+  r70["/home/explosivestaff_add/"]:::route
+  v70["explosivestaff_add"]:::view
+  m70_0["ExplosiveStaff"]:::model
+  t70_0["explosivestaff_add.html"]:::template
+  r71["/home/explosivestaff_delete/"]:::route
+  v71["explosivestaff_delete"]:::view
+  m71_0["ExplosiveStaff"]:::model
+  r72["/home/explosivestaff_list/"]:::route
+  v72["explosivestaff_list"]:::view
+  m72_0["ExplosiveStaff"]:::model
+  t72_0["explosivestaff_list.html"]:::template
+  r73["/home/explosivestaff_export_zip/"]:::route
+  v73["explosivestaff_export_zip"]:::view
+  m73_0["ExplosiveStaff"]:::model
+  r74["/home/explosivestaff_export_xlsx/"]:::route
+  v74["explosivestaff_export_xlsx"]:::view
+  m74_0["ExplosiveStaff"]:::model
+  r75["/upload/"]:::route
+  v75["upload_model"]:::view
+  t75_0["upload.html"]:::template
+  r76["/home/candidateprofile_add/"]:::route
+  v76["candidateprofile_add"]:::view
+  t76_0["candidateprofile_add.html"]:::template
+  r77["/home/candidateprofile_delete/"]:::route
+  v77["check"]:::view
+  r78["/home/candidateprofile_list/"]:::route
+  v78["candidateprofile_list"]:::view
+  m78_0["Candidate"]:::model
+  t78_0["candidateprofile_list.html"]:::template
+  r79["/home/weighingrecord_add/"]:::route
+  v79["weighingrecord_add"]:::view
+  t79_0["create.html"]:::template
+  r80["/home/weighingrecord_delete/"]:::route
+  v80["check"]:::view
+  r81["/home/weighingrecord_list/"]:::route
+  v81["weighingrecord_list"]:::view
+  m81_0["WeighingRecord"]:::model
+  t81_0["weighingrecord_list.html"]:::template
+  r82["/home/pdf_add/"]:::route
+  v82["pdf_add"]:::view
+  m82_0["UploadedPDF"]:::model
+  t82_0["pdf_add.html"]:::template
+  r83["/home/pdf_delete/"]:::route
+  v83["pdf_delete"]:::view
+  m83_0["UploadedPDF"]:::model
+  r84["/home/pdf_list/"]:::route
+  v84["pdf_list"]:::view
+  m84_0["UploadedPDF"]:::model
+  t84_0["pdf_list.html"]:::template
+  r85["/home/tu_add/"]:::route
+  v85["tu_add"]:::view
+  m85_0["UploadedTu"]:::model
+  t85_0["tu_add.html"]:::template
+  r86["/home/tu_delete/"]:::route
+  v86["tu_delete"]:::view
+  m86_0["UploadedTu"]:::model
+  r87["/home/tu_list/"]:::route
+  v87["tu_list"]:::view
+  m87_0["UploadedTu"]:::model
+  t87_0["tu_list.html"]:::template
+  r88["/home/inventory_list"]:::route
+  v88["inventory_list"]:::view
+  m88_0["ExplosiveInventoryItem"]:::model
+  t88_0["inventory_list.html"]:::template
+  r89["/home/inventory_add"]:::route
+  v89["inventory_add"]:::view
+  t89_0["create.html"]:::template
+  r90["/home/inventory_delete"]:::route
+  v90["inventory_delete"]:::view
+  m90_0["ExplosiveInventoryItem"]:::model
+  r91["/home/inventory_edit"]:::route
+  v91["inventory_edit"]:::view
+  m91_0["ExplosiveInventoryItem"]:::model
+  t91_0["create.html"]:::template
+  r92["/home/inventory_export_xlsx/"]:::route
+  v92["inventory_export_xlsx"]:::view
+  m92_0["ExplosiveInventoryItem"]:::model
+  r93["/home/categorycontent_list"]:::route
+  v93["categorycontent_list"]:::view
+  m93_0["CategoryContent"]:::model
+  t93_0["list.html"]:::template
+  r94["/home/categorycontent_create"]:::route
+  v94["categorycontent_create"]:::view
+  t94_0["create.html"]:::template
+  r95["/home/categorycontent_delete"]:::route
+  v95["categorycontent_delete"]:::view
+  m95_0["CategoryContent"]:::model
+  r96["/home/categorycontent_edit"]:::route
+  v96["categorycontent_edit"]:::view
+  m96_0["CategoryContent"]:::model
+  t96_0["create.html"]:::template
+  r97["/home/baopo_ti_new_reload"]:::route
+  v97["ti_new_reload"]:::view
+  r98["/home/baopo_ti_new"]:::route
+  v98["ti_new"]:::view
+  m98_0["QuestionType"]:::model
+  m98_1["UserAnswer"]:::model
+  t98_0["baopo_ti_new.html"]:::template
+  t98_1["result_new.html"]:::template
+  r99["/home/ti_grades"]:::route
+  v99["grades"]:::view
+  t99_0["chart_qi.html"]:::template
+  r100["/home/grades_new"]:::route
+  v100["grades_new"]:::view
+  m100_0["Admin"]:::model
+  m100_1["UserAnswer"]:::model
+  t100_0["grades_table.html"]:::template
+  r101["/home/ti_reload"]:::route
+  v101["questions_reload"]:::view
+  r102["/home/jskjgti_grades"]:::route
+  v102["grades"]:::view
+  t102_0["chart_qi.html"]:::template
+  r103["/home/jskjgti_reload"]:::route
+  v103["jskjgquestions_reload"]:::view
+  r104["/home/jskjgti_new_reload"]:::route
+  v104["jskjgti_new_reload"]:::view
+  r105["/home/jskjgti_new"]:::route
+  v105["jskjgti_new"]:::view
+  m105_0["JskjgQuestion"]:::model
+  m105_1["UserAnswer"]:::model
+  t105_0["baopo_ti_new.html"]:::template
+  t105_1["result_new.html"]:::template
+  r106["/home/wxpzxti_grades"]:::route
+  v106["grades"]:::view
+  t106_0["chart_qi.html"]:::template
+  r107["/home/wxpzxti_reload"]:::route
+  v107["wxpzxquestions_reload"]:::view
+  r108["/home/wxpzxti_new_reload"]:::route
+  v108["wxpzxti_new_reload"]:::view
+  r109["/home/wxpzxti_new"]:::route
+  v109["wxpzxti_new"]:::view
+  m109_0["UserAnswer"]:::model
+  m109_1["WxpzxQuestion"]:::model
+  t109_0["baopo_ti_new.html"]:::template
+  t109_1["result_new.html"]:::template
+  r110["/manifest.json"]:::route
+  v110["manifest_json"]:::view
+  r111["/sw.js"]:::route
+  v111["service_worker"]:::view
+  r112["/api/push/subscribe/"]:::route
+  v112["push_subscribe"]:::view
+  m112_0["PushSubscription"]:::model
+  r113["/api/push/unsubscribe/"]:::route
+  v113["push_unsubscribe"]:::view
+  m113_0["PushSubscription"]:::model
+  r114["/api/push/public-key/"]:::route
+  v114["push_public_key"]:::view
+  r115["/api/'^admins/$"]:::route
+  v115["AdminViewSet"]:::view
+  m115_0["Admin"]:::model
+  r116["/api/'^admins\.:id/?$"]:::route
+  v116["AdminViewSet"]:::view
+  m116_0["Admin"]:::model
+  r117["/api/'^admins/:id/$"]:::route
+  v117["AdminViewSet"]:::view
+  m117_0["Admin"]:::model
+  r118["/api/'^admins/:id\.:id/?$"]:::route
+  v118["AdminViewSet"]:::view
+  m118_0["Admin"]:::model
+  r119["/api/'^question-types/$"]:::route
+  v119["QuestionTypeViewSet"]:::view
+  m119_0["QuestionType"]:::model
+  r120["/api/'^question-types\.:id/?$"]:::route
+  v120["QuestionTypeViewSet"]:::view
+  m120_0["QuestionType"]:::model
+  r121["/api/'^question-types/:id/$"]:::route
+  v121["QuestionTypeViewSet"]:::view
+  m121_0["QuestionType"]:::model
+  r122["/api/'^question-types/:id\.:id/?$"]:::route
+  v122["QuestionTypeViewSet"]:::view
+  m122_0["QuestionType"]:::model
+  r123["/api/'^jskjg-questions/$"]:::route
+  v123["JskjgQuestionViewSet"]:::view
+  m123_0["JskjgQuestion"]:::model
+  r124["/api/'^jskjg-questions\.:id/?$"]:::route
+  v124["JskjgQuestionViewSet"]:::view
+  m124_0["JskjgQuestion"]:::model
+  r125["/api/'^jskjg-questions/:id/$"]:::route
+  v125["JskjgQuestionViewSet"]:::view
+  m125_0["JskjgQuestion"]:::model
+  r126["/api/'^jskjg-questions/:id\.:id/?$"]:::route
+  v126["JskjgQuestionViewSet"]:::view
+  m126_0["JskjgQuestion"]:::model
+  r127["/api/'^wxpzx-questions/$"]:::route
+  v127["WxpzxQuestionViewSet"]:::view
+  m127_0["WxpzxQuestion"]:::model
+  r128["/api/'^wxpzx-questions\.:id/?$"]:::route
+  v128["WxpzxQuestionViewSet"]:::view
+  m128_0["WxpzxQuestion"]:::model
+  r129["/api/'^wxpzx-questions/:id/$"]:::route
+  v129["WxpzxQuestionViewSet"]:::view
+  m129_0["WxpzxQuestion"]:::model
+  r130["/api/'^wxpzx-questions/:id\.:id/?$"]:::route
+  v130["WxpzxQuestionViewSet"]:::view
+  m130_0["WxpzxQuestion"]:::model
+  r131["/api/'^user-answers/$"]:::route
+  v131["UserAnswerViewSet"]:::view
+  m131_0["UserAnswer"]:::model
+  r132["/api/'^user-answers\.:id/?$"]:::route
+  v132["UserAnswerViewSet"]:::view
+  m132_0["UserAnswer"]:::model
+  r133["/api/'^user-answers/:id/$"]:::route
+  v133["UserAnswerViewSet"]:::view
+  m133_0["UserAnswer"]:::model
+  r134["/api/'^user-answers/:id\.:id/?$"]:::route
+  v134["UserAnswerViewSet"]:::view
+  m134_0["UserAnswer"]:::model
+  r135["/api/'^tihao/$"]:::route
+  v135["TihaoViewSet"]:::view
+  m135_0["Tihao"]:::model
+  r136["/api/'^tihao\.:id/?$"]:::route
+  v136["TihaoViewSet"]:::view
+  m136_0["Tihao"]:::model
+  r137["/api/'^tihao/:id/$"]:::route
+  v137["TihaoViewSet"]:::view
+  m137_0["Tihao"]:::model
+  r138["/api/'^tihao/:id\.:id/?$"]:::route
+  v138["TihaoViewSet"]:::view
+  m138_0["Tihao"]:::model
+  r139["/api/'^login-records/$"]:::route
+  v139["LoginRecordsViewSet"]:::view
+  m139_0["LoginRecords"]:::model
+  r140["/api/'^login-records\.:id/?$"]:::route
+  v140["LoginRecordsViewSet"]:::view
+  m140_0["LoginRecords"]:::model
+  r141["/api/'^login-records/:id/$"]:::route
+  v141["LoginRecordsViewSet"]:::view
+  m141_0["LoginRecords"]:::model
+  r142["/api/'^login-records/:id\.:id/?$"]:::route
+  v142["LoginRecordsViewSet"]:::view
+  m142_0["LoginRecords"]:::model
+  r143["/api/'^inventory-items/$"]:::route
+  v143["ExplosiveInventoryItemViewSet"]:::view
+  m143_0["ExplosiveInventoryItem"]:::model
+  r144["/api/'^inventory-items\.:id/?$"]:::route
+  v144["ExplosiveInventoryItemViewSet"]:::view
+  m144_0["ExplosiveInventoryItem"]:::model
+  r145["/api/'^inventory-items/:id/$"]:::route
+  v145["ExplosiveInventoryItemViewSet"]:::view
+  m145_0["ExplosiveInventoryItem"]:::model
+  r146["/api/'^inventory-items/:id\.:id/?$"]:::route
+  v146["ExplosiveInventoryItemViewSet"]:::view
+  m146_0["ExplosiveInventoryItem"]:::model
+  r147["/api/'^category-contents/$"]:::route
+  v147["CategoryContentViewSet"]:::view
+  m147_0["CategoryContent"]:::model
+  r148["/api/'^category-contents\.:id/?$"]:::route
+  v148["CategoryContentViewSet"]:::view
+  m148_0["CategoryContent"]:::model
+  r149["/api/'^category-contents/:id/$"]:::route
+  v149["CategoryContentViewSet"]:::view
+  m149_0["CategoryContent"]:::model
+  r150["/api/'^category-contents/:id\.:id/?$"]:::route
+  v150["CategoryContentViewSet"]:::view
+  m150_0["CategoryContent"]:::model
+  r151["/api/'^pdfs/$"]:::route
+  v151["UploadedPDFViewSet"]:::view
+  m151_0["UploadedPDF"]:::model
+  r152["/api/'^pdfs\.:id/?$"]:::route
+  v152["UploadedPDFViewSet"]:::view
+  m152_0["UploadedPDF"]:::model
+  r153["/api/'^pdfs/:id/$"]:::route
+  v153["UploadedPDFViewSet"]:::view
+  m153_0["UploadedPDF"]:::model
+  r154["/api/'^pdfs/:id\.:id/?$"]:::route
+  v154["UploadedPDFViewSet"]:::view
+  m154_0["UploadedPDF"]:::model
+  r155["/api/'^tus/$"]:::route
+  v155["UploadedTuViewSet"]:::view
+  m155_0["UploadedTu"]:::model
+  r156["/api/'^tus\.:id/?$"]:::route
+  v156["UploadedTuViewSet"]:::view
+  m156_0["UploadedTu"]:::model
+  r157["/api/'^tus/:id/$"]:::route
+  v157["UploadedTuViewSet"]:::view
+  m157_0["UploadedTu"]:::model
+  r158["/api/'^tus/:id\.:id/?$"]:::route
+  v158["UploadedTuViewSet"]:::view
+  m158_0["UploadedTu"]:::model
+  r159["/api/'^photos/$"]:::route
+  v159["UploadedZhaopianViewSet"]:::view
+  m159_0["UploadedZhaopian"]:::model
+  r160["/api/'^photos\.:id/?$"]:::route
+  v160["UploadedZhaopianViewSet"]:::view
+  m160_0["UploadedZhaopian"]:::model
+  r161["/api/'^photos/:id/$"]:::route
+  v161["UploadedZhaopianViewSet"]:::view
+  m161_0["UploadedZhaopian"]:::model
+  r162["/api/'^photos/:id\.:id/?$"]:::route
+  v162["UploadedZhaopianViewSet"]:::view
+  m162_0["UploadedZhaopian"]:::model
+  r163["/api/'^idcards/$"]:::route
+  v163["IDCardViewSet"]:::view
+  m163_0["IDCard"]:::model
+  r164["/api/'^idcards\.:id/?$"]:::route
+  v164["IDCardViewSet"]:::view
+  m164_0["IDCard"]:::model
+  r165["/api/'^idcards/:id/$"]:::route
+  v165["IDCardViewSet"]:::view
+  m165_0["IDCard"]:::model
+  r166["/api/'^idcards/:id\.:id/?$"]:::route
+  v166["IDCardViewSet"]:::view
+  m166_0["IDCard"]:::model
+  r167["/api/'^contract-labors/$"]:::route
+  v167["ContractLaborViewSet"]:::view
+  m167_0["ContractLabor"]:::model
+  r168["/api/'^contract-labors\.:id/?$"]:::route
+  v168["ContractLaborViewSet"]:::view
+  m168_0["ContractLabor"]:::model
+  r169["/api/'^contract-labors/:id/$"]:::route
+  v169["ContractLaborViewSet"]:::view
+  m169_0["ContractLabor"]:::model
+  r170["/api/'^contract-labors/:id\.:id/?$"]:::route
+  v170["ContractLaborViewSet"]:::view
+  m170_0["ContractLabor"]:::model
+  r171["/api/'^candidates/$"]:::route
+  v171["CandidateViewSet"]:::view
+  m171_0["Candidate"]:::model
+  r172["/api/'^candidates\.:id/?$"]:::route
+  v172["CandidateViewSet"]:::view
+  m172_0["Candidate"]:::model
+  r173["/api/'^candidates/:id/$"]:::route
+  v173["CandidateViewSet"]:::view
+  m173_0["Candidate"]:::model
+  r174["/api/'^candidates/:id\.:id/?$"]:::route
+  v174["CandidateViewSet"]:::view
+  m174_0["Candidate"]:::model
+  r175["/api/'^explosive-staff/$"]:::route
+  v175["ExplosiveStaffViewSet"]:::view
+  m175_0["ExplosiveStaff"]:::model
+  r176["/api/'^explosive-staff\.:id/?$"]:::route
+  v176["ExplosiveStaffViewSet"]:::view
+  m176_0["ExplosiveStaff"]:::model
+  r177["/api/'^explosive-staff/:id/$"]:::route
+  v177["ExplosiveStaffViewSet"]:::view
+  m177_0["ExplosiveStaff"]:::model
+  r178["/api/'^explosive-staff/:id\.:id/?$"]:::route
+  v178["ExplosiveStaffViewSet"]:::view
+  m178_0["ExplosiveStaff"]:::model
+  r179["/api/'^weighing-records/$"]:::route
+  v179["WeighingRecordViewSet"]:::view
+  m179_0["WeighingRecord"]:::model
+  r180["/api/'^weighing-records\.:id/?$"]:::route
+  v180["WeighingRecordViewSet"]:::view
+  m180_0["WeighingRecord"]:::model
+  r181["/api/'^weighing-records/:id/$"]:::route
+  v181["WeighingRecordViewSet"]:::view
+  m181_0["WeighingRecord"]:::model
+  r182["/api/'^weighing-records/:id\.:id/?$"]:::route
+  v182["WeighingRecordViewSet"]:::view
+  m182_0["WeighingRecord"]:::model
+  r183["/api/'^blasting-certificates/$"]:::route
+  v183["BlastingCertificateViewSet"]:::view
+  m183_0["BlastingCertificate"]:::model
+  r184["/api/'^blasting-certificates\.:id/?$"]:::route
+  v184["BlastingCertificateViewSet"]:::view
+  m184_0["BlastingCertificate"]:::model
+  r185["/api/'^blasting-certificates/:id/$"]:::route
+  v185["BlastingCertificateViewSet"]:::view
+  m185_0["BlastingCertificate"]:::model
+  r186["/api/'^blasting-certificates/:id\.:id/?$"]:::route
+  v186["BlastingCertificateViewSet"]:::view
+  m186_0["BlastingCertificate"]:::model
+  r187["/api/"]:::route
+  v187["APIRootView"]:::view
+  r188["/api/':id"]:::route
+  v188["APIRootView"]:::view
+  r189["/arch/"]:::route
+  v189["architecture_diagram_view"]:::view
+  r190["/schema/"]:::route
+  v190["Schema"]:::view
+  t190_0["schema.html"]:::template
+  r191["/media/:id"]:::route
+  v191["serve"]:::view
+  r0 --> v0
+  r1 --> v1
+  r2 --> v2
+  v2 -- uses --> m2_0
+  v2 -- uses --> m2_1
+  v2 -- renders --> t2_0
+  r3 --> v3
+  v3 -- uses --> m3_0
+  r4 --> v4
+  v4 -- uses --> m4_0
+  v4 -- renders --> t4_0
+  r5 --> v5
+  v5 -- uses --> m5_0
+  v5 -- uses --> m5_1
+  v5 -- uses --> m5_2
+  v5 -- uses --> m5_3
+  v5 -- uses --> m5_4
+  v5 -- renders --> t5_0
+  r6 --> v6
+  v6 -- uses --> m6_0
+  v6 -- uses --> m6_1
+  v6 -- uses --> m6_2
+  v6 -- uses --> m6_3
+  v6 -- uses --> m6_4
+  v6 -- renders --> t6_0
+  r7 --> v7
+  r8 --> v8
+  r9 --> v9
+  r10 --> v10
+  r11 --> v11
+  v11 -- uses --> m11_0
+  v11 -- renders --> t11_0
+  r12 --> v12
+  v12 -- uses --> m12_0
+  v12 -- renders --> t12_0
+  r13 --> v13
+  v13 -- renders --> t13_0
+  r14 --> v14
+  v14 -- uses --> m14_0
+  v14 -- renders --> t14_0
+  r15 --> v15
+  v15 -- renders --> t15_0
+  r16 --> v16
+  v16 -- uses --> m16_0
+  r17 --> v17
+  v17 -- renders --> t17_0
+  r18 --> v18
+  r19 --> v19
+  v19 -- uses --> m19_0
+  v19 -- renders --> t19_0
+  r20 --> v20
+  v20 -- uses --> m20_0
+  v20 -- renders --> t20_0
+  r21 --> v21
+  v21 -- renders --> t21_0
+  r22 --> v22
+  v22 -- renders --> t22_0
+  r23 --> v23
+  r24 --> v24
+  v24 -- uses --> m24_0
+  v24 -- uses --> m24_1
+  v24 -- renders --> t24_0
+  r25 --> v25
+  v25 -- uses --> m25_0
+  v25 -- uses --> m25_1
+  r26 --> v26
+  v26 -- uses --> m26_0
+  v26 -- renders --> t26_0
+  r27 --> v27
+  v27 -- uses --> m27_0
+  r28 --> v28
+  v28 -- uses --> m28_0
+  v28 -- renders --> t28_0
+  r29 --> v29
+  r30 --> v30
+  v30 -- uses --> m30_0
+  v30 -- uses --> m30_1
+  v30 -- renders --> t30_0
+  r31 --> v31
+  v31 -- uses --> m31_0
+  r32 --> v32
+  v32 -- uses --> m32_0
+  r33 --> v33
+  v33 -- uses --> m33_0
+  r34 --> v34
+  v34 -- renders --> t34_0
+  r35 --> v35
+  r36 --> v36
+  v36 -- uses --> m36_0
+  v36 -- renders --> t36_0
+  r37 --> v37
+  v37 -- uses --> m37_0
+  r38 --> v38
+  v38 -- uses --> m38_0
+  r39 --> v39
+  v39 -- uses --> m39_0
+  v39 -- renders --> t39_0
+  r40 --> v40
+  r41 --> v41
+  r42 --> v42
+  v42 -- uses --> m42_0
+  r43 --> v43
+  v43 -- uses --> m43_0
+  r44 --> v44
+  v44 -- uses --> m44_0
+  r45 --> v45
+  v45 -- uses --> m45_0
+  r46 --> v46
+  v46 -- uses --> m46_0
+  v46 -- renders --> t46_0
+  r47 --> v47
+  v47 -- uses --> m47_0
+  r48 --> v48
+  v48 -- uses --> m48_0
+  v48 -- renders --> t48_0
+  r49 --> v49
+  v49 -- renders --> t49_0
+  r50 --> v50
+  r51 --> v51
+  r52 --> v52
+  r53 --> v53
+  v53 -- uses --> m53_0
+  v53 -- renders --> t53_0
+  r54 --> v54
+  v54 -- uses --> m54_0
+  r55 --> v55
+  v55 -- uses --> m55_0
+  v55 -- renders --> t55_0
+  r56 --> v56
+  r57 --> v57
+  r58 --> v58
+  v58 -- uses --> m58_0
+  v58 -- renders --> t58_0
+  r59 --> v59
+  v59 -- uses --> m59_0
+  v59 -- renders --> t59_0
+  r60 --> v60
+  v60 -- uses --> m60_0
+  v60 -- uses --> m60_1
+  v60 -- renders --> t60_0
+  r61 --> v61
+  v61 -- uses --> m61_0
+  v61 -- renders --> t61_0
+  r62 --> v62
+  v62 -- uses --> m62_0
+  r63 --> v63
+  v63 -- uses --> m63_0
+  r64 --> v64
+  v64 -- renders --> t64_0
+  r65 --> v65
+  v65 -- uses --> m65_0
+  v65 -- renders --> t65_0
+  r66 --> v66
+  v66 -- uses --> m66_0
+  r67 --> v67
+  v67 -- uses --> m67_0
+  v67 -- renders --> t67_0
+  r68 --> v68
+  v68 -- uses --> m68_0
+  r69 --> v69
+  r70 --> v70
+  v70 -- uses --> m70_0
+  v70 -- renders --> t70_0
+  r71 --> v71
+  v71 -- uses --> m71_0
+  r72 --> v72
+  v72 -- uses --> m72_0
+  v72 -- renders --> t72_0
+  r73 --> v73
+  v73 -- uses --> m73_0
+  r74 --> v74
+  v74 -- uses --> m74_0
+  r75 --> v75
+  v75 -- renders --> t75_0
+  r76 --> v76
+  v76 -- renders --> t76_0
+  r77 --> v77
+  r78 --> v78
+  v78 -- uses --> m78_0
+  v78 -- renders --> t78_0
+  r79 --> v79
+  v79 -- renders --> t79_0
+  r80 --> v80
+  r81 --> v81
+  v81 -- uses --> m81_0
+  v81 -- renders --> t81_0
+  r82 --> v82
+  v82 -- uses --> m82_0
+  v82 -- renders --> t82_0
+  r83 --> v83
+  v83 -- uses --> m83_0
+  r84 --> v84
+  v84 -- uses --> m84_0
+  v84 -- renders --> t84_0
+  r85 --> v85
+  v85 -- uses --> m85_0
+  v85 -- renders --> t85_0
+  r86 --> v86
+  v86 -- uses --> m86_0
+  r87 --> v87
+  v87 -- uses --> m87_0
+  v87 -- renders --> t87_0
+  r88 --> v88
+  v88 -- uses --> m88_0
+  v88 -- renders --> t88_0
+  r89 --> v89
+  v89 -- renders --> t89_0
+  r90 --> v90
+  v90 -- uses --> m90_0
+  r91 --> v91
+  v91 -- uses --> m91_0
+  v91 -- renders --> t91_0
+  r92 --> v92
+  v92 -- uses --> m92_0
+  r93 --> v93
+  v93 -- uses --> m93_0
+  v93 -- renders --> t93_0
+  r94 --> v94
+  v94 -- renders --> t94_0
+  r95 --> v95
+  v95 -- uses --> m95_0
+  r96 --> v96
+  v96 -- uses --> m96_0
+  v96 -- renders --> t96_0
+  r97 --> v97
+  r98 --> v98
+  v98 -- uses --> m98_0
+  v98 -- uses --> m98_1
+  v98 -- renders --> t98_0
+  v98 -- renders --> t98_1
+  r99 --> v99
+  v99 -- renders --> t99_0
+  r100 --> v100
+  v100 -- uses --> m100_0
+  v100 -- uses --> m100_1
+  v100 -- renders --> t100_0
+  r101 --> v101
+  r102 --> v102
+  v102 -- renders --> t102_0
+  r103 --> v103
+  r104 --> v104
+  r105 --> v105
+  v105 -- uses --> m105_0
+  v105 -- uses --> m105_1
+  v105 -- renders --> t105_0
+  v105 -- renders --> t105_1
+  r106 --> v106
+  v106 -- renders --> t106_0
+  r107 --> v107
+  r108 --> v108
+  r109 --> v109
+  v109 -- uses --> m109_0
+  v109 -- uses --> m109_1
+  v109 -- renders --> t109_0
+  v109 -- renders --> t109_1
+  r110 --> v110
+  r111 --> v111
+  r112 --> v112
+  v112 -- uses --> m112_0
+  r113 --> v113
+  v113 -- uses --> m113_0
+  r114 --> v114
+  r115 --> v115
+  v115 -- uses --> m115_0
+  r116 --> v116
+  v116 -- uses --> m116_0
+  r117 --> v117
+  v117 -- uses --> m117_0
+  r118 --> v118
+  v118 -- uses --> m118_0
+  r119 --> v119
+  v119 -- uses --> m119_0
+  r120 --> v120
+  v120 -- uses --> m120_0
+  r121 --> v121
+  v121 -- uses --> m121_0
+  r122 --> v122
+  v122 -- uses --> m122_0
+  r123 --> v123
+  v123 -- uses --> m123_0
+  r124 --> v124
+  v124 -- uses --> m124_0
+  r125 --> v125
+  v125 -- uses --> m125_0
+  r126 --> v126
+  v126 -- uses --> m126_0
+  r127 --> v127
+  v127 -- uses --> m127_0
+  r128 --> v128
+  v128 -- uses --> m128_0
+  r129 --> v129
+  v129 -- uses --> m129_0
+  r130 --> v130
+  v130 -- uses --> m130_0
+  r131 --> v131
+  v131 -- uses --> m131_0
+  r132 --> v132
+  v132 -- uses --> m132_0
+  r133 --> v133
+  v133 -- uses --> m133_0
+  r134 --> v134
+  v134 -- uses --> m134_0
+  r135 --> v135
+  v135 -- uses --> m135_0
+  r136 --> v136
+  v136 -- uses --> m136_0
+  r137 --> v137
+  v137 -- uses --> m137_0
+  r138 --> v138
+  v138 -- uses --> m138_0
+  r139 --> v139
+  v139 -- uses --> m139_0
+  r140 --> v140
+  v140 -- uses --> m140_0
+  r141 --> v141
+  v141 -- uses --> m141_0
+  r142 --> v142
+  v142 -- uses --> m142_0
+  r143 --> v143
+  v143 -- uses --> m143_0
+  r144 --> v144
+  v144 -- uses --> m144_0
+  r145 --> v145
+  v145 -- uses --> m145_0
+  r146 --> v146
+  v146 -- uses --> m146_0
+  r147 --> v147
+  v147 -- uses --> m147_0
+  r148 --> v148
+  v148 -- uses --> m148_0
+  r149 --> v149
+  v149 -- uses --> m149_0
+  r150 --> v150
+  v150 -- uses --> m150_0
+  r151 --> v151
+  v151 -- uses --> m151_0
+  r152 --> v152
+  v152 -- uses --> m152_0
+  r153 --> v153
+  v153 -- uses --> m153_0
+  r154 --> v154
+  v154 -- uses --> m154_0
+  r155 --> v155
+  v155 -- uses --> m155_0
+  r156 --> v156
+  v156 -- uses --> m156_0
+  r157 --> v157
+  v157 -- uses --> m157_0
+  r158 --> v158
+  v158 -- uses --> m158_0
+  r159 --> v159
+  v159 -- uses --> m159_0
+  r160 --> v160
+  v160 -- uses --> m160_0
+  r161 --> v161
+  v161 -- uses --> m161_0
+  r162 --> v162
+  v162 -- uses --> m162_0
+  r163 --> v163
+  v163 -- uses --> m163_0
+  r164 --> v164
+  v164 -- uses --> m164_0
+  r165 --> v165
+  v165 -- uses --> m165_0
+  r166 --> v166
+  v166 -- uses --> m166_0
+  r167 --> v167
+  v167 -- uses --> m167_0
+  r168 --> v168
+  v168 -- uses --> m168_0
+  r169 --> v169
+  v169 -- uses --> m169_0
+  r170 --> v170
+  v170 -- uses --> m170_0
+  r171 --> v171
+  v171 -- uses --> m171_0
+  r172 --> v172
+  v172 -- uses --> m172_0
+  r173 --> v173
+  v173 -- uses --> m173_0
+  r174 --> v174
+  v174 -- uses --> m174_0
+  r175 --> v175
+  v175 -- uses --> m175_0
+  r176 --> v176
+  v176 -- uses --> m176_0
+  r177 --> v177
+  v177 -- uses --> m177_0
+  r178 --> v178
+  v178 -- uses --> m178_0
+  r179 --> v179
+  v179 -- uses --> m179_0
+  r180 --> v180
+  v180 -- uses --> m180_0
+  r181 --> v181
+  v181 -- uses --> m181_0
+  r182 --> v182
+  v182 -- uses --> m182_0
+  r183 --> v183
+  v183 -- uses --> m183_0
+  r184 --> v184
+  v184 -- uses --> m184_0
+  r185 --> v185
+  v185 -- uses --> m185_0
+  r186 --> v186
+  v186 -- uses --> m186_0
+  r187 --> v187
+  r188 --> v188
+  r189 --> v189
+  r190 --> v190
+  v190 -- renders --> t190_0
+  r191 --> v191</pre></div>
+<script>
+mermaid.initialize({
+  startOnLoad:true,theme:"dark",fontSize:22,
+  flowchart:{useMaxWidth:false,htmlLabels:true,nodeSpacing:80,rankSpacing:80},
+  themeVariables:{
+    primaryColor:"#16213e",primaryTextColor:"#eee",
+    primaryBorderColor:"#0f3460",lineColor:"#533483",
+    secondaryColor:"#0f3460",tertiaryColor:"#1a1a2e",
+    fontSize:"22px"
+  }
+});
+</script>
+</body>
+</html>
