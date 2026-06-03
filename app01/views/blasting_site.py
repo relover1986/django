@@ -80,7 +80,7 @@ def blasting_site_photo_list(request):
         model_fields = models.BlastingSitePhoto._meta.fields
         cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location')]
         cols.append({'verbose_name': '操作'})
-        data = models.BlastingSitePhoto.objects.values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at").order_by('code')[:100]
+        data = models.BlastingSitePhoto.objects.values("id", "code", "location", "photo", "blaster", "safety_officer", "engineer", "uploaded_at").order_by('code')[:100]
         return render(request, 'blasting_site_photo_list.html', {
             'data': data,
             'cols': cols,
@@ -229,7 +229,7 @@ def blasting_site_low_conf(request):
     try:
         with open(label_map_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
-            for v in data.values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at"):
+            for v in data.values("id", "code", "location", "photo", "blaster", "safety_officer", "engineer", "uploaded_at"):
                 if v.strip():
                     name_options.append(v.strip())
     except Exception:

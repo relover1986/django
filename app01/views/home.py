@@ -74,58 +74,7 @@ client = AipBodyAnalysis(APP_ID, API_KEY, SECRET_KEY)
 
 
 def home(request):
-    import qrcode
-    import io
-    import base64
-    from collections import defaultdict
-
-    # 答题专用二维码
-    qr = qrcode.QRCode(box_size=8, border=2)
-    qr.add_data("http://bxks.online/staff_login/")
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    qr_base64 = base64.b64encode(buf.getvalue()).decode()
-
-    # 本部门答题统计
-    dept_stats = []
-    dept_name = ""
-    info = request.session.get("info", {})
-    dept = info.get("department", "")
-    if dept:
-        dept_name = dept
-        staff_list = models.Staff.objects.filter(department=dept, status="在职")
-        total_baopo = models.QuestionType.objects.count()
-        total_jingong = models.JskjgQuestion.objects.count()
-        total_weizhuang = models.WxpzxQuestion.objects.count()
-
-        for staff in staff_list:
-            phone = staff.phone
-            score_baopo = models.UserAnswer.objects.filter(ident=phone, ti_type="爆破").count()
-            score_jingong = models.UserAnswer.objects.filter(ident=phone, ti_type="非煤矿山井工").count()
-            score_weizhuang = models.UserAnswer.objects.filter(ident=phone, ti_type="危险品装卸").count()
-            remain_baopo = total_baopo - score_baopo
-            remain_jingong = total_jingong - score_jingong
-            remain_weizhuang = total_weizhuang - score_weizhuang
-            dept_stats.append({
-                "name": staff.name,
-                "phone": phone,
-                "score_baopo": score_baopo,
-                "remain_baopo": remain_baopo,
-                "score_jingong": score_jingong,
-                "remain_jingong": remain_jingong,
-                "score_weizhuang": score_weizhuang,
-                "remain_weizhuang": remain_weizhuang,
-            })
-        dept_stats.sort(key=lambda x: x["remain_baopo"] + x["remain_jingong"] + x["remain_weizhuang"], reverse=True)
-
-    context = {
-        "qr_base64": qr_base64,
-        "dept_stats": dept_stats,
-        "dept_name": dept_name,
-    }
-    return render(request, "home.html", context)
+    return render(request, "home.html")
 
 
 def department_quiz_stats(request):

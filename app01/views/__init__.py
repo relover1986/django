@@ -1,6 +1,6 @@
 # Auto-generated: imports all view functions from submodules
 # home
-from .home import home, department_quiz_stats
+from .home import home
 # contract_labor
 from .contract_labor import contractlabor_add, contractlabor_delete, contractlabor_list, contractlabor_export_zip
 # photo

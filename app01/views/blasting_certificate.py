@@ -140,7 +140,7 @@ def blastingcertificate_list(request):
         model_fields = models.BlastingCertificate._meta.fields
         cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location')]
         cols.append({'verbose_name': '操作'})
-        data = models.BlastingCertificate.objects.values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at").order_by(
+        data = models.BlastingCertificate.objects.values("id", "certificate_number", "name", "certificate_photo", "created_at").order_by(
             '-created_at')[:100]
         return render(request, 'blastingcertificate_list.html', {
             "data": data,

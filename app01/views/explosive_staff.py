@@ -129,7 +129,7 @@ def explosivestaff_add(request):
                         # 处理身份证信息
 
                         # 添加空值检查
-                            if not all(required_files.values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at")):
+                            if not all(required_files.values("id", "name", "id_number", "mobile", "front_image", "back_image", "photo", "created_at")):
                                 missing = [
                                     k for k, v in required_files.items() if not v]
                                 raise ValueError(f"图片加载失败: {missing}")
@@ -306,7 +306,7 @@ def explosivestaff_list(request):
         model_fields = models.ExplosiveStaff._meta.fields
         cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location')]
         cols.append({'verbose_name': '操作'})
-        data = models.ExplosiveStaff.objects.values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at").order_by(
+        data = models.ExplosiveStaff.objects.values("id", "name", "id_number", "mobile", "front_image", "back_image", "photo", "created_at").order_by(
             '-created_at')[:100]
         return render(request, 'explosivestaff_list.html', {
             "data": data,

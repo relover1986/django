@@ -95,7 +95,7 @@ def weighingrecord_delete(request):
 def weighingrecord_list(request):
     title = 'weighingrecord'
     if request.method == "GET":
-        data = models.WeighingRecord.objects.values("name", "photo", "rotated_photo", "blue_background", "red_background", "white_background", "uploaded_at").order_by(
+        data = models.WeighingRecord.objects.values("id", "weight_number", "truck_driver", "forklift_driver", "net_weight", "weight_photo", "created_at").order_by(
             'weight_number', '-created_at')
         # 获取模型字段的verbose_name
         model_fields = models.WeighingRecord._meta.fields
