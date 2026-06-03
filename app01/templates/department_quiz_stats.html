@@ -6,7 +6,7 @@
         <div class="col-sm-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">📊 本部门答题统计 — {{ dept_name }}</h5>
+                    <h5 class="card-title mb-0">📊 {% if is_admin %}全部部门答题统计{% else %}本部门答题统计 — {{ dept_name }}{% endif %}</h5>
                     <div class="d-flex align-items-center gap-2">
                         {% if qr_base64 %}
                         <div class="text-center">
@@ -26,6 +26,7 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
+                                    {% if is_admin %}<th class="text-center">部门</th>{% endif %}
                                     <th class="text-center">姓名</th>
                                     <th class="text-center">手机号</th>
                                     <th class="text-center">爆破答对</th>
@@ -39,6 +40,7 @@
                             <tbody>
                                 {% for s in dept_stats %}
                                 <tr>
+                                    {% if is_admin %}<td class="text-center"><span class="badge bg-light text-dark">{{ s.dept }}</span></td>{% endif %}
                                     <td class="text-center fw-semibold">{{ s.name }}</td>
                                     <td class="text-center">{{ s.phone }}</td>
                                     <td class="text-center text-success">{{ s.score_baopo }}</td>

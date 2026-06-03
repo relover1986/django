@@ -96,9 +96,19 @@ def department_quiz_stats(request):
     # 本部门答题统计
     dept_stats = []
     info = request.session.get("info", {})
+    ident = info.get("ident", "")
     dept = info.get("department", "")
-    if dept:
+    is_admin = ident in ("000001", "000002")
+
+    if is_admin:
+        # 管理员：看全部部门
+        staff_list = models.Staff.objects.filter(status="在职").order_by("department", "name")
+    elif dept:
         staff_list = models.Staff.objects.filter(department=dept, status="在职")
+    else:
+        staff_list = []
+
+    if staff_list:
         total_baopo = models.QuestionType.objects.count()
         total_jingong = models.JskjgQuestion.objects.count()
         total_weizhuang = models.WxpzxQuestion.objects.count()
@@ -114,6 +124,7 @@ def department_quiz_stats(request):
             dept_stats.append({
                 "name": staff.name,
                 "phone": phone,
+                "dept": staff.department if is_admin else "",
                 "score_baopo": score_baopo,
                 "remain_baopo": remain_baopo,
                 "score_jingong": score_jingong,
@@ -126,7 +137,8 @@ def department_quiz_stats(request):
     return render(request, "department_quiz_stats.html", {
         "qr_base64": qr_base64,
         "dept_stats": dept_stats,
-        "dept_name": dept,
+        "dept_name": "全部部门" if is_admin else dept,
+        "is_admin": is_admin,
     })
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
