@@ -14,6 +14,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
 import zipfile
 import io
+from app01.services import export_service
 from collections import defaultdict
 from app01.jiami import md5
 from app01.func import *
@@ -147,28 +148,9 @@ def contractlabor_list(request):
 # 新增合同导出函数
 
 
-@资料员
+@require_role("爆破工程技术人员", "资料员")
 def contractlabor_export_zip(request):
-    import zipfile
-    from io import BytesIO
-
-    zip_buffer = BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        # 获取所有合同工
-        laborers = models.ContractLabor.objects.all()
-
-        for laborer in laborers:
-            # 获取合同文件字段
-            contract_file = laborer.contract_file
-            if contract_file and contract_file.storage.exists(contract_file.name):
-                # 使用身份证号+姓名作为目录名
-                zipf.writestr(
-                    f"{laborer.id_number}_{laborer.name}/劳动合同.docx",
-                    contract_file.read()
-                )
-
-    zip_buffer.seek(0)
-
+    zip_buffer = export_service.contractlabor_export_zip()
     response = HttpResponse(zip_buffer, content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename="labor_contracts.zip"'
     return response

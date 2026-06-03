@@ -1,4 +1,4 @@
-from django.shortcuts import render, HttpResponse, redirect
+from django.shortcuts import render, HttpResponse, redirect, get_object_or_404
 import time
 import torch
 import torch.nn as nn
@@ -108,6 +108,7 @@ def mine_card_index(request):
                 messages.error(request, f"导入失败：{e}")
 
     if request.method == "POST" and "name" in request.POST:
+        worker_form = WorkerForm(request.POST, request.FILES)
         if worker_form.is_valid():
             worker = worker_form.save(commit=False)
             if dept:

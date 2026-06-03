@@ -1,4 +1,15 @@
 {% extends "home.html" %} {% block content %}
+{% if messages %}
+<div class="container" style="margin-top: 70px;">
+    {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags|default:"info" }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
 
 <br />
 <br />

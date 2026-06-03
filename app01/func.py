@@ -157,18 +157,8 @@ def url_check(fun):
             return redirect('/home')        
     return check
 
-def 最高权限(fun):
-    print(fun.__name__)
-    def check(request):
-        # 修改条件判断逻辑，支持多身份验证
-        if any(x in request.session.get('info').get('ident') for x in ["000001", "000002"]):
-            return fun(request)
-        else:
-            title="没有权限!"
-            return render(request,'change.html',{"title":title })  
-    return check
 
-from app01.permissions import 资料员
+from app01.permissions import 资料员, 最高权限, require_role
 
 
 def tu_128(file,username):

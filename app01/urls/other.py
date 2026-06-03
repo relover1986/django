@@ -24,5 +24,4 @@ urlpatterns = [
     path("home/categorycontent_create", views.categorycontent_create),
     path("home/categorycontent_delete", views.categorycontent_delete),
     path("home/categorycontent_edit", views.categorycontent_edit),
-    path('home/test_upload/', views.test_upload, name='test_upload'),
 ]

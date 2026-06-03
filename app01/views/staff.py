@@ -56,6 +56,7 @@ from datetime import datetime
 
 import zipfile
 from io import BytesIO
+from app01.services import export_service
 
 from aip import AipBodyAnalysis
 import base64
@@ -124,7 +125,7 @@ def staff_list(request):
     return render(request, 'staff_list.html', {"title": title})
 
 
-@资料员
+@require_role("爆破工程技术人员", "资料员")
 def admin_add(request):
 
     title = '新建员工信息'
@@ -426,27 +427,9 @@ def staff_cert_list(request):
 @login_required
 def staff_cert_export_zip(request):
     """导出证件附件为ZIP"""
-    import os
-    from django.conf import settings
-    from app01.models import StaffCert, StaffCertFile
-
     dept = request.session.get("info", {}).get("department", "")
-    certs = StaffCert.objects.select_related("staff", "cert_type").filter(staff__department=dept)
     cert_type_id = request.GET.get("cert_type")
-    if cert_type_id:
-        certs = certs.filter(cert_type_id=cert_type_id)
-
-    buf = io.BytesIO()
-    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        for cert in certs:
-            files = StaffCertFile.objects.filter(cert=cert)
-            for f in files:
-                path = os.path.join(settings.MEDIA_ROOT, str(f.file))
-                if os.path.exists(path):
-                    arcname = f"{cert.staff.name}_{cert.cert_type.name}_{f.file_type}.jpg"
-                    zf.write(path, arcname)
-
-    buf.seek(0)
+    buf = export_service.staff_cert_export_zip(dept, cert_type_id)
     resp = HttpResponse(buf.getvalue(), content_type="application/zip")
     resp["Content-Disposition"] = "attachment; filename=cert_files.zip"
     return resp

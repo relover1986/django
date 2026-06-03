@@ -14,6 +14,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
 import zipfile
 import io
+from app01.services import export_service
 from collections import defaultdict
 from app01.jiami import md5
 from app01.func import *
@@ -150,43 +151,11 @@ def blastingcertificate_list(request):
         })
 
 
-@资料员
+@require_role("爆破工程技术人员", "资料员")
 def blastingcertificate_export_xlsx(request):
-    from openpyxl import Workbook
-    from django.http import HttpResponse
-    import io
     from datetime import datetime
 
-    # 创建Excel工作簿
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "爆破证书数据"
-
-    # 设置标题行
-    headers = ['姓名', '证书编号']
-    ws.append(headers)
-
-    # 设置列宽
-    ws.column_dimensions['A'].width = 25  # 姓名列
-    ws.column_dimensions['B'].width = 30  # 证书编号列
-
-    # 获取数据
-    certificates = models.BlastingCertificate.objects.all().values_list(
-        'name', 'certificate_number'
-    )
-
-    # 填充数据
-    for cert in certificates:
-        ws.append([
-            cert[0],  # 姓名
-            cert[1]   # 证书编号
-        ])
-
-    # 创建HTTP响应
-    excel_io = io.BytesIO()
-    wb.save(excel_io)
-    excel_io.seek(0)
-
+    excel_io = export_service.blastingcertificate_export_xlsx()
     response = HttpResponse(
         excel_io.getvalue(),
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -196,28 +165,9 @@ def blastingcertificate_export_xlsx(request):
     return response
 
 
-@资料员
+@require_role("爆破工程技术人员", "资料员")
 def blastingcertificate_export_zip(request):
-    import zipfile
-    from io import BytesIO
-
-    zip_buffer = BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        # 获取所有爆破证书
-        certificates = models.BlastingCertificate.objects.all()
-
-        for cert in certificates:
-            # 爆破证照片字段
-            cert_photo = cert.certificate_photo
-            if cert_photo and cert_photo.storage.exists(cert_photo.name):
-                # 使用证书编号+姓名作为文件名
-                zipf.writestr(
-                    f"{cert.certificate_number}_{cert.name}.jpg",
-                    cert_photo.read()
-                )
-
-    zip_buffer.seek(0)
-
+    zip_buffer = export_service.blastingcertificate_export_zip()
     response = HttpResponse(zip_buffer, content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename="blasting_certificates.zip"'
     return response

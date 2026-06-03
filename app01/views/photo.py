@@ -563,7 +563,7 @@ def generate_white_bg(request):
         return JsonResponse({"code": 500, "error": str(e)})
 
 
-@资料员
+@require_role("爆破工程技术人员", "资料员")
 def photo_export_zip(request):
     import zipfile
     from io import BytesIO

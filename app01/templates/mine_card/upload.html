@@ -225,7 +225,7 @@
                 <!-- 右侧：手动添加（标签在上，输入框在下） -->
                 <div class="col-md-6 d-flex flex-column justify-content-center" style="border-left: 1px solid #e5e7eb; padding-left: 20px; padding-right: 20px;">
                     <div class="fw-medium text-secondary compact-label mb-1">或手动添加一人</div>
-                    <form method="post" id="manual-form" class="d-flex align-items-center gap-2">
+                    <form method="post" enctype="multipart/form-data" id="manual-form" class="d-flex align-items-center gap-2">
                         {% csrf_token %}
                         <div class="name-input-wrap" style="max-width:145px;">
                             {{ worker_form.name }}

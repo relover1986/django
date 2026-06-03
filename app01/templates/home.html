@@ -103,6 +103,21 @@
         @media (max-width: 600px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
         }
+    /* ===== 侧边栏二级菜单文字样式兜底 ===== */
+        .page-wrapper.compact-wrapper .sidebar-main .sidebar-links .sidebar-submenu li a {
+            padding: 7px 25px !important;
+            font-size: 14px !important;
+            color: #fff !important;
+            display: block !important;
+            font-weight: 500 !important;
+            letter-spacing: 0.06em !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        .page-wrapper.compact-wrapper .sidebar-main .sidebar-links .sidebar-submenu li a:hover {
+            color: var(--theme-default) !important;
+        }
     </style>
 </head>
 <body>
@@ -222,8 +237,8 @@
                                     </a>
                                     <ul class="sidebar-submenu">
                                         <li><a href="/home/pdf_list">上级文件</a></li>
-                                        <li><a href="/home/pdf_list">项目部</a></li>
-                                        <li><a href="/upload_pdf">文件上传</a></li>
+                                        <li><a href="/home/tu_list/">项目部</a></li>
+                                        <li><a href="/home/pdf_add/">文件上传</a></li>
                                     </ul>
                                 </li>
                                 <!-- 矿山图纸 -->
@@ -317,7 +332,7 @@
                                                                         <!-- VERSION_HISTORY_START -->
                                     <div class="text-center mt-3">
                                         <p class="lead" style="font-size:1.3rem;">
-                                            <span class="badge bg-primary fs-6 me-2">v1.10</span>
+                                            <span class="badge bg-primary fs-6 me-2">v1.11</span>
                                             <span class="text-muted">2026-06-02</span>
                                         </p>
                                         <p class="text-muted" style="font-size:1.0rem;">架构重构：views 拆分 + services/permissions 层抽离 + forms/serializers 目录化</p>

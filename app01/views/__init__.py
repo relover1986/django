@@ -11,16 +11,19 @@ from .blasting_certificate import blastingcertificate_add, blastingcertificate_d
 from .blasting_certificate import blastingcertificate_export_xlsx, blastingcertificate_export_zip
 # idcard
 from .idcard import idcard_add, idcard_delete, api_idcard_add, api_idcard_list, idcard_list, idcard_export_zip
-# other
-from .other import tu_add, tu_delete, tu_list, pdf_add, pdf_delete, pdf_list
-from .other import inventory_list, inventory_add, inventory_delete, inventory_edit, inventory_export_xlsx
-from .other import categorycontent_list, categorycontent_create, categorycontent_delete, categorycontent_edit
-from .other import upload_model, candidateprofile_add, candidateprofile_delete, candidateprofile_list
-from .other import save_image_to_field, process_photo, apply_orientation
-from .other import explosivestaff_add, explosivestaff_delete, explosivestaff_list
-from .other import explosivestaff_export_xlsx, explosivestaff_export_zip
-from .other import weighingrecord_add, weighingrecord_delete, weighingrecord_list
-from .other import idcard_batch_upload, test_upload
+
+# ── 从 other.py 拆出的模块 ──
+from .drawing import tu_add, tu_delete, tu_list
+from .document import pdf_add, pdf_delete, pdf_list
+from .inventory import inventory_list, inventory_add, inventory_delete, inventory_edit, inventory_export_xlsx
+from .category import categorycontent_list, categorycontent_create, categorycontent_delete, categorycontent_edit
+from .upload import upload_model
+from .candidate import candidateprofile_add, candidateprofile_delete, candidateprofile_list
+from .explosive_staff import explosivestaff_add, explosivestaff_delete, explosivestaff_list
+from .explosive_staff import explosivestaff_export_xlsx, explosivestaff_export_zip
+from .weighing import weighingrecord_add, weighingrecord_delete, weighingrecord_list
+from .idcard import idcard_batch_upload
+
 # staff
 from .staff import StaffListView, staff_list, admin_add, admin_delete, admin_edit
 from app01.permissions import login_required

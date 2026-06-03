@@ -368,7 +368,7 @@ def idcard_list(request):
         model_fields = models.IDCard._meta.fields
         cols = [{'verbose_name': field.verbose_name} for field in model_fields if field.attname not in ('id', 'location')]
         cols.append({'verbose_name': '操作'})
-        data = models.IDCard.objects.values("name", "id_number", "front_image", "back_image", "combined_image", "created_at").order_by('-created_at')[:100]
+        data = models.IDCard.objects.values("id", "name", "id_number", "front_image", "back_image", "combined_image", "created_at").order_by('-created_at')[:100]
         return render(request, 'idcard_list.html', {
             "data": data,
             "cols": cols,
@@ -377,7 +377,7 @@ def idcard_list(request):
         })
 
 
-@资料员
+@require_role("爆破工程技术人员", "资料员")
 def idcard_export_zip(request):
     import zipfile
     from io import BytesIO
@@ -424,3 +424,27 @@ def idcard_export_zip(request):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
+
+
+@require_role("爆破工程技术人员", "资料员")
+def idcard_batch_upload(request):
+    """接收一张正反面拼图 → 服务层处理 → 入库"""
+    from django.contrib import messages
+    from app01.services.idcard_service import batch_process_idcard
+
+    if request.method != "POST":
+        return redirect("/home/idcard_list/")
+
+    uploaded = request.FILES.get("image")
+    if not uploaded:
+        messages.error(request, "未选择图片")
+        return redirect("/home/idcard_list/")
+
+    result = batch_process_idcard(uploaded.read())
+    if not result:
+        messages.error(request, "识别失败，请检查图片是否为身份证正反面拼图")
+        return redirect("/home/idcard_list/")
+
+    models.IDCard.objects.create(**result)
+    messages.success(request, "识别成功：" + result['name'] + " - " + result['id_number'])
+    return redirect("/home/idcard_list/")
