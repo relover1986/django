@@ -1,5 +1,16 @@
 {% extends "home.html" %}
 {% block content %}
+<style>
+.grades-tabs { text-align: center; padding: 0 16px 16px; }
+.grades-tabs .tab-btn {
+  display: inline-block; padding: 8px 20px; margin: 0 4px;
+  border-radius: 8px; font-size: 14px; cursor: pointer;
+  border: 1px solid #e5e7eb; background: #fff; color: #374151;
+  text-decoration: none; transition: all .15s;
+}
+.grades-tabs .tab-btn:hover { background: #f3f4f6; }
+.grades-tabs .tab-btn.active { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+</style>
 <br><br><br>
 <div class="container-fluid">
     <div class="row">
@@ -20,6 +31,12 @@
                         <a href="/home/" class="btn btn-outline-secondary btn-sm">← 回首页</a>
                     </div>
                 </div>
+                <div class="grades-tabs pt-3">
+                    <a href="/home/department_quiz_stats/" class="tab-btn {% if active_type == '' %}active{% endif %}">全部</a>
+                    <a href="/home/department_quiz_stats/?type=爆破" class="tab-btn {% if active_type == '爆破' %}active{% endif %}">爆破</a>
+                    <a href="/home/department_quiz_stats/?type=井工" class="tab-btn {% if active_type == '井工' %}active{% endif %}">井工</a>
+                    <a href="/home/department_quiz_stats/?type=危装" class="tab-btn {% if active_type == '危装' %}active{% endif %}">危装</a>
+                </div>
                 <div class="card-body p-0">
                     {% if dept_stats %}
                     <div class="table-responsive">
@@ -29,12 +46,18 @@
                                     {% if is_admin %}<th class="text-center">部门</th>{% endif %}
                                     <th class="text-center">姓名</th>
                                     <th class="text-center">手机号</th>
+                                    {% if active_type == '' or active_type == '爆破' %}
                                     <th class="text-center">爆破答对</th>
                                     <th class="text-center">爆破剩余</th>
+                                    {% endif %}
+                                    {% if active_type == '' or active_type == '井工' %}
                                     <th class="text-center">井工答对</th>
                                     <th class="text-center">井工剩余</th>
+                                    {% endif %}
+                                    {% if active_type == '' or active_type == '危装' %}
                                     <th class="text-center">危装答对</th>
                                     <th class="text-center">危装剩余</th>
+                                    {% endif %}
                                 </tr>
                             </thead>
                             <tbody>
@@ -43,12 +66,18 @@
                                     {% if is_admin %}<td class="text-center"><span class="badge bg-light text-dark">{{ s.dept }}</span></td>{% endif %}
                                     <td class="text-center fw-semibold">{{ s.name }}</td>
                                     <td class="text-center">{{ s.phone }}</td>
+                                    {% if active_type == '' or active_type == '爆破' %}
                                     <td class="text-center text-success">{{ s.score_baopo }}</td>
                                     <td class="text-center {% if s.remain_baopo > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">{{ s.remain_baopo }}</td>
+                                    {% endif %}
+                                    {% if active_type == '' or active_type == '井工' %}
                                     <td class="text-center text-success">{{ s.score_jingong }}</td>
                                     <td class="text-center {% if s.remain_jingong > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">{{ s.remain_jingong }}</td>
+                                    {% endif %}
+                                    {% if active_type == '' or active_type == '危装' %}
                                     <td class="text-center text-success">{{ s.score_weizhuang }}</td>
                                     <td class="text-center {% if s.remain_weizhuang > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">{{ s.remain_weizhuang }}</td>
+                                    {% endif %}
                                 </tr>
                                 {% endfor %}
                             </tbody>

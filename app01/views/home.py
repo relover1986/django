@@ -139,6 +139,7 @@ def department_quiz_stats(request):
         "dept_stats": dept_stats,
         "dept_name": "全部部门" if is_admin else dept,
         "is_admin": is_admin,
+        "active_type": request.GET.get("type", ""),
     })
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
