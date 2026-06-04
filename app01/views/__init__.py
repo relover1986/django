@@ -30,7 +30,7 @@ from app01.permissions import login_required
 from .staff import staff_add, staff_edit_v2, staff_delete_v2, staff_detail, staff_cert_add, staff_cert_delete
 from .staff import cert_type_list, cert_type_add, cert_type_edit, cert_type_delete
 # blasting_stats
-from .blasting_stats import blasting_stats, blaster_list, blaster_add
+from .blasting_stats import blasting_stats
 from .blasting_stats import blasting_summary_list, blasting_summary_add, blasting_summary_delete, blasting_summary_assign_blaster
 # blasting_site
 from .blasting_site import blasting_site_photo_list, SignNetMulti, _load_sign_model

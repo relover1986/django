@@ -8,54 +8,267 @@
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'css/cursor-theme.css' %}" rel="stylesheet">
     <style>
-        html, body { height: 100%; overflow: hidden; }
-        .page-wrap { height: 100vh; display: flex; flex-direction: column; }
-        .table-scroll { flex: 1; overflow: auto; }
-        .table-scroll thead th { position: sticky; top: 0; z-index: 2; background: #0d6efd !important; color: #fff; font-weight: 600; border-bottom: 2px solid #0a58ca; white-space: nowrap; }
-        .summary-row { background: #fff3cd !important; font-weight: bold; }
-        .summary-row td { border-bottom: 2px solid #ffc107 !important; }
-        .date-group-start { border-top: 3px solid #1a3a5c !important; }
-        .date-cell { vertical-align: middle !important; text-align: center; font-weight: bold; background: #e9ecef; }
+        :root {
+            --bg-main: #f0f2f5;
+            --bg-card: #ffffff;
+            --green: #3ecf8e;
+            --green-dim: rgba(62, 207, 142, 0.1);
+            --blue: #2d7ff9;
+            --text-primary: #1d2129;
+            --text-secondary: #4e5969;
+            --text-muted: #86909c;
+            --border: #e5e6eb;
+            --radius: 8px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        * { box-sizing: border-box; }
+        html, body {
+            height: 100%;
+            margin: 0;
+            background: var(--bg-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+        .page-wrap {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 16px 20px 12px;
+        }
+        @media (max-width: 600px) {
+            .page-wrap { padding: 12px 8px 8px; }
+        }
+
+        /* ── 顶栏 ── */
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            margin-bottom: 14px;
+        }
+        .stats-header h4 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .stats-header h4 small {
+            font-weight: 400;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 16px;
+            background: #e8f3ff;
+            color: #165dff;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .btn-back:hover { background: #d4e8ff; color: #165dff; }
+
+        .stats-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 20px;
+            background: linear-gradient(135deg, #ff7d00, #ff9400);
+            color: #fff;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(255, 125, 0, 0.25);
+        }
+
+        /* ── 表格容器 ── */
+        .table-wrap {
+            flex: 1;
+            overflow: auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+        }
+        .table-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
+        .table-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            min-width: 700px;
+        }
+
+        .stats-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: linear-gradient(180deg, #1a73e8, #1557b0);
+            color: #fff;
+            padding: 10px 14px;
+            font-weight: 600;
+            font-size: 13px;
+            text-align: center;
+            border-bottom: 2px solid #0d47a1;
+            white-space: nowrap;
+        }
+        .stats-table thead th:not(:last-child) {
+            border-right: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .stats-table tbody td {
+            padding: 8px 14px;
+            text-align: center;
+            border-bottom: 1px solid #f2f3f5;
+            vertical-align: middle;
+        }
+
+        /* ── 日期组首行 ── */
+        .date-group-first td {
+            border-top: 3px solid var(--blue) !important;
+        }
+
+        /* ── 日期单元格（合并行） ── */
+        .date-cell {
+            font-weight: 700;
+            color: var(--text-primary);
+            background: #f0f7ff !important;
+            text-align: center;
+            vertical-align: middle !important;
+            font-size: 14px;
+            border-right: 1px solid var(--border);
+        }
+
+        /* ── 汇总行 ── */
+        .summary-row td {
+            background: #fffbe6 !important;
+            font-weight: 700;
+            border-top: 2px solid #ffc107 !important;
+            border-bottom: 2px solid #ffc107 !important;
+        }
+        .summary-row .summary-label {
+            color: #ad8b00;
+        }
+
+        /* ── 正常行悬停 ── */
+        .stats-table tbody tr:not(.summary-row):hover td {
+            background: var(--green-dim) !important;
+        }
+
+        /* ── 数字列加粗 ── */
+        .num-val {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .summary-row .num-val {
+            color: #ad8b00;
+        }
+
+        /* ── 包装列 ── */
+        .pkg-box {
+            display: inline-block;
+            padding: 0 8px;
+            background: #f0f7ff;
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .pkg-unit { color: var(--text-muted); font-size: 11px; }
+
+        /* ── 班次标签 ── */
+        .shift-tag {
+            display: inline-block;
+            padding: 1px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .shift-day {
+            background: #e8f3ff;
+            color: #165dff;
+        }
+        .shift-night {
+            background: #fff0e0;
+            color: #ff7d00;
+        }
+        .shift-other {
+            background: #f0f0f0;
+            color: var(--text-secondary);
+        }
+
+        /* ── 空状态 ── */
+        .empty-state {
+            padding: 80px 20px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
     </style>
 </head>
-<body class="bg-light">
-    <div class="page-wrap p-3">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <a href="/home/" class="btn btn-sm px-3" style="background:#E8F3FF;color:#165DFF;border:none;font-weight:500;">← 返回主页</a>
-            <span class="badge fs-6 px-3 py-2" style="background:#FF7D00;color:#FFFFFF;font-weight:600;">统计数据</span>
+<body>
+<div class="page-wrap">
+    <!-- ═══ 顶栏 ═══ -->
+    <div class="stats-header">
+        <div class="d-flex align-items-center gap-3">
+            <a href="/home/" class="btn-back">← 返回主页</a>
+            <h4>爆破登记统计 <small>按日期·班次·爆破员汇总</small></h4>
         </div>
-        <div class="table-scroll">
-            <table class="table table-bordered table-hover bg-white">
-                <thead>
-                    <tr class="text-center">
-                        <th>日期</th>
-                        <th>班次</th>
-                        <th>爆破员</th>
-                        <th>雷管数</th>
-                        <th>炸药(公斤)</th>
-                        <th>包装</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for r in rows %}
-                    {% if r.date_rowspan %}<tr class="date-group-start">{% elif r.is_summary %}<tr class="summary-row">{% else %}<tr>{% endif %}
-                        {% if r.date_rowspan %}
-                        <td class="date-cell" rowspan="{{ r.date_rowspan }}">{{ r.date }}</td>
-                        {% endif %}
-                        <td class="text-center">{{ r.shift }}</td>
-                        <td class="text-center">{% if r.is_summary %}<strong>{{ r.blaster }}</strong>{% else %}{{ r.blaster }}{% endif %}</td>
-                        <td class="text-center">{{ r.detonator }}</td>
-                        <td class="text-center">{{ r.explosive }}</td>
-                        <td class="text-center">{{ r.explosive_boxes }}箱{{ r.explosive_bags }}包</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="6" class="text-center text-muted">暂无数据</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
+        <span class="stats-badge">统计数据</span>
     </div>
-    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+
+    <!-- ═══ 表格 ═══ -->
+    <div class="table-wrap">
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th style="width:100px;">日期</th>
+                    <th style="width:70px;">班次</th>
+                    <th>爆破员</th>
+                    <th style="width:80px;">雷管数</th>
+                    <th style="width:90px;">炸药(kg)</th>
+                    <th>包装</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in rows %}
+                <tr class="{% if r.is_summary %}summary-row{% elif r.date_rowspan %}date-group-first{% endif %}">
+                    {% if r.date_rowspan %}
+                    <td class="date-cell" rowspan="{{ r.date_rowspan }}">{{ r.date }}</td>
+                    {% endif %}
+                    <td>
+                        {% if r.shift == "夜" or r.shift == "夜班" %}
+                        <span class="shift-tag shift-night">{{ r.shift }}</span>
+                        {% elif r.shift == "白" or r.shift == "白班" or r.shift == "早" or r.shift == "早班" %}
+                        <span class="shift-tag shift-day">{{ r.shift }}</span>
+                        {% else %}
+                        <span class="shift-tag shift-other">{{ r.shift }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{% if r.is_summary %}<span class="summary-label">{{ r.blaster }}</span>{% else %}{{ r.blaster }}{% endif %}</td>
+                    <td class="num-val">{{ r.detonator }}</td>
+                    <td class="num-val">{{ r.explosive }}</td>
+                    <td>
+                        <span class="pkg-box">{{ r.explosive_boxes }}<span class="pkg-unit">箱</span> {{ r.explosive_bags }}<span class="pkg-unit">包</span></span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="empty-state">暂无数据</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
 </body>
 </html>

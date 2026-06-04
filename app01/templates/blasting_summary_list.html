@@ -8,120 +8,575 @@
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'css/cursor-theme.css' %}" rel="stylesheet">
     <style>
-        html, body { height: 100%; }
-        .page-wrap { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .top-section { flex: 0 0 auto; max-height: 45vh; overflow: auto; }
-        .bottom-section { flex: 1; overflow: auto; padding-top: 1rem; }
-        .seg-card { border: 1px solid #dee2e6; border-radius: .5rem; background: #fff; }
-        .seg-card-header {
-            border-bottom: 2px solid #0d6efd; padding: .35rem .5rem;
-            background: #f0f7ff; border-radius: .5rem .5rem 0 0;
+        :root {
+            --bg-main: #f0f2f5;
+            --bg-card: #ffffff;
+            --green: #3ecf8e;
+            --green-dim: rgba(62, 207, 142, 0.1);
+            --blue: #2d7ff9;
+            --text-primary: #1d2129;
+            --text-secondary: #4e5969;
+            --text-muted: #86909c;
+            --border: #e5e6eb;
+            --radius: 8px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
         }
-        .seg-card-header select { font-size: .8rem; padding: .1rem .2rem; max-width: 100%; }
-        .seg-table td { padding: .22rem .3rem; font-size: .8rem; }
-        .seg-table td+td { border-left: 1px solid #dee2e6; }
-        .seg-total td { border-top: 2px solid #ffc107 !important; background: #fffbe6 !important; }
-        .blaster-select { font-size: .78rem; padding: .1rem .15rem; max-width: 6rem; }
-        .badge-night { background: #6c757d !important; color: #ff7d00 !important; }
+        * { box-sizing: border-box; }
+        html, body {
+            height: 100%;
+            margin: 0;
+            background: var(--bg-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text-primary);
+        }
+        .page-wrap {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ── 顶部：列表表格 ── */
+        .top-section {
+            flex: 0 0 auto;
+            max-height: 45vh;
+            overflow: auto;
+            padding: 16px 20px 8px;
+        }
+        .top-section::-webkit-scrollbar { width: 6px; }
+        .top-section::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .page-header h4 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .page-header h4 small {
+            font-weight: 400;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-left: 8px;
+        }
+        .btn-add {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 16px;
+            background: var(--green);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: opacity 0.2s, transform 0.1s;
+            box-shadow: 0 2px 6px rgba(62, 207, 142, 0.3);
+        }
+        .btn-add:hover { opacity: 0.85; color: #fff; transform: translateY(-1px); }
+        .btn-add:active { transform: translateY(0); }
+
+        /* ── 表格样式 ── */
+        .data-table-wrap {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .data-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+        .data-table thead th {
+            background: #f7f8fa;
+            padding: 10px 12px;
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+            text-align: center;
+        }
+        .data-table tbody td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #f2f3f5;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .data-table tbody tr:hover { background: var(--green-dim); }
+        .data-table tbody tr:last-child td { border-bottom: none; }
+
+        .col-id { width: 48px; color: var(--text-muted); }
+        .col-action { width: 64px; }
+
+        .blaster-input {
+            width: 120px;
+            padding: 4px 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 12px;
+            background: #fafafa;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .blaster-input:focus {
+            outline: none;
+            border-color: var(--green);
+            box-shadow: 0 0 0 2px rgba(62, 207, 142, 0.15);
+            background: #fff;
+        }
+
+        /* ── 爆破员 Combobox ── */
+        .blaster-combo {
+            position: relative;
+            display: inline-flex;
+            align-items: stretch;
+            width: 140px;
+        }
+        .blaster-combo .blaster-input {
+            width: 100%;
+            padding: 4px 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px 0 0 6px;
+            font-size: 12px;
+            background: #fff;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .blaster-combo .blaster-input:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 0 2px rgba(62, 207, 142, 0.15);
+        }
+        .combo-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            padding: 0;
+            border: 1px solid var(--border);
+            border-left: none;
+            border-radius: 0 6px 6px 0;
+            background: #f7f8fa;
+            color: var(--text-muted);
+            font-size: 10px;
+            cursor: pointer;
+            transition: background 0.15s;
+            line-height: 1;
+        }
+        .combo-arrow:hover { background: #e8e8e8; }
+        .combo-arrow.open { background: var(--green-dim); color: var(--green); }
+        .combo-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 2px);
+            left: 0;
+            right: 0;
+            min-width: 160px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            z-index: 100;
+            max-height: 220px;
+            overflow: hidden;
+        }
+        .combo-dropdown.open { display: flex; flex-direction: column; }
+        .combo-search-box {
+            padding: 6px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .combo-search-box input {
+            width: 100%;
+            padding: 4px 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 12px;
+            outline: none;
+            background: #fafafa;
+        }
+        .combo-search-box input:focus { border-color: var(--green); }
+        .combo-options {
+            overflow-y: auto;
+            flex: 1;
+        }
+        .combo-options::-webkit-scrollbar { width: 5px; }
+        .combo-options::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .combo-option {
+            padding: 6px 10px;
+            font-size: 12px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .combo-option:hover { background: var(--green-dim); }
+        .combo-option.active { background: rgba(62, 207, 142, 0.2); font-weight: 600; }
+        .combo-option.hidden { display: none; }
+        .combo-no-match {
+            padding: 12px 10px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        @media (max-width: 600px) {
+            .blaster-combo { width: 100px; }
+        }
+
+        .btn-del {
+            display: inline-block;
+            padding: 2px 10px;
+            font-size: 12px;
+            color: #f53f3f;
+            border: 1px solid #ffe0e0;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+        .btn-del:hover {
+            background: #f53f3f;
+            color: #fff;
+            border-color: #f53f3f;
+        }
+
+        .badge-shift-day {
+            display: inline-block;
+            padding: 1px 8px;
+            font-size: 11px;
+            background: #e8f3ff;
+            color: #165dff;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+        .badge-shift-night {
+            display: inline-block;
+            padding: 1px 8px;
+            font-size: 11px;
+            background: #f0f0f0;
+            color: #ff7d00;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        /* ── 分隔线 ── */
+        .divider {
+            flex-shrink: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--green) 0%, var(--blue) 100%);
+            opacity: 0.6;
+            margin: 0;
+            border: none;
+        }
+
+        /* ── 底部：分段卡片 ── */
+        .bottom-section {
+            flex: 1;
+            overflow: auto;
+            padding: 16px 20px 20px;
+        }
+        .bottom-section::-webkit-scrollbar { width: 6px; }
+        .bottom-section::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .bottom-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 16px;
+            background: #e8f3ff;
+            color: #165dff;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .btn-back:hover { background: #d4e8ff; color: #165dff; }
+
+        .btn-stats {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 20px;
+            background: linear-gradient(135deg, #ff7d00, #ff9400);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: opacity 0.2s, transform 0.1s;
+            box-shadow: 0 2px 8px rgba(255, 125, 0, 0.3);
+        }
+        .btn-stats:hover { opacity: 0.88; color: #fff; transform: translateY(-1px); }
+        .btn-stats:active { transform: translateY(0); }
+        .btn-stats-disabled {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 20px;
+            background: #e5e6eb;
+            color: #c9cdd4;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: not-allowed;
+        }
+
+        .alert-warning-custom {
+            padding: 10px 16px;
+            margin-bottom: 16px;
+            background: #fffbe6;
+            border: 1px solid #ffe58f;
+            border-radius: var(--radius);
+            font-size: 13px;
+            color: #ad8b00;
+        }
+        .alert-warning-custom div { margin-bottom: 2px; }
+        .alert-warning-custom div:last-child { margin-bottom: 0; }
+
+        /* ── 卡片网格 ── */
+        .seg-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+        }
+        @media (max-width: 600px) {
+            .seg-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .top-section { padding: 12px 12px 4px; }
+            .bottom-section { padding: 12px; }
+            .page-header h4 { font-size: 15px; }
+            .page-header h4 small { display: none; }
+            .data-table { font-size: 11px; }
+            .data-table thead th,
+            .data-table tbody td { padding: 4px 4px; }
+            .blaster-input { width: 80px; font-size: 11px; }
+            .bottom-actions { flex-wrap: wrap; gap: 8px; }
+        }
+
+        .seg-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: box-shadow 0.2s, transform 0.15s;
+        }
+        .seg-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .seg-card-header {
+            padding: 8px 10px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #f0f7ff 0%, #e8f3ff 100%);
+            border-bottom: 2px solid var(--blue);
+        }
+        .seg-card-header .loc { color: var(--text-secondary); font-weight: 400; font-size: 12px; }
+        .seg-card-header .shift-badge-day {
+            display: inline-block;
+            padding: 0 6px;
+            font-size: 10px;
+            background: #e8f3ff;
+            color: #165dff;
+            border-radius: 8px;
+            font-weight: 500;
+            margin-left: 4px;
+        }
+        .seg-card-header .shift-badge-night {
+            display: inline-block;
+            padding: 0 6px;
+            font-size: 10px;
+            background: #f0f0f0;
+            color: #ff7d00;
+            border-radius: 8px;
+            font-weight: 500;
+            margin-left: 4px;
+        }
+
+        .seg-card-body table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .seg-card-body thead th {
+            background: #fafafa;
+            padding: 6px 8px;
+            font-weight: 600;
+            font-size: 11px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+        .seg-card-body td {
+            padding: 5px 8px;
+            text-align: center;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .seg-card-body tbody tr:hover { background: var(--green-dim); }
+        .seg-card-body tfoot td {
+            padding: 6px 8px;
+            text-align: center;
+            font-weight: 700;
+            background: #fffbe6 !important;
+            border-top: 2px solid #ffc107 !important;
+            color: #ad8b00;
+        }
+        .seg-card-body tbody tr:last-child td { border-bottom: none; }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
-<div class="page-wrap p-3">
+<div class="page-wrap">
+    <!-- ═══ 顶部：列表表格 ═══ -->
     <div class="top-section">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="mb-0">岩工报药列表</h5>
-            <a href="/home/blasting_summary_add/" class="btn btn-primary btn-sm">添加</a>
+        <div class="page-header">
+            <h4>岩工报药列表 <small>分段数据 &amp; 爆破员管理</small></h4>
+            <a href="/home/blasting_summary_add/" class="btn-add">+ 添加</a>
         </div>
-        <table class="table table-bordered table-hover table-sm bg-white mb-0 text-center align-middle small">
-            <thead class="table-light position-sticky top-0" style="z-index:2;">
-                <tr>
-                    <th style="width:3rem;">#</th>
-                    <th>班次</th>
-                    <th>人员</th>
-                    <th>地点</th>
-                    <th>日期</th>
-                    <th>雷管数</th>
-                    <th>炸药(公斤)</th>
-                    <th>爆破员</th>
-                    <th style="width:4rem;">操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in all_records %}
-                <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{ r.shift|default:"—" }}</td>
-                    <td>{{ r.person }}</td>
-                    <td>{{ r.location }}</td>
-                    <td>{{ r.date }}</td>
-                    <td>{{ r.detonator_count }}</td>
-                    <td>{{ r.explosive_count }}</td>
-                    <td>
-                        <select class="form-select form-select-sm blaster-select" data-pk="{{ r.id }}" onchange="assignBlaster(this)">
-                            <option value="">—</option>
-                            {% for b in blasters %}
-                            <option value="{{ b.name }}"{% if r.blaster == b.name %} selected{% endif %}>{{ b.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </td>
-                    <td><a href="/home/blasting_summary_delete/{{ r.id }}/" class="btn btn-sm btn-outline-danger py-0 px-1" onclick="return confirm('确认删除？')">删除</a></td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="9" class="text-center text-muted py-3">暂无记录</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th class="col-id">#</th>
+                        <th>班次</th>
+                        <th>人员</th>
+                        <th>地点</th>
+                        <th>日期</th>
+                        <th>雷管数</th>
+                        <th>炸药(kg)</th>
+                        <th>爆破员</th>
+                        <th class="col-action">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in all_records %}
+                    <tr>
+                        <td class="col-id">{{ forloop.counter }}</td>
+                        <td>
+                            {% if r.shift == "夜" or r.shift == "夜班" %}
+                            <span class="badge-shift-night">{{ r.shift }}</span>
+                            {% else %}
+                            <span class="badge-shift-day">{{ r.shift|default:"—" }}</span>
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ r.person }}</strong></td>
+                        <td>{{ r.location }}</td>
+                        <td>{{ r.date }}</td>
+                        <td>{{ r.detonator_count }}</td>
+                        <td>{{ r.explosive_count }}</td>
+                        <td>
+                            <div class="blaster-combo" data-pk="{{ r.id }}">
+                                <input class="blaster-input" type="text" value="{{ r.blaster }}" placeholder="输入或选择..." autocomplete="off">
+                                <button type="button" class="combo-arrow" tabindex="-1">▾</button>
+                                <div class="combo-dropdown">
+                                    <div class="combo-search-box">
+                                        <input type="text" class="combo-search-input" placeholder="搜索爆破员...">
+                                    </div>
+                                    <div class="combo-options">
+                                        {% for b in blasters %}
+                                        <div class="combo-option" data-value="{{ b }}">{{ b }}</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <a href="/home/blasting_summary_delete/{{ r.id }}/" class="btn-del" onclick="return confirm('确认删除？')">删除</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="9" style="padding:40px;color:var(--text-muted);">暂无记录</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <hr style="border: none; border-top: 3px solid #0d6efd; opacity: 1; flex-shrink: 0;">
+    <!-- ═══ 渐变分隔线 ═══ -->
+    <div class="divider"></div>
 
+    <!-- ═══ 底部：分段卡片 ═══ -->
     <div class="bottom-section">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <a href="/home/" class="btn btn-sm px-3" style="background:#E8F3FF;color:#165DFF;border:none;font-weight:500;">← 返回主页</a>
+        <div class="bottom-actions">
+            <a href="/home/" class="btn-back">← 返回主页</a>
             {% if warnings %}
-            <span class="btn btn-sm px-3" style="background:#ccc;color:#888;border:none;font-weight:600;cursor:not-allowed;">统计数据</span>
+            <span class="btn-stats-disabled">统计数据</span>
             {% else %}
-            <a href="/home/blasting_stats/" class="btn btn-sm px-3" style="background:#FF7D00;color:#FFFFFF;border:none;font-weight:600;">统计数据</a>
+            <a href="/home/blasting_stats/" class="btn-stats">统计数据</a>
             {% endif %}
         </div>
+
         {% if warnings %}
-        <div class="alert alert-warning py-2 mb-2">
+        <div class="alert-warning-custom">
             {% for w in warnings %}<div>⚠ {{ w }}，请补充后再统计</div>{% endfor %}
         </div>
         {% endif %}
-        <div class="row g-4">
+
+        <!-- 卡片网格 -->
+        {% if records %}
+        <div class="seg-grid">
             {% for r in records %}
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2">
-                <div class="seg-card">
-                    <div class="seg-card-header text-center small fw-bold">
-                        {{ r.person }}
-                        <span class="text-muted fw-normal ms-1">{{ r.location }}</span>
-                        {% if r.shift %}<span class="badge ms-1 {% if r.shift == "夜" or r.shift == "夜班" %}badge-night{% else %}bg-info{% endif %}">{{ r.shift }}</span>{% endif %}
-                    </div>
-                    <div class="seg-table">
-                        <table class="table table-sm table-striped text-center mb-0 small">
-                            <thead class="table-light">
-                                <tr><th style="width:50%;">段号</th><th>雷管数</th></tr>
-                            </thead>
-                            <tbody>
-                                {% for seg, val in r.seg_list %}
-                                <tr><td>{{ seg }}段</td><td>{{ val }}</td></tr>
-                                {% endfor %}
-                            </tbody>
-                            <tfoot>
-                                <tr class="seg-total fw-bold"><td>合计</td><td>{{ r.detonator_count }}</td></tr>
-                            </tfoot>
-                        </table>
-                    </div>
+            <div class="seg-card">
+                <div class="seg-card-header">
+                    {{ r.person }}
+                    <span class="loc">{{ r.location }}</span>
+                    {% if r.shift %}
+                    <span class="{% if r.shift == "夜" or r.shift == "夜班" %}shift-badge-night{% else %}shift-badge-day{% endif %}">{{ r.shift }}</span>
+                    {% endif %}
+                </div>
+                <div class="seg-card-body">
+                    <table>
+                        <thead>
+                            <tr><th style="width:50%;">段号</th><th>雷管数</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for seg, val in r.seg_list %}
+                            <tr><td>{{ seg }}段</td><td>{{ val }}</td></tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr><td>合计</td><td>{{ r.detonator_count }}</td></tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
-            {% empty %}
-            <div class="col-12 text-center text-muted py-4">暂无分段数据</div>
             {% endfor %}
         </div>
-
+        {% else %}
+        <div class="empty-state">暂无分段数据</div>
+        {% endif %}
     </div>
 </div>
+
 <script>
 function getCookie(n) {
     var v = null;
@@ -133,13 +588,153 @@ function getCookie(n) {
     }
     return v;
 }
-function assignBlaster(el) {
+function assignBlaster(pk, blaster) {
     fetch('/home/blasting_summary_assign_blaster/', {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
-        body: JSON.stringify({pk: el.getAttribute('data-pk'), blaster: el.value})
+        body: JSON.stringify({pk: pk, blaster: blaster})
     }).then(function() { location.reload(); });
 }
+
+// ═══ Combobox 爆破员选择 ═══
+document.addEventListener('DOMContentLoaded', function() {
+    // 关闭所有下拉（点击外部）
+    document.addEventListener('click', function(e) {
+        var combo = e.target.closest('.blaster-combo');
+        if (!combo) {
+            document.querySelectorAll('.combo-dropdown.open').forEach(function(d) {
+                d.classList.remove('open');
+            });
+            document.querySelectorAll('.combo-arrow.open').forEach(function(a) {
+                a.classList.remove('open');
+            });
+        }
+    });
+
+    document.querySelectorAll('.blaster-combo').forEach(function(combo) {
+        var input = combo.querySelector('.blaster-input');
+        var arrow = combo.querySelector('.combo-arrow');
+        var dropdown = combo.querySelector('.combo-dropdown');
+        var optionsWrap = combo.querySelector('.combo-options');
+        var lastVal = input.value;
+
+        // 保存函数
+        function save() {
+            var newVal = input.value.trim();
+            if (newVal !== lastVal) {
+                lastVal = newVal;
+                assignBlaster(combo.getAttribute('data-pk'), newVal);
+            }
+        }
+
+        // 打开/关闭下拉
+        function openDropdown() {
+            dropdown.classList.add('open');
+            arrow.classList.add('open');
+            // 输入框内容过滤下拉
+            filterOptions(input.value);
+        }
+        function closeDropdown() {
+            dropdown.classList.remove('open');
+            arrow.classList.remove('open');
+            save();
+        }
+        function toggleDropdown() {
+            if (dropdown.classList.contains('open')) {
+                closeDropdown();
+            } else {
+                openDropdown();
+            }
+        }
+
+        // 过滤选项（根据输入框内容）
+        function filterOptions(q) {
+            var hasMatch = false;
+            optionsWrap.querySelectorAll('.combo-option').forEach(function(opt) {
+                if (!q || opt.getAttribute('data-value').toLowerCase().includes(q.toLowerCase())) {
+                    opt.classList.remove('hidden');
+                    hasMatch = true;
+                } else {
+                    opt.classList.add('hidden');
+                }
+            });
+            var noMatch = optionsWrap.querySelector('.combo-no-match');
+            if (!hasMatch) {
+                if (!noMatch) {
+                    noMatch = document.createElement('div');
+                    noMatch.className = 'combo-no-match';
+                    noMatch.textContent = '无匹配爆破员';
+                    optionsWrap.appendChild(noMatch);
+                }
+            } else if (noMatch) {
+                noMatch.remove();
+            }
+        }
+
+        // 选中选项
+        function selectOption(value) {
+            input.value = value;
+            closeDropdown();
+        }
+
+        // ── 事件绑定 ──
+
+        // 箭头点击：打开/关闭
+        arrow.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleDropdown();
+        });
+
+        // 输入框聚焦：打开下拉
+        input.addEventListener('focus', function() {
+            openDropdown();
+        });
+
+        // 输入框输入时：实时过滤下拉
+        input.addEventListener('input', function() {
+            if (dropdown.classList.contains('open')) {
+                filterOptions(this.value);
+            }
+        });
+
+        // 输入框失焦保存
+        input.addEventListener('blur', function() {
+            setTimeout(function() {
+                if (!dropdown.classList.contains('open')) {
+                    save();
+                }
+            }, 200);
+        });
+
+        // 输入框回车：选中第一个可见项 + 关闭 + 保存
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                var first = optionsWrap.querySelector('.combo-option:not(.hidden)');
+                if (first) {
+                    input.value = first.getAttribute('data-value');
+                }
+                closeDropdown();
+            }
+            if (e.key === 'Escape') {
+                closeDropdown();
+            }
+        });
+
+        // 选项点击
+        optionsWrap.addEventListener('click', function(e) {
+            var opt = e.target.closest('.combo-option');
+            if (opt) {
+                selectOption(opt.getAttribute('data-value'));
+            }
+        });
+
+        // 阻止下拉内部点击冒泡（避免关闭下拉）
+        dropdown.addEventListener('mousedown', function(e) {
+            e.stopPropagation();
+        });
+    });
+});
 </script>
 <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
 </body>

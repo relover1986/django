@@ -81,28 +81,6 @@ def blasting_stats(request):
     from app01.services.stats_service import compute_blasting_stats
     display_rows = compute_blasting_stats()
     return render(request, 'blasting_stats.html', {'rows': display_rows})
-
-
-def blaster_list(request):
-    """爆破员列表"""
-    records = models.Blaster.objects.all().order_by('-created_at')
-    return render(request, 'blaster_list.html', {'records': records})
-
-
-def blaster_add(request):
-    """爆破员添加"""
-    from django.shortcuts import render, redirect
-    if request.method == 'POST':
-        name = request.POST.get('name', '').strip()
-        if name:
-            from app01.models import Blaster
-            Blaster.objects.create(name=name)
-            return redirect('/home/blaster_list/')
-        else:
-            return render(request, 'blaster_add.html', {'error': '请输入爆破员姓名'})
-    return render(request, 'blaster_add.html')
-
-
 def blasting_summary_list(request):
     """岩工报药列表"""
     from django.shortcuts import render
@@ -129,7 +107,7 @@ def blasting_summary_list(request):
         warnings.append(f'有 {empty_shift} 条记录缺少班次')
     if empty_blaster:
         warnings.append(f'有 {empty_blaster} 条记录缺少爆破员')
-    blasters = models.Blaster.objects.all().order_by('-created_at')
+    blasters = models.BlastingSummary.objects.exclude(blaster='').values_list('blaster', flat=True).distinct().order_by('blaster')
     return render(request, 'blasting_summary_list.html', {'records': records, 'all_records': all_records, 'blasters': blasters, 'warnings': warnings})
 @csrf_exempt
 def blasting_summary_add(request):
