@@ -1,14 +1,13 @@
 from rest_framework import viewsets
 from .models import (
-    Admin, QuestionType, JskjgQuestion, WxpzxQuestion,
+    Admin, Question,
     UserAnswer, Tihao, LoginRecords, ExplosiveInventoryItem,
     CategoryContent, UploadedPDF, UploadedTu, UploadedZhaopian,
     IDCard, ContractLabor, Candidate, ExplosiveStaff,
     WeighingRecord, BlastingCertificate
 )
 from .serializers import (
-    AdminSerializer, QuestionTypeSerializer,
-    JskjgQuestionSerializer, WxpzxQuestionSerializer,
+    AdminSerializer, QuestionSerializer,
     UserAnswerSerializer, TihaoSerializer, LoginRecordsSerializer,
     ExplosiveInventoryItemSerializer, CategoryContentSerializer,
     UploadedPDFSerializer, UploadedTuSerializer,
@@ -27,24 +26,10 @@ class AdminViewSet(viewsets.ModelViewSet):
     ordering_fields = '__all__'
 
 
-class QuestionTypeViewSet(viewsets.ModelViewSet):
-    queryset = QuestionType.objects.all()
-    serializer_class = QuestionTypeSerializer
-    filterset_fields = ['question_type', 'tihao']
-    search_fields = ['question_type', 'tihao']
-
-
-class JskjgQuestionViewSet(viewsets.ModelViewSet):
-    queryset = JskjgQuestion.objects.all()
-    serializer_class = JskjgQuestionSerializer
-    filterset_fields = ['question_type', 'tihao']
-    search_fields = ['question_type', 'tihao']
-
-
-class WxpzxQuestionViewSet(viewsets.ModelViewSet):
-    queryset = WxpzxQuestion.objects.all()
-    serializer_class = WxpzxQuestionSerializer
-    filterset_fields = ['question_type', 'tihao']
+class QuestionViewSet(viewsets.ModelViewSet):
+    queryset = Question.objects.all()
+    serializer_class = QuestionSerializer
+    filterset_fields = ['category', 'question_type', 'tihao']
     search_fields = ['question_type', 'tihao']
 
 

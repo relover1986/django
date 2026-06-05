@@ -51,7 +51,7 @@ def ti_list(request):
     
     def 题数 ():
         
-        data = models.QuestionType.objects.values('tihao', 'question_type', 'question', 'options', 'correct_answer')
+        data = models.Question.objects.filter(category="爆破").values('tihao', 'question_type', 'question', 'options', 'correct_answer')
         df = pd.DataFrame(data)
         
         ident=request.session['info']['ident']
@@ -217,7 +217,7 @@ def wxpzxti_list(request):
     
     def 题数 ():
         
-        data = models.WxpzxQuestion.objects.values('tihao', 'question_type', 'question', 'options', 'correct_answer')
+        data = models.Question.objects.filter(category="危装").values('tihao', 'question_type', 'question', 'options', 'correct_answer')
         df = pd.DataFrame(data)
         
         ident=request.session['info']['ident']
@@ -402,7 +402,7 @@ def jskjgti_list(request):
     
     def 题数 ():
         
-        data = models.JskjgQuestion.objects.values('tihao', 'question_type', 'question', 'options', 'correct_answer')
+        data = models.Question.objects.filter(category="井工").values('tihao', 'question_type', 'question', 'options', 'correct_answer')
         df = pd.DataFrame(data)
         
         ident=request.session['info']['ident']

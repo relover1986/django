@@ -7,29 +7,17 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 
-class QuestionType(models.Model):
-    id = models.AutoField(primary_key=True)
-    question_type = models.CharField(max_length=20)
-    tihao = models.CharField(max_length=20)
-    question = models.TextField()  # 修改为TextField
-    options = models.CharField(max_length=200)
-    correct_answer = models.CharField(max_length=20)
+class Question(models.Model):
+    category = models.CharField(max_length=10, verbose_name="题库类别", help_text="爆破/井工/危装")
+    question_type = models.CharField(max_length=20, verbose_name="题型")
+    tihao = models.CharField(max_length=20, verbose_name="题号")
+    question = models.TextField(verbose_name="题目")
+    options = models.CharField(max_length=200, verbose_name="选项")
+    correct_answer = models.CharField(max_length=20, verbose_name="正确答案")
 
-class JskjgQuestion(models.Model):
-    id = models.AutoField(primary_key=True)
-    question_type = models.CharField(max_length=20)
-    tihao = models.CharField(max_length=20)
-    question = models.TextField()  # 修改为TextField
-    options = models.CharField(max_length=200)
-    correct_answer = models.CharField(max_length=20)
-
-class WxpzxQuestion(models.Model):
-    id = models.AutoField(primary_key=True)
-    question_type = models.CharField(max_length=20)
-    tihao = models.CharField(max_length=20)
-    question = models.TextField()  # 修改为TextField
-    options = models.CharField(max_length=200)
-    correct_answer = models.CharField(max_length=20)
+    class Meta:
+        db_table = "app01_question"
+        verbose_name = "题库"
 
 class UserAnswer(models.Model):
 

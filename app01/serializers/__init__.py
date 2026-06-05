@@ -1,6 +1,6 @@
 from .admin import AdminSerializer
 from .quiz import (
-    QuestionTypeSerializer, JskjgQuestionSerializer, WxpzxQuestionSerializer,
+    QuestionSerializer,
     UserAnswerSerializer, TihaoSerializer
 )
 from .auth import LoginRecordsSerializer
@@ -18,9 +18,7 @@ from .blasting import BlastingCertificateSerializer
 
 __all__ = [
     'AdminSerializer',
-    'QuestionTypeSerializer',
-    'JskjgQuestionSerializer',
-    'WxpzxQuestionSerializer',
+    'QuestionSerializer',
     'UserAnswerSerializer',
     'TihaoSerializer',
     'LoginRecordsSerializer',

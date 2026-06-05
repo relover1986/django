@@ -4,9 +4,7 @@ from . import api_views
 
 router = DefaultRouter()
 router.register(r'admins', api_views.AdminViewSet)
-router.register(r'question-types', api_views.QuestionTypeViewSet)
-router.register(r'jskjg-questions', api_views.JskjgQuestionViewSet)
-router.register(r'wxpzx-questions', api_views.WxpzxQuestionViewSet)
+router.register(r'questions', api_views.QuestionViewSet)
 router.register(r'user-answers', api_views.UserAnswerViewSet)
 router.register(r'tihao', api_views.TihaoViewSet)
 router.register(r'login-records', api_views.LoginRecordsViewSet)

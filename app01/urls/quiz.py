@@ -17,4 +17,9 @@ urlpatterns = [
     path("home/wxpzxti_reload", change.wxpzxquestions_reload),
     path("home/wxpzxti_new_reload", quiz.wxpzxti_new_reload),
     path("home/wxpzxti_new", quiz.wxpzxti_new),
+    path("home/custom_quiz", quiz.custom_quiz),
+    path("home/custom_quiz_reload", quiz.custom_quiz_reload),
+    path("home/download_example_questions", quiz.download_example_questions),
+    path("home/import_questions", quiz.import_questions),
+    path("home/export_quiz", quiz.export_docx),
 ]

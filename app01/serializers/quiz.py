@@ -1,25 +1,10 @@
 from rest_framework import serializers
-from app01.models import (
-    QuestionType, JskjgQuestion, WxpzxQuestion,
-    UserAnswer, Tihao
-)
+from app01.models import Question, UserAnswer, Tihao
 
 
-class QuestionTypeSerializer(serializers.ModelSerializer):
+class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = QuestionType
-        fields = '__all__'
-
-
-class JskjgQuestionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = JskjgQuestion
-        fields = '__all__'
-
-
-class WxpzxQuestionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WxpzxQuestion
+        model = Question
         fields = '__all__'
 
 

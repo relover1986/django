@@ -12,6 +12,21 @@
 .badge-pan { background: #10B981; }
 .ti-question-text { font-size: 15px; line-height: 1.6; margin-bottom: 12px; color: #1a1a2e; font-weight: 500; }
 .ti-section-title { font-size: 14px; font-weight: 600; color: #666; padding: 8px 0; margin-top: 8px; margin-bottom: 12px; border-bottom: 1px solid #eee; }
+.filter-tabs { text-align: center; margin-bottom: 20px; }
+.filter-tabs a { display: inline-block; padding: 6px 28px; margin: 0 4px; border-radius: 20px; text-decoration: none; font-size: 14px; color: #666; background: #f0f2f5; transition: all 0.2s; }
+.filter-tabs a.active { background: #3ecf8e; color: #fff; font-weight: 600; }
+.filter-tabs a:hover:not(.active) { background: #e0e2e5; }
+/* 导入区域 */
+.import-card { border: 2px dashed #ccc; border-radius: 12px; padding: 30px 20px; text-align: center; margin-bottom: 20px; cursor: pointer; transition: all 0.3s; background: #fafbfc; }
+.import-card.dragover { border-color: #3ecf8e; background: #f0fdf4; }
+.import-card .icon { font-size: 40px; margin-bottom: 8px; }
+.import-card .hint { font-size: 13px; color: #999; margin-top: 8px; }
+.field-table { max-width: 600px; margin: 12px auto; font-size: 13px; }
+.field-table th { background: #f0f2f5; font-weight: 600; padding: 6px 12px; text-align: left; }
+.field-table td { padding: 6px 12px; border-bottom: 1px solid #eee; }
+#import-status { margin-top: 12px; font-size: 14px; font-weight: 500; }
+#import-status.success { color: #10B981; }
+#import-status.error { color: #EF4444; }
 </style>
 
 <br>
@@ -19,10 +34,33 @@
   <div class="card mb-3" style="border: none; box-shadow: 0 1px 4px rgba(0,0,0,0.06);">
     <div class="card-body">
       <h4 style="font-size: 18px; font-weight: 600; color: #1a1a2e; margin-bottom: 4px;">{{ title }}</h4>
+      <div class="filter-tabs">
+        {% for cat in categories %}
+        <a href="/home/custom_quiz?category={{ cat }}" class="{% if category == cat %}active{% endif %}">{{ cat }}</a>
+        {% endfor %}
+      </div>
       <div class="progress progress-ti">
         <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
       </div>
     </div>
+  </div>
+
+  <!-- 导入题库 -->
+  <div style="text-align:right;margin-bottom:6px;"><a href="/home/download_example_questions" style="color:#307EF3;font-size:13px;text-decoration:none;">📥 下载导入模板</a></div>
+  <div class="import-card" id="dropZone">
+    <div class="icon">📥</div>
+    <div><strong>拖入 Excel 文件到此区域</strong></div>
+    <div class="hint">支持 .xlsx / .xls 格式，也可点击选择文件</div>
+    <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
+    <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px;font-size:12px;">
+      <span style="background:#e8f5e9;padding:3px 10px;border-radius:12px;white-space:nowrap;"><b>category</b> 自定义类别 <code>三级教育/其他</code></span>
+      <span style="background:#e3f2fd;padding:3px 10px;border-radius:12px;white-space:nowrap;"><b>question_type</b> 题型 <code>单选题/多选题/判断题</code></span>
+      <span style="background:#fff3e0;padding:3px 10px;border-radius:12px;white-space:nowrap;"><b>tihao</b> 题号(可选) <code>001</code></span>
+      <span style="background:#fce4ec;padding:3px 10px;border-radius:12px;white-space:nowrap;"><b>question</b> 题目内容 <code>爆破时严禁...</code></span>
+      <span style="background:#f3e5f5;padding:3px 10px;border-radius:12px;white-space:nowrap;"><b>options</b> 选项(空格分隔) <code>A.正确 B.错误</code></span>
+      <span style="background:#e0f7fa;padding:3px 10px;border-radius:12px;white-space:nowrap;"><b>correct_answer</b> 正确答案 <code>A / AB / 对</code></span>
+    </div>
+    <div id="import-status"></div>
   </div>
 
   <form method="post" enctype="multipart/form-data" novalidate>
@@ -94,10 +132,10 @@
     {% endfor %}
 
     <div style="text-align: center; padding: 16px 0 32px;">
-            <div id="blank-warning" style="display:none;text-align:center;padding:8px;margin-bottom:12px;background:#FEF2F2;color:#991B1B;border-radius:8px;font-size:14px;font-weight:500;">⚠️ 还有题目未作答，请检查后再提交</div>
+      <div id="blank-warning" style="display:none;text-align:center;padding:8px;margin-bottom:12px;background:#FEF2F2;color:#991B1B;border-radius:8px;font-size:14px;font-weight:500;">⚠️ 还有题目未作答，请检查后再提交</div>
       <button type="button" class="btn btn-primary" id="submit-btn" style="padding: 8px 32px; border-radius: 8px;" onclick="validateAndSubmit()">提交</button>
       <a href="{{ reload_url }}" class="btn btn-outline-secondary" style="padding: 8px 32px; border-radius: 8px; margin-left: 8px;">重新出题</a>
-      <a href="/home/export_quiz?page={{ request.path|cut:'/home/'|cut:'/' }}" class="btn btn-outline-info" style="padding: 8px 32px; border-radius: 8px; margin-left: 8px;">📄 导出试卷</a>
+      <a href="/home/export_quiz?page=custom_quiz&category={{ category }}" class="btn btn-outline-info" style="padding: 8px 32px; border-radius: 8px; margin-left: 8px;">📄 导出试卷</a>
     </div>
   </form>
 </div>
@@ -145,5 +183,74 @@ function validateAndSubmit() {
   btn.disabled = true;
   document.querySelector('form').submit();
 }
+
+// === 拖入导入 ===
+(function() {
+  var zone = document.getElementById('dropZone');
+  var fileInput = document.getElementById('fileInput');
+  var statusEl = document.getElementById('import-status');
+
+  zone.addEventListener('click', function() { fileInput.click(); });
+
+  zone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    zone.classList.add('dragover');
+  });
+  zone.addEventListener('dragleave', function() {
+    zone.classList.remove('dragover');
+  });
+  zone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    var files = e.dataTransfer.files;
+    if (files.length > 0) uploadFile(files[0]);
+  });
+
+  fileInput.addEventListener('change', function() {
+    if (this.files.length > 0) uploadFile(this.files[0]);
+  });
+
+  function uploadFile(file) {
+    var name = file.name.toLowerCase();
+    if (!name.endsWith('.xlsx') && !name.endsWith('.xls')) {
+      statusEl.className = 'error';
+      statusEl.textContent = '❌ 仅支持 .xlsx / .xls 文件';
+      return;
+    }
+    statusEl.className = '';
+    statusEl.textContent = '⏳ 上传中...';
+
+    var fd = new FormData();
+    fd.append('file', file);
+
+    fetch('/home/import_questions', {
+      method: 'POST',
+      body: fd,
+      headers: { 'X-CSRFToken': getCookie('csrftoken') },
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success) {
+        statusEl.className = 'success';
+        statusEl.textContent = '✅ ' + data.message;
+        if (data.errors && data.errors.length > 0) {
+          statusEl.textContent += ' | 错误: ' + data.errors.join('; ');
+        }
+      } else {
+        statusEl.className = 'error';
+        statusEl.textContent = '❌ ' + data.error;
+      }
+    })
+    .catch(function(err) {
+      statusEl.className = 'error';
+      statusEl.textContent = '❌ 上传失败: ' + err.message;
+    });
+  }
+
+  function getCookie(name) {
+    var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? match[2] : '';
+  }
+})();
 </script>
 {% endblock %}

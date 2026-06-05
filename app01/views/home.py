@@ -109,9 +109,9 @@ def department_quiz_stats(request):
         staff_list = []
 
     if staff_list:
-        total_baopo = models.QuestionType.objects.count()
-        total_jingong = models.JskjgQuestion.objects.count()
-        total_weizhuang = models.WxpzxQuestion.objects.count()
+        total_baopo = models.Question.objects.filter(category="爆破").count()
+        total_jingong = models.Question.objects.filter(category="井工").count()
+        total_weizhuang = models.Question.objects.filter(category="危装").count()
 
         for staff in staff_list:
             phone = staff.phone
