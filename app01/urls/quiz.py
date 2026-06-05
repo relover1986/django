@@ -1,7 +1,7 @@
 from django.urls import path
-from app01 import change
+from app01.views import change
 from app01 import quiz
-from app01 import grades
+from app01.views import grades
 
 urlpatterns = [
     path("home/baopo_ti_new_reload", quiz.ti_new_reload),

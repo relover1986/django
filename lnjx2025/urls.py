@@ -63,6 +63,9 @@ urlpatterns = [
     # PWA
     path('', include('app01.urls.pwa')),
 
+    # DB Schema
+    path('schema-db/', include('schematic.urls')),
+
     # API
     path('api/', include('app01.api_urls')),
 
