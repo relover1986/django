@@ -19,17 +19,17 @@ BASE = Path(__file__).parent.parent
 CATEGORY_CONFIG = {
     "爆破": {
         "title": "辽宁捷祥民用爆破三大员培训题库",
-        "url_prefix": "/home/baopo_ti_new",
+        "url_prefix": "/home/custom_quiz",
         "ti_type": "爆破",
     },
     "井工": {
         "title": "辽宁捷祥非煤矿山井工培训题库",
-        "url_prefix": "/home/jskjgti_new",
+        "url_prefix": "/home/custom_quiz",
         "ti_type": "非煤矿山井工",
     },
     "危装": {
         "title": "辽宁捷祥危险品装卸培训题库",
-        "url_prefix": "/home/wxpzxti_new",
+        "url_prefix": "/home/custom_quiz",
         "ti_type": "危险品装卸",
     },
     "自定义": {
@@ -56,7 +56,7 @@ def _get_opt_text(options_str: str, answer: str) -> str:
     return " | ".join(results)
 
 
-def _ti_new_core(request, category, template_name="baopo_ti_new.html"):
+def _ti_new_core(request, category, template_name="custom_quiz.html"):
     """统一出题/评分逻辑，按 category 区分题库"""
     cfg = CATEGORY_CONFIG.get(category)
     if cfg is None:
@@ -171,33 +171,6 @@ def _ti_new_core(request, category, template_name="baopo_ti_new.html"):
     })
 
 
-def ti_new(request):
-    return _ti_new_core(request, "爆破")
-
-def ti_new_reload(request):
-    if "quiz_data_爆破" in request.session:
-        del request.session["quiz_data_爆破"]
-    return redirect("/home/baopo_ti_new")
-
-
-def jskjgti_new(request):
-    return _ti_new_core(request, "井工")
-
-def jskjgti_new_reload(request):
-    if "quiz_data_井工" in request.session:
-        del request.session["quiz_data_井工"]
-    return redirect("/home/jskjgti_new")
-
-
-def wxpzxti_new(request):
-    return _ti_new_core(request, "危装")
-
-def wxpzxti_new_reload(request):
-    if "quiz_data_危装" in request.session:
-        del request.session["quiz_data_危装"]
-    return redirect("/home/wxpzxti_new")
-
-
 def custom_quiz(request):
     category = request.GET.get("category", "爆破")
     return _ti_new_core(request, category, template_name="custom_quiz.html")
@@ -213,18 +186,16 @@ def custom_quiz_reload(request):
 
 def export_docx(request):
     """导出试卷为 DOCX 文件"""
-    page = request.GET.get("page", "baopo_ti_new")
+    page = request.GET.get("page", "custom_quiz")
 
     # 映射 page 到 session key 和 redirect URL
     page_map = {
-        "baopo_ti_new": {"session_key": "quiz_data_爆破", "redirect_url": "/home/baopo_ti_new"},
-        "jskjgti_new": {"session_key": "quiz_data_井工", "redirect_url": "/home/jskjgti_new"},
-        "wxpzxti_new": {"session_key": "quiz_data_危装", "redirect_url": "/home/wxpzxti_new"},
+        "custom_quiz": {"session_key": "quiz_data_自定义", "redirect_url": "/home/custom_quiz"},
         "custom_quiz": {"session_key": "quiz_data_自定义", "redirect_url": "/home/custom_quiz"},
     }
     cfg = page_map.get(page)
     if not cfg:
-        return redirect("/home/baopo_ti_new")
+        return redirect("/home/custom_quiz")
 
     quiz_data = request.session.get(cfg["session_key"], [])
     if not quiz_data:

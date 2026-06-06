@@ -3,11 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>入井人员标签系统</title>
-    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <title>入井人员标签系统 — 辽宁捷祥</title>
+    <!-- Bootstrap 5 CSS + 本地 fallback -->
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet"
+          onerror="this.onerror=null;this.href='/static/css/vendors/bootstrap.css'">
+    <!-- Font Awesome + 本地 fallback -->
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"
+          onerror="this.onerror=null;this.href='/static/css/font-awesome.css'">
     <style>
-        body { background: #f0f2f5; }
+        :root {
+            --theme: #307EF3;
+            --theme-light: #eef2ff;
+            --theme-border: #5b9cf5;
+            --gray-bg: #f0f2f5;
+            --gray-text: #98a2b3;
+            --dark-text: #1e293b;
+            --radius: 10px;
+        }
+
+        body { background: var(--gray-bg); }
+
+        /* ===== 共享拖拽区基础样式 ===== */
+        .dz {
+            border: 2px dashed var(--theme-border);
+            border-radius: var(--radius);
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+            background: #fafbfc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .dz:hover,
+        .dz.dragover {
+            border-color: var(--theme);
+            background: var(--theme-light);
+            border-width: 3px;
+            box-shadow: 0 0 0 3px rgba(48,126,243,.2);
+        }
+        .dz.has-file {
+            border-color: #16a34a;
+            background: #f0fdf4;
+            border-style: solid;
+        }
+        .dz input[type=file] {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0; cursor: pointer;
+        }
+        .dz .placeholder { color: var(--gray-text); font-size: 13px; }
+        .dz .placeholder i { font-size: 28px; display: block; margin-bottom: 6px; color: var(--theme-border); }
+        .dz:focus-visible { outline: 3px solid var(--theme); outline-offset: 2px; }
+
+        /* 变体 */
+        .dz--excel { padding: 6px 10px; min-height: 50px; flex-direction: column; }
+        .dz--excel .file-name { font-size: 13px; font-weight: 500; color: #16a34a; margin-top: 2px; }
+        .dz--photo { padding: 10px; min-height: 110px; }
+        .dz--photo img.preview { max-height: 96px; max-width: 100%; border-radius: 6px; }
+        .dz--manual { padding: 10px; min-height: 70px; flex-direction: column; }
+        .dz--manual .placeholder { font-size: 12px; }
+        .dz--manual .placeholder i { font-size: 22px; margin-bottom: 4px; }
+        .dz--manual img.preview { max-height: 60px; max-width: 100%; border-radius: 6px; }
+
+        /* ===== 布局 ===== */
         .section-card { border: 0; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
         .section-card .card-header {
             border-radius: 12px 12px 0 0;
@@ -15,73 +75,25 @@
             padding: 10px 16px;
         }
         .section-card .card-body.compact { padding: 20px 24px; }
-        .excel-drop-zone {
-            border: 2px dashed #60a5fa;
-            border-radius: 10px;
-            padding: 6px 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all .2s;
-            min-height: 50px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: #fafbfc;
-            position: relative;
+
+        /* ===== 步骤编号 ===== */
+        .step-num {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: rgba(255,255,255,.2); color: #fff;
+            font-size: 11px; font-weight: 700; margin-right: 6px;
         }
-        .excel-drop-zone:hover, .excel-drop-zone.dragover {
-            border-color: #2563eb;
-            background: #eef2ff;
-            border-width: 3px;
-            box-shadow: 0 0 0 3px rgba(37,99,235,.2);
+
+        /* ===== 表格 ===== */
+        .table > :not(caption) > * > * {
+            padding: 10px 10px;
+            vertical-align: middle;
         }
-        .excel-drop-zone.has-file {
-            border-color: #16a34a;
-            background: #f0fdf4;
-            border-style: solid;
-        }
-        .excel.drop-zone .placeholder { color: #98a2b3; font-size: 13px; }
-        .excel-drop-zone .placeholder i { font-size: 28px; display: block; margin-bottom: 6px; color: #60a5fa; }
-        .excel-drop-zone .file-name { font-size: 13px; font-weight: 500; color: #16a34a; margin-top: 2px; }
-        .excel-drop-zone input[type=file] {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            opacity: 0; cursor: pointer;
-        }
-        .drop-zone {
-            border: 2px dashed #60a5fa;
-            border-radius: 10px;
-            padding: 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all .2s;
-            min-height: 110px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #fafbfc;
-        }
-        .drop-zone:hover, .drop-zone.dragover {
-            border-color: #2563eb;
-            background: #eef2ff;
-            border-width: 3px;
-            box-shadow: 0 0 0 3px rgba(37,99,235,.2);
-        }
-        .drop-zone.has-img {
-            border-color: #16a34a;
-            background: #f0fdf4;
-            border-style: solid;
-        }
-        .drop-zone img.preview {
-            max-height: 96px;
-            max-width: 100%;
-            border-radius: 6px;
-        }
-        .drop-zone .placeholder { color: #98a2b3; font-size: 13px; }
-        .drop-zone .placeholder i { font-size: 28px; display: block; margin-bottom: 4px; color: #60a5fa; }
         .check-col { width: 36px; }
         .th-check { text-align: center; }
         .photo-form { margin: 0; }
+
+        /* ===== 自动补全下拉 ===== */
         .name-input-wrap {
             position: relative;
             flex-grow: 1;
@@ -89,183 +101,178 @@
         .name-input-wrap input { padding-right: 30px; font-size: 14px; }
         .name-input-wrap .dropdown-arrow {
             position: absolute;
-            right: 6px;
-            top: 50%;
+            right: 6px; top: 50%;
             transform: translateY(-50%);
-            color: #9ca3af;
-            cursor: pointer;
-            font-size: 13px;
-            padding: 4px;
-            z-index: 5;
+            color: #9ca3af; cursor: pointer;
+            font-size: 13px; padding: 4px; z-index: 5;
             transition: color .15s;
         }
-        .name-input-wrap .dropdown-arrow:hover { color: #2563eb; }
+        .name-input-wrap .dropdown-arrow:hover { color: var(--theme); }
         .name-suggestions {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: #fff;
-            border: 1px solid #d0d5dd;
-            border-radius: 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            display: none;
-            z-index: 1000;
-            box-shadow: 0 4px 12px rgba(0,0,0,.1);
-            margin-top: 2px;
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: #fff; border: 1px solid #d0d5dd;
+            border-radius: 8px; max-height: 200px;
+            overflow-y: auto; display: none; z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,.1); margin-top: 2px;
         }
         .name-suggestions .item {
-            padding: 6px 12px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: background .1s;
+            padding: 6px 12px; cursor: pointer;
+            font-size: 13px; transition: background .1s;
         }
-        .name-suggestions .item:hover, .name-suggestions .item.active {
-            background: #eef2ff;
-            color: #2563eb;
+        .name-suggestions .item:hover,
+        .name-suggestions .item.active {
+            background: var(--theme-light); color: var(--theme);
         }
-        .manual-photo-zone {
-            border: 2px dashed #60a5fa;
-            border-radius: 10px;
-            padding: 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all .2s;
-            min-height: 70px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: #fafbfc;
-        }
-        .manual-photo-zone:hover, .manual-photo-zone.dragover {
-            border-color: #2563eb;
-            background: #eef2ff;
-            border-width: 3px;
-            box-shadow: 0 0 0 3px rgba(37,99,235,.2);
-        }
-        .manual-photo-zone.has-img {
-            border-color: #16a34a;
-            background: #f0fdf4;
-            border-style: solid;
-        }
-        .manual-photo-zone .placeholder { color: #98a2b3; font-size: 12px; }
-        .manual-photo-zone .placeholder i { font-size: 22px; display: block; margin-bottom: 4px; color: #60a5fa; }
-        .manual-photo-zone img.preview {
-            max-height: 60px;
-            max-width: 100%;
-            border-radius: 6px;
-        }
-        .toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 9999; }
-        .step-num {
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 20px; height: 20px; border-radius: 50%;
-            background: rgba(255,255,255,.2); color: #fff;
-            font-size: 11px; font-weight: 700; margin-right: 6px;
-        }
-        .table > :not(caption) > * > * {
-            padding: 10px 10px;
-            vertical-align: middle;
-        }
+
+        /* ===== 辅助 ===== */
         .compact-label { font-size: 13px; margin-bottom: 4px; }
         .compact-text { font-size: 12px; }
-        .vertical-divider {
-            border-right: 1px solid #d0d5dd;
+        .vertical-divider { border-right: 1px solid #d0d5dd; }
+        .toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 9999; }
+        .btn:focus-visible,
+        a:focus-visible,
+        input:focus-visible,
+        select:focus-visible {
+            outline: 3px solid var(--theme) !important;
+            outline-offset: 2px !important;
         }
+
+        /* ===== 移动端 ===== */
         @media (max-width: 767.98px) {
             .vertical-divider { border-right: none; }
+            .section-card .card-body.compact { padding: 12px 14px; }
+        }
+
+        /* ===== 暗色模式提示（兼容主站） ===== */
+        @media (prefers-color-scheme: dark) {
+            body { background: #1a1a2e; color: #e0e0e0; }
+            .section-card { background: #2a2a3e; color: #e0e0e0; }
+            .section-card .card-header { background: #3a3a4e !important; }
+            .table { color: #e0e0e0; }
+            .table-light { background: #3a3a4e !important; color: #e0e0e0; }
+            .name-suggestions { background: #2a2a3e; border-color: #444; }
+            .name-suggestions .item:hover { background: #3a3a5e; }
+            .dz { background: #2a2a3e; }
+            .text-muted { color: #aaa !important; }
+            .btn-outline-secondary { color: #ccc; border-color: #555; }
         }
     </style>
 </head>
 <body>
-<div class="container py-3" style="max-width: 960px;">
 
+<div class="container py-3 px-3">
+
+    <!-- Toast 消息 -->
     {% if messages %}
-    <div class="toast-container">
+    <div class="toast-container" role="status" aria-live="polite">
         {% for msg in messages %}
         <div class="toast align-items-center text-bg-{{ msg.tags|default:'info' }} border-0 show" role="alert">
             <div class="d-flex">
                 <div class="toast-body">{{ msg }}</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                        aria-label="关闭"></button>
             </div>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
+    <!-- 页头 -->
     <div class="d-flex align-items-start mb-3">
-        <a href="/home/" class="btn btn-outline-secondary btn-sm mt-1"><i class="fas fa-arrow-left me-1"></i>回主页</a>
+        <a href="/home/" class="btn btn-outline-secondary btn-sm mt-1" aria-label="返回主页">
+            <i class="fas fa-arrow-left me-1"></i>回主页
+        </a>
         <div class="flex-grow-1 text-center">
-            <h4 class="fw-bold mb-0" style="color: #1e293b;"><i class="fas fa-helmet-safety me-2" style="color: #2563eb;"></i>入井人员标签生成系统</h4>
+            <h4 class="fw-bold mb-0" style="color: var(--dark-text);">
+                <i class="fas fa-helmet-safety me-2" style="color: var(--theme);"></i>入井人员标签生成系统
+            </h4>
             <p class="text-muted small mt-1 mb-0">导入人员名单 → 上传一寸照片 → 批量生成 A4 排版</p>
         </div>
     </div>
 
-    <div class="card section-card mb-4">
-        <div class="card-header bg-primary text-white py-2">
+    <!-- ===== 步骤 1：导入人员 ===== -->
+    <div class="card section-card mb-4" role="region" aria-labelledby="step1-title">
+        <div class="card-header bg-primary text-white py-2" id="step1-title">
             <span class="step-num">1</span>导入人员
         </div>
         <div class="card-body compact d-flex flex-column" style="gap:8px;">
-            <!-- ====== 上半部：标签+按钮 ====== -->
+
+            <!-- 上半部：标签 + 按钮 -->
             <div class="row g-4 flex-shrink-0">
-                <!-- 左侧：Excel 标签+按钮 -->
+                <!-- Excel -->
                 <div class="col-md-6 d-flex align-items-center">
                     <div class="d-flex align-items-center gap-2 w-100">
-                        <label class="form-label fw-medium text-secondary compact-label mb-0 text-nowrap">上传 Excel 名单</label>
+                        <label class="form-label fw-medium text-secondary compact-label mb-0 text-nowrap">
+                            上传 Excel 名单
+                        </label>
                         <span class="text-muted small compact-text text-nowrap">(姓名+工种)</span>
                         <form method="post" enctype="multipart/form-data" id="excel-form" class="d-inline ms-auto">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-primary btn-sm" id="excel-submit-btn">
+                            <button type="submit" class="btn btn-outline-primary btn-sm" id="excel-submit-btn"
+                                    aria-label="提交 Excel 导入">
                                 <i class="fas fa-plus"></i>
                             </button>
                         </form>
                     </div>
                 </div>
-                <!-- 右侧：手动添加（标签在上，输入框在下） -->
-                <div class="col-md-6 d-flex flex-column justify-content-center" style="border-left: 1px solid #e5e7eb; padding-left: 20px; padding-right: 20px;">
+
+                <!-- 手动添加 -->
+                <div class="col-md-6 d-flex flex-column justify-content-center vertical-divider"
+                     style="border-left-width: 0; padding-left: 20px; padding-right: 20px;">
                     <div class="fw-medium text-secondary compact-label mb-1">或手动添加一人</div>
                     <form method="post" enctype="multipart/form-data" id="manual-form" class="d-flex align-items-center gap-2">
                         {% csrf_token %}
                         <div class="name-input-wrap" style="max-width:145px;">
                             {{ worker_form.name }}
-                            <i class="fas fa-caret-down dropdown-arrow" onclick="toggleNameDropdown()"></i>
-                            <div class="name-suggestions" id="name-suggestions"></div>
+                            <i class="fas fa-caret-down dropdown-arrow" onclick="toggleNameDropdown()"
+                               role="button" tabindex="0" aria-label="展开姓名列表"
+                               onkeydown="if(event.key==='Enter')toggleNameDropdown()"></i>
+                            <div class="name-suggestions" id="name-suggestions" role="listbox" aria-label="已有姓名"></div>
                         </div>
                         <div class="name-input-wrap" style="max-width:145px;">
                             {{ worker_form.job_type }}
-                            <i class="fas fa-caret-down dropdown-arrow" onclick="toggleJobDropdown()"></i>
-                            <div class="name-suggestions" id="job-suggestions"></div>
+                            <i class="fas fa-caret-down dropdown-arrow" onclick="toggleJobDropdown()"
+                               role="button" tabindex="0" aria-label="展开工种列表"
+                               onkeydown="if(event.key==='Enter')toggleJobDropdown()"></i>
+                            <div class="name-suggestions" id="job-suggestions" role="listbox" aria-label="工种列表"></div>
                         </div>
-                        <button type="submit" class="btn btn-outline-primary btn-sm flex-shrink-0">
+                        <button type="submit" class="btn btn-outline-primary btn-sm flex-shrink-0" aria-label="添加人员">
                             <i class="fas fa-plus"></i>
                         </button>
                     </form>
                 </div>
             </div>
 
-            <!-- ====== 面板中间横线 ====== -->
             <hr class="my-0" style="border-top: 1px solid #d0d5dd; opacity: 1;">
 
-            <!-- ====== 下半部：拖拽区（Excel / 照片） ====== -->
+            <!-- 下半部：拖拽区 -->
             <div class="row g-2 flex-grow-1" style="min-height:0;">
+                <!-- Excel 拖拽区 -->
                 <div class="col-md-6 d-flex">
-                    <div class="excel-drop-zone flex-grow-1" id="excel-zone">
+                    <div class="dz dz--excel flex-grow-1" id="excel-zone" tabindex="0"
+                         role="button" aria-label="拖拽 Excel 文件到此处或点击选择">
                         <div class="placeholder" id="excel-placeholder">
                             <i class="fas fa-cloud-upload-alt"></i>
                             拖拽 Excel 到此处 或点击选择
                         </div>
                         <div class="file-name d-none" id="excel-filename"></div>
-                        <input type="file" name="excel" accept=".xlsx,.xls" id="excel-input" onchange="onExcelFileSelect(this)" form="excel-form">
+                        <input type="file" name="excel" accept=".xlsx,.xls" id="excel-input"
+                               onchange="onExcelFileSelect(this)" form="excel-form"
+                               aria-label="选择 Excel 文件">
                     </div>
                     <div class="flex-shrink-0 align-self-start pt-1">
-                        <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1" id="excel-clear-btn" onclick="clearExcelFile()" style="display:none;font-size:11px;">
+                        <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1"
+                                id="excel-clear-btn" onclick="clearExcelFile()"
+                                style="display:none;font-size:11px;" aria-label="清除已选 Excel">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
                 </div>
-                <div class="col-md-6 d-flex" style="border-left: 1px solid #e5e7eb; padding-left: 12px;">
-                    <div class="manual-photo-zone flex-grow-1" id="manual-photo-zone"
+
+                <!-- 手动照片拖拽区 -->
+                <div class="col-md-6 d-flex">
+                    <div class="dz dz--manual flex-grow-1" id="manual-photo-zone" tabindex="0"
+                         role="button" aria-label="拖拽照片到此处或点击选择"
                          onclick="document.getElementById('manual-photo-input').click()"
                          ondragover="event.preventDefault();this.classList.add('dragover')"
                          ondragleave="this.classList.remove('dragover')"
@@ -275,39 +282,48 @@
                             拖拽照片或点击选择
                         </div>
                     </div>
-                    <input type="file" name="photo" accept="image/*" id="manual-photo-input" style="display:none;" form="manual-form">
+                    <input type="file" name="photo" accept="image/*" id="manual-photo-input"
+                           style="display:none;" form="manual-form" aria-label="选择照片">
                 </div>
             </div>
             <datalist id="job-type-list">
-                            {% for jt in job_types %}<option value="{{ jt }}">{% endfor %}
-                        </datalist>
-                </div>
-            </div>
+                {% for jt in job_types %}<option value="{{ jt }}">{% endfor %}
+            </datalist>
+
         </div>
     </div>
 
+    <!-- ===== 步骤 2：上传照片 + 人员列表 ===== -->
     {% if workers %}
-    <div class="card section-card mb-4">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center" style="border-bottom: 1px solid #e5e7eb;">
-            <span class="fw-semibold" style="color: #1e293b;">
-                <span class="step-num" style="background: #2563eb;">2</span>
+    <div class="card section-card mb-4" role="region" aria-labelledby="step2-title">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center"
+             style="border-bottom: 1px solid #e5e7eb;" id="step2-title">
+            <span class="fw-semibold" style="color: var(--dark-text);">
+                <span class="step-num" style="background: var(--theme);">2</span>
                 上传照片
-                <span class="badge bg-secondary ms-2">{{ workers|length }} 人</span>
+                <span class="badge bg-secondary ms-2" aria-label="共 {{ workers|length }} 人">{{ workers|length }} 人</span>
             </span>
             <div class="d-flex align-items-center gap-2">
-                <button class="btn btn-outline-danger btn-sm" id="batchDeleteBtn" disabled onclick="batchDelete()">
+                <button class="btn btn-outline-danger btn-sm" id="batchDeleteBtn" disabled
+                        onclick="batchDelete()" aria-label="批量删除选中人员">
                     <i class="fas fa-trash-alt"></i> 批量删除
                 </button>
-                <span class="text-muted" style="font-size: 13px;">
+                <span class="text-muted d-none d-md-inline" style="font-size: 13px;">
                     <i class="fas fa-mouse-pointer me-1"></i>点击或拖拽上传
                 </span>
             </div>
         </div>
-        <div class="p-0">
-            <table class="table table-hover mb-0" style="border-collapse: separate;">
+
+        <!-- 表格：移动端横向滚动 -->
+        <div class="table-responsive" style="padding: 20px 24px;">
+            <table class="table table-hover mb-0" style="border-collapse: separate; min-width: 580px;"
+                   aria-label="人员照片上传列表">
                 <thead class="table-light">
                     <tr>
-                        <th class="check-col th-check"><input type="checkbox" id="checkAll" onchange="toggleAll()"></th>
+                        <th class="check-col th-check">
+                            <input type="checkbox" id="checkAll" onchange="toggleAll()"
+                                   aria-label="全选/取消全选">
+                        </th>
                         <th style="width:56px;" class="text-muted">#</th>
                         <th style="width:100px;">姓名</th>
                         <th style="width:90px;">工种</th>
@@ -318,20 +334,31 @@
                 <tbody>
                     {% for w in workers %}
                     <tr>
-                        <td class="text-center"><input type="checkbox" class="row-check" value="{{ w.id }}" onchange="updateBatchBtn()"></td>
+                        <td class="text-center">
+                            <input type="checkbox" class="row-check" value="{{ w.id }}"
+                                   onchange="updateBatchBtn()" aria-label="选中 {{ w.name }}">
+                        </td>
                         <td class="text-muted text-center">{{ forloop.counter }}</td>
                         <td class="fw-semibold">{{ w.name }}</td>
-                        <td><span class="badge bg-info bg-opacity-10 text-info-emphasis px-3 py-1 rounded-pill">{{ w.job_type }}</span></td>
+                        <td>
+                            <span class="badge bg-info bg-opacity-10 text-info-emphasis px-3 py-1 rounded-pill">
+                                {{ w.job_type }}
+                            </span>
+                        </td>
                         <td style="max-width: 340px;">
-                            <form method="post" enctype="multipart/form-data" action="{% url 'mine_card_update_photo' w.id %}" class="photo-form" id="pf-{{ w.id }}">
+                            <form method="post" enctype="multipart/form-data"
+                                  action="{% url 'mine_card_update_photo' w.id %}"
+                                  class="photo-form" id="pf-{{ w.id }}">
                                 {% csrf_token %}
-                                <div class="drop-zone{% if w.photo %} has-img{% endif %}"
+                                <div class="dz dz--photo{% if w.photo %} has-file{% endif %}"
+                                     tabindex="0" role="button"
+                                     aria-label="上传 {{ w.name }} 的照片"
                                      onclick="document.getElementById('file-{{ w.id }}').click()"
                                      ondragover="event.preventDefault();this.classList.add('dragover')"
                                      ondragleave="this.classList.remove('dragover')"
                                      ondrop="handleDrop(event, {{ w.id }})">
                                     {% if w.photo %}
-                                        <img src="{{ w.photo.url }}" class="preview" alt="">
+                                        <img src="{{ w.photo.url }}" class="preview" alt="{{ w.name }} 照片">
                                     {% else %}
                                         <div class="placeholder">
                                             <i class="fas fa-cloud-upload-alt"></i>
@@ -339,12 +366,17 @@
                                         </div>
                                     {% endif %}
                                 </div>
-                                <input type="file" name="photo" accept="image/*" id="file-{{ w.id }}" class="d-none" onchange="handleFileSelect(this, {{ w.id }})">
-
+                                <input type="file" name="photo" accept="image/*"
+                                       id="file-{{ w.id }}" class="d-none"
+                                       onchange="handleFileSelect(this, {{ w.id }})"
+                                       aria-label="选择 {{ w.name }} 的照片文件">
                             </form>
                         </td>
                         <td class="text-center">
-                            <a href="{% url 'mine_card_delete' w.id %}" class="btn btn-sm btn-outline-danger border-0" onclick="return confirm('确定删除 {{ w.name }}？')" title="删除">
+                            <a href="{% url 'mine_card_delete' w.id %}"
+                               class="btn btn-sm btn-outline-danger border-0"
+                               onclick="return confirm('确定删除 {{ w.name }}？')"
+                               title="删除 {{ w.name }}" aria-label="删除 {{ w.name }}">
                                 <i class="fas fa-trash-alt"></i>
                             </a>
                         </td>
@@ -354,16 +386,21 @@
             </table>
         </div>
     </div>
+
+    <!-- 生成 A4 按钮 -->
     <div class="text-center mb-4">
-        <a href="{% url 'mine_card_preview' %}" class="btn btn-success px-4 py-2 fw-semibold" style="border-radius: 10px; font-size: 15px;">
+        <a href="{% url 'mine_card_preview' %}" class="btn btn-success px-4 py-2 fw-semibold"
+           style="border-radius: var(--radius); font-size: 15px;"
+           aria-label="批量生成 A4 排版预览">
             <i class="fas fa-layer-group me-2"></i>批量生成 A4 排版
         </a>
     </div>
     {% else %}
-    <div class="card section-card">
+    <!-- 空状态 -->
+    <div class="card section-card" role="region" aria-label="无人员数据">
         <div class="card-body text-center py-4">
             <div class="mb-2" style="color: #d0d5dd; font-size: 36px;">
-                <i class="fas fa-users"></i>
+                <i class="fas fa-users" aria-hidden="true"></i>
             </div>
             <h6 class="text-secondary">暂无人员数据</h6>
             <p class="text-muted small">上传 Excel 名单或手动添加人员后，即可在此上传照片并生成标签</p>
@@ -373,22 +410,23 @@
 
 </div>
 
-<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<!-- JS：Bootstrap 5 + 业务逻辑 -->
+<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"
+        onerror="console.warn('Bootstrap JS CDN 加载失败')"></script>
 <script>
 var WORKER_NAMES = {{ worker_names_json|safe }};
 var JOB_TYPES = {{ job_type_choices_json|safe }};
 
-// == Excel 拖拽表单提交验证 ==
+// ─── Excel 拖拽表单提交验证 ───
 document.getElementById('excel-form').addEventListener('submit', function(e) {
     var input = document.getElementById('excel-input');
     if (!input.files || !input.files[0]) {
         e.preventDefault();
         alert('请先选择 Excel 文件');
-        return;
     }
 });
 
-// == Excel 拖拽 ==
+// ─── Excel 拖拽逻辑 ───
 var excelZone = document.getElementById('excel-zone');
 var excelInput = document.getElementById('excel-input');
 var excelSubmitBtn = document.getElementById('excel-submit-btn');
@@ -405,6 +443,14 @@ excelZone.addEventListener('drop', function(e) {
     this.classList.remove('dragover');
     var files = e.dataTransfer.files;
     if (files.length > 0) { excelInput.files = files; onExcelFileSelect(excelInput); }
+});
+
+// 键盘可访问性：Enter/Space 触发点击
+excelZone.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        excelInput.click();
+    }
 });
 
 function onExcelFileSelect(input) {
@@ -424,6 +470,7 @@ function onExcelFileSelect(input) {
         excelClearBtn.style.display = 'inline-block';
     }
 }
+
 function clearExcelFile() {
     excelInput.value = '';
     excelPlaceholder.classList.remove('d-none');
@@ -433,7 +480,7 @@ function clearExcelFile() {
     excelClearBtn.style.display = 'none';
 }
 
-// == 姓名自动补全 ==
+// ─── 姓名自动补全 ───
 var nameInput = document.getElementById('id_name');
 var suggestionsBox = document.getElementById('name-suggestions');
 var selectedIndex = -1;
@@ -447,7 +494,7 @@ nameInput.addEventListener('input', function() {
     });
     if (matches.length === 0) { suggestionsBox.style.display = 'none'; return; }
     suggestionsBox.innerHTML = matches.map(function(n) {
-        return '<div class="item" data-name="' + n.replace(/'/g, '') + '">' + n + '</div>';
+        return '<div class="item" role="option" data-name="' + n.replace(/'/g, '') + '">' + n + '</div>';
     }).join('');
     suggestionsBox.style.display = 'block';
 });
@@ -477,7 +524,7 @@ function toggleNameDropdown() {
     }) : WORKER_NAMES;
     if (matches.length === 0) { suggestionsBox.style.display = 'none'; return; }
     suggestionsBox.innerHTML = matches.map(function(n) {
-        return '<div class="item" data-name="' + n.replace(/'/g, '') + '">' + n + '</div>';
+        return '<div class="item" role="option" data-name="' + n.replace(/'/g, '') + '">' + n + '</div>';
     }).join('');
     suggestionsBox.style.display = 'block';
 }
@@ -487,7 +534,7 @@ suggestionsBox.addEventListener('click', function(e) {
     if (item) { selectName(item.dataset.name); }
 });
 
-// == 工种下拉 ==
+// ─── 工种下拉 ───
 var jobInput = document.getElementById('id_job_type');
 var jobSuggestions = document.getElementById('job-suggestions');
 var jobSelectedIndex = -1;
@@ -501,7 +548,7 @@ jobInput.addEventListener('input', function() {
     });
     if (matches.length === 0) { jobSuggestions.style.display = 'none'; return; }
     jobSuggestions.innerHTML = matches.map(function(j) {
-        return '<div class="item" data-name="' + j.replace(/'/g, '') + '">' + j + '</div>';
+        return '<div class="item" role="option" data-name="' + j.replace(/'/g, '') + '">' + j + '</div>';
     }).join('');
     jobSuggestions.style.display = 'block';
 });
@@ -536,12 +583,12 @@ function toggleJobDropdown() {
     }) : JOB_TYPES;
     if (matches.length === 0) { jobSuggestions.style.display = 'none'; return; }
     jobSuggestions.innerHTML = matches.map(function(j) {
-        return '<div class="item" data-name="' + j.replace(/'/g, '') + '">' + j + '</div>';
+        return '<div class="item" role="option" data-name="' + j.replace(/'/g, '') + '">' + j + '</div>';
     }).join('');
     jobSuggestions.style.display = 'block';
 }
 
-// close dropdowns on outside click
+// 点击外部关闭下拉
 document.addEventListener('click', function(e) {
     if (!e.target.closest('.name-input-wrap')) {
         suggestionsBox.style.display = 'none';
@@ -549,7 +596,7 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// == 手动添加照片拖拽 ==
+// ─── 手动添加照片拖拽 ───
 function onManualPhotoDrop(e) {
     e.preventDefault();
     e.currentTarget.classList.remove('dragover');
@@ -568,16 +615,17 @@ function showManualPhotoPreview(file) {
     var reader = new FileReader();
     reader.onload = function(e) {
         var zone = document.getElementById('manual-photo-zone');
-        zone.innerHTML = '<img src="' + e.target.result + '" class="preview" alt="">';
-        zone.classList.add('has-img');
+        zone.innerHTML = '<img src="' + e.target.result + '" class="preview" alt="照片预览">';
+        zone.classList.add('has-file');
     };
     reader.readAsDataURL(file);
 }
 
-// == 照片拖拽 ==
+// ─── 行照片拖拽 ───
 function handleFileSelect(input, workerId) {
     if (input.files && input.files[0]) { showPreview(workerId, input.files[0]); input.closest('form').submit(); }
 }
+
 function handleDrop(e, workerId) {
     e.preventDefault();
     e.currentTarget.classList.remove('dragover');
@@ -589,31 +637,33 @@ function handleDrop(e, workerId) {
         input.closest('form').submit();
     }
 }
+
 function showPreview(workerId, file) {
     var reader = new FileReader();
     reader.onload = function(e) {
-        var zone = document.querySelector('#pf-' + workerId + ' .drop-zone');
-        zone.innerHTML = '<img src="' + e.target.result + '" class="preview" alt="">';
-        zone.classList.add('has-img');
+        var zone = document.querySelector('#pf-' + workerId + ' .dz--photo');
+        zone.innerHTML = '<img src="' + e.target.result + '" class="preview" alt="照片预览">';
+        zone.classList.add('has-file');
     };
     reader.readAsDataURL(file);
 }
-</script>
 
-<script>
+// ─── 批量删除 ───
 function toggleAll() {
-    const checked = document.getElementById('checkAll').checked;
-    document.querySelectorAll('.row-check').forEach(cb => cb.checked = checked);
+    var checked = document.getElementById('checkAll').checked;
+    document.querySelectorAll('.row-check').forEach(function(cb) { cb.checked = checked; });
     updateBatchBtn();
 }
+
 function updateBatchBtn() {
-    const n = document.querySelectorAll('.row-check:checked').length;
-    document.getElementById('batchDeleteBtn').disabled = n === 0;
-    document.getElementById('batchDeleteBtn').innerHTML =
-        '<i class="fas fa-trash-alt"></i> 批量删除' + (n ? ' (' + n + ')' : '');
+    var n = document.querySelectorAll('.row-check:checked').length;
+    var btn = document.getElementById('batchDeleteBtn');
+    btn.disabled = n === 0;
+    btn.innerHTML = '<i class="fas fa-trash-alt"></i> 批量删除' + (n ? ' (' + n + ')' : '');
 }
+
 function batchDelete() {
-    const ids = Array.from(document.querySelectorAll('.row-check:checked')).map(cb => cb.value);
+    var ids = Array.from(document.querySelectorAll('.row-check:checked')).map(function(cb) { return cb.value; });
     if (!ids.length) return;
     if (!confirm('确定删除选中的 ' + ids.length + ' 条记录？')) return;
     fetch('/home/mine_card/batch_delete/', {
@@ -623,7 +673,7 @@ function batchDelete() {
             'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
         },
         body: 'ids=' + ids.join(',')
-    }).then(r => {
+    }).then(function(r) {
         if (r.ok) location.reload();
         else alert('删除失败');
     });

@@ -47,4 +47,4 @@ def staff_login(request):
     }
     request.session.set_expiry(60 * 60 * 24 * 7)  # 7天
 
-    return redirect('/home/baopo_ti_new')
+    return redirect('/home/custom_quiz')

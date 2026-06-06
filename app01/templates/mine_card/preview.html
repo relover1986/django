@@ -3,12 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A4 排版预览</title>
-    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <title>A4 排版预览 — 辽宁捷祥</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet"
+          onerror="this.onerror=null;this.href='/static/css/vendors/bootstrap.css'">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"
+          onerror="this.onerror=null;this.href='/static/css/font-awesome.css'">
     <style>
+        :root {
+            --theme: #307EF3;
+        }
+
+        body { background: #f0f2f5; }
+
         .sheet-page {
             margin-bottom: 2rem;
+            text-align: center;
         }
         .sheet-page img {
             width: 100%;
@@ -31,48 +40,80 @@
             position: relative;
             display: inline-block;
         }
+
+        .btn:focus-visible,
+        a:focus-visible {
+            outline: 3px solid var(--theme) !important;
+            outline-offset: 2px !important;
+        }
+
+        /* 暗色模式 */
+        @media (prefers-color-scheme: dark) {
+            body { background: #1a1a2e; color: #e0e0e0; }
+            .text-muted { color: #aaa !important; }
+            .btn-outline-secondary { color: #ccc; border-color: #555; }
+        }
     </style>
 </head>
-<body class="bg-light">
-<div class="container py-4">
+<body>
+<div class="container py-4" role="main">
     <div class="row justify-content-center">
         <div class="col-lg-10">
 
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
                 <div>
-                    <h4 class="mb-1"><i class="fas fa-eye me-2"></i>A4 排版预览</h4>
-                    <p class="text-muted mb-0">共 {{ total }} 人，{{ sheets|length }} 页（左正面 / 右背面，每页 5 人）</p>
+                    <h4 class="mb-1"><i class="fas fa-eye me-2" style="color: var(--theme);"></i>A4 排版预览</h4>
+                    <p class="text-muted mb-0">
+                        共 <strong>{{ total }}</strong> 人，<strong>{{ sheets|length }}</strong> 页（左正面 / 右背面，每页 5 人）
+                    </p>
                 </div>
-                <div>
-                    <a href="{% url 'mine_card_index' %}" class="btn btn-outline-secondary me-2">
+                <div class="d-flex gap-2">
+                    <a href="{% url 'mine_card_index' %}" class="btn btn-outline-secondary"
+                       aria-label="返回人员列表">
                         <i class="fas fa-arrow-left me-1"></i>返回
                     </a>
-                    <a href="{% url 'mine_card_download' %}" class="btn btn-primary btn-lg">
+                    <a href="{% url 'mine_card_download' %}" class="btn btn-primary btn-lg"
+                       aria-label="下载 A4 排版 ZIP">
                         <i class="fas fa-download me-2"></i>下载 ZIP
                     </a>
                 </div>
             </div>
 
             {% for sheet in sheets %}
-            <div class="sheet-page text-center">
+            <div class="sheet-page">
                 <div class="page-wrapper">
                     <span class="page-badge">第 {{ sheet.page }} 页 · {{ sheet.count }} 人</span>
-                    <img src="data:image/jpeg;base64,{{ sheet.b64 }}" alt="A4排版第{{ sheet.page }}页">
+                    <img src="data:image/jpeg;base64,{{ sheet.b64 }}"
+                         alt="A4排版第{{ sheet.page }}页，包含 {{ sheet.count }} 人标签"
+                         loading="lazy">
                 </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-5">
+                <i class="fas fa-image mb-3" style="font-size: 48px; color: #d0d5dd;" aria-hidden="true"></i>
+                <p class="text-muted">暂无排版数据</p>
             </div>
             {% endfor %}
 
-            <div class="text-center mt-3 mb-5">
-                <a href="{% url 'mine_card_index' %}" class="btn btn-outline-secondary me-3">
+            <!-- 底部操作栏 -->
+            <div class="text-center mt-3 mb-5 d-flex justify-content-center gap-3 flex-wrap">
+                <a href="{% url 'mine_card_index' %}" class="btn btn-outline-secondary"
+                   aria-label="返回编辑人员">
                     <i class="fas fa-arrow-left me-1"></i>返回编辑
                 </a>
-                <a href="{% url 'mine_card_download' %}" class="btn btn-primary btn-lg px-5">
+                {% if sheets %}
+                <a href="{% url 'mine_card_download' %}" class="btn btn-primary btn-lg px-5"
+                   aria-label="下载 A4 排版 ZIP 压缩包">
                     <i class="fas fa-download me-2"></i>下载 ZIP
                 </a>
+                {% endif %}
             </div>
 
         </div>
     </div>
 </div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"
+        onerror="console.warn('Bootstrap JS CDN 加载失败')"></script>
 </body>
 </html>
