@@ -127,7 +127,7 @@
         /* ===== 辅助 ===== */
         .compact-label { font-size: 13px; margin-bottom: 4px; }
         .compact-text { font-size: 12px; }
-        .vertical-divider { border-right: 1px solid #d0d5dd; }
+        .vertical-divider { border-left: 1px solid #d0d5dd; }
         .toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 9999; }
         .btn:focus-visible,
         a:focus-visible,
@@ -139,7 +139,7 @@
 
         /* ===== 移动端 ===== */
         @media (max-width: 767.98px) {
-            .vertical-divider { border-right: none; }
+            .vertical-divider { border-left: none; }
             .section-card .card-body.compact { padding: 12px 14px; }
         }
 
@@ -192,7 +192,7 @@
 
     <!-- ===== 步骤 1：导入人员 ===== -->
     <div class="card section-card mb-4" role="region" aria-labelledby="step1-title">
-        <div class="card-header bg-primary text-white py-2" id="step1-title">
+        <div class="card-header bg-primary text-white py-2 text-center" id="step1-title">
             <span class="step-num">1</span>导入人员
         </div>
         <div class="card-body compact d-flex flex-column" style="gap:8px;">
@@ -218,7 +218,7 @@
 
                 <!-- 手动添加 -->
                 <div class="col-md-6 d-flex flex-column justify-content-center vertical-divider"
-                     style="border-left-width: 0; padding-left: 20px; padding-right: 20px;">
+                     style="padding-left: 20px; padding-right: 20px;">
                     <div class="fw-medium text-secondary compact-label mb-1">或手动添加一人</div>
                     <form method="post" enctype="multipart/form-data" id="manual-form" class="d-flex align-items-center gap-2">
                         {% csrf_token %}
@@ -316,7 +316,7 @@
 
         <!-- 表格：移动端横向滚动 -->
         <div class="table-responsive" style="padding: 20px 24px;">
-            <table class="table table-hover mb-0" style="border-collapse: separate; min-width: 580px;"
+            <table class="table table-hover mb-0" style="min-width: 580px;"
                    aria-label="人员照片上传列表">
                 <thead class="table-light">
                     <tr>

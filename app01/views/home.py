@@ -145,3 +145,8 @@ def department_quiz_stats(request):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
+
+# Vue 前端入口
+def vue_app(request, vue_path=None):
+    from django.shortcuts import render
+    return render(request, 'vue/index.html')

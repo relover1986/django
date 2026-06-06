@@ -103,7 +103,8 @@ def _ti_new_core(request, category, template_name="custom_quiz.html"):
                 dfs.append(sub)
         df = pd.concat(dfs) if dfs else pd.DataFrame()
         questions = df.to_dict(orient="records")
-
+        for q in questions:
+            q["选项列表"] = q["选项"].split(chr(10))
         request.session[session_key] = questions
 
         context = {
@@ -187,19 +188,13 @@ def custom_quiz_reload(request):
 def export_docx(request):
     """导出试卷为 DOCX 文件"""
     page = request.GET.get("page", "custom_quiz")
+    category = request.GET.get("category", "自定义")
 
-    # 映射 page 到 session key 和 redirect URL
-    page_map = {
-        "custom_quiz": {"session_key": "quiz_data_自定义", "redirect_url": "/home/custom_quiz"},
-        "custom_quiz": {"session_key": "quiz_data_自定义", "redirect_url": "/home/custom_quiz"},
-    }
-    cfg = page_map.get(page)
-    if not cfg:
-        return redirect("/home/custom_quiz")
+    session_key = f"quiz_data_{category}"
 
-    quiz_data = request.session.get(cfg["session_key"], [])
+    quiz_data = request.session.get(session_key, [])
     if not quiz_data:
-        return redirect(cfg["redirect_url"])
+        return redirect("/home/custom_quiz?category=" + category)
 
     doc = Document()
 

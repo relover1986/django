@@ -115,7 +115,7 @@ class ExplosiveStaffViewSet(viewsets.ModelViewSet):
 
 
 class WeighingRecordViewSet(viewsets.ModelViewSet):
-    queryset = WeighingRecord.objects.all()
+    queryset = WeighingRecord.objects.all().order_by("-id")
     serializer_class = WeighingRecordSerializer
     filterset_fields = ['weight_number', 'truck_driver', 'forklift_driver']
     search_fields = ['weight_number', 'truck_driver']
