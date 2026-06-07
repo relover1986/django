@@ -173,6 +173,9 @@ def _ti_new_core(request, category, template_name="custom_quiz.html"):
 
 
 def custom_quiz(request):
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning(f"[CUSTOM_QUIZ] method={request.method}, session_info={request.session.get('info')}, session_key={request.session.session_key}")
     category = request.GET.get("category", "爆破")
     return _ti_new_core(request, category, template_name="custom_quiz.html")
 

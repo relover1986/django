@@ -31,7 +31,8 @@ class M2(MiddlewareMixin):
 
     def process_request(self, request):
         if 'ti' in request.path_info :
-
+            return
+        if request.path_info.startswith('/api/'):
             return
         
         elif 'candidateprofile_add' in request.path_info :
@@ -56,9 +57,9 @@ class M2(MiddlewareMixin):
             job = info_dict.get('role')
             if job == 'staff':
                 # staff 只能访问答题页、登出和登录页
-                if any(p in request.path_info for p in ['/home/baopo_ti_new', '/logout/', '/staff_login/']):
+                if any(p in request.path_info for p in ['/home/baopo_ti_new', '/logout/', '/staff_login/', '/vue/training/quiz']):
                     return
-                return redirect('/home/custom_quiz')
+                return redirect('/vue/training/quiz')
 
             if '新入职'  in job:
                 # 如果会话中没有信息，可能需要重定向到登录页面

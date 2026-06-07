@@ -4,10 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>矿山管理系统</title>
-  <script type="module" crossorigin src="/static/vue/assets/index-CLC0z0Mw.js"></script>
-  <link rel="stylesheet" crossorigin href="/static/vue/assets/index-VBy42XYS.css">
+  <script type="module" crossorigin src="/static/vue/assets/index-DMnB1S9l.js"></script>
+  <link rel="stylesheet" crossorigin href="/static/vue/assets/index-B3EMrUWM.css">
 </head>
 <body>
   <div id=app></div>
+  <script>
+    window.USER_IDENT = "{{ request.session.info.ident|default:'' }}";
+    window.USER_NAME = "{{ request.session.info.name|default:'' }}";
+  </script>
 </body>
 </html>
