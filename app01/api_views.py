@@ -1,14 +1,14 @@
 from rest_framework import viewsets
 from .models import (
     Admin, Question,
-    UserAnswer, Tihao, LoginRecords, ExplosiveInventoryItem,
+    UserAnswer, LoginRecords, ExplosiveInventoryItem,
     CategoryContent, UploadedPDF, UploadedTu, UploadedZhaopian,
     IDCard, ContractLabor, Candidate, ExplosiveStaff,
     WeighingRecord, BlastingCertificate
 )
 from .serializers import (
     AdminSerializer, QuestionSerializer,
-    UserAnswerSerializer, TihaoSerializer, LoginRecordsSerializer,
+    UserAnswerSerializer, LoginRecordsSerializer,
     ExplosiveInventoryItemSerializer, CategoryContentSerializer,
     UploadedPDFSerializer, UploadedTuSerializer,
     UploadedZhaopianSerializer, IDCardSerializer,
@@ -38,11 +38,6 @@ class UserAnswerViewSet(viewsets.ModelViewSet):
     serializer_class = UserAnswerSerializer
     filterset_fields = ['ti_type', 'tihao', 'date', 'ident']
     ordering_fields = '__all__'
-
-
-class TihaoViewSet(viewsets.ModelViewSet):
-    queryset = Tihao.objects.all()
-    serializer_class = TihaoSerializer
 
 
 class LoginRecordsViewSet(viewsets.ModelViewSet):

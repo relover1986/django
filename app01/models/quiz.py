@@ -28,7 +28,3 @@ class UserAnswer(models.Model):
 
     # def __str__(self):
     #     return self.UserAnswer
-
-class Tihao(models.Model):
-    题号=models.TextField(blank=False, null=False)
-

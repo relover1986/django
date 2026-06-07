@@ -1,7 +1,7 @@
 from .admin import AdminSerializer
 from .quiz import (
     QuestionSerializer,
-    UserAnswerSerializer, TihaoSerializer
+    UserAnswerSerializer
 )
 from .auth import LoginRecordsSerializer
 from .inventory import ExplosiveInventoryItemSerializer
@@ -15,12 +15,12 @@ from .candidate import CandidateSerializer
 from .explosive import ExplosiveStaffSerializer
 from .weighing import WeighingRecordSerializer
 from .blasting import BlastingCertificateSerializer
+from .mine_card import WorkerSerializer, JobTypeSerializer
 
 __all__ = [
     'AdminSerializer',
     'QuestionSerializer',
     'UserAnswerSerializer',
-    'TihaoSerializer',
     'LoginRecordsSerializer',
     'ExplosiveInventoryItemSerializer',
     'CategoryContentSerializer',
@@ -34,4 +34,6 @@ __all__ = [
     'ExplosiveStaffSerializer',
     'WeighingRecordSerializer',
     'BlastingCertificateSerializer',
+    'WorkerSerializer',
+    'JobTypeSerializer',
 ]
