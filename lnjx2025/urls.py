@@ -63,8 +63,8 @@ urlpatterns = [
     # PWA
     path('', include('app01.urls.pwa')),
 
-    # DB Schema
-    path('schema-db/', include('schematic.urls')),
+    # DB Schema (schematic package broken, disabled)
+    # path('schema-db/', include('schematic.urls')),
 
     # API
     path('api/', include('app01.api_urls')),
@@ -80,3 +80,9 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+from django.shortcuts import render
+def page_not_found(request, exception):
+    return render(request, '404.html', status=404)
+
+handler404 = page_not_found

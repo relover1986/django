@@ -74,10 +74,11 @@ class UploadedTuViewSet(viewsets.ModelViewSet):
 
 
 class UploadedZhaopianViewSet(viewsets.ModelViewSet):
-    queryset = UploadedZhaopian.objects.all()
+    queryset = UploadedZhaopian.objects.all().order_by('-uploaded_at')
     serializer_class = UploadedZhaopianSerializer
     filterset_fields = ['name']
     search_fields = ['name']
+    ordering_fields = ['id', 'name', 'uploaded_at']
 
 
 class IDCardViewSet(viewsets.ModelViewSet):

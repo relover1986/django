@@ -405,7 +405,12 @@ def staff_cert_file_add(request, pk):
 def staff_cert_list(request):
     """证件列表"""
     dept = request.session.get("info", {}).get("department", "")
-    certs = models.StaffCert.objects.select_related("staff", "cert_type").filter(staff__department=dept).order_by("-created_at")
+    ident = request.session.get("info", {}).get("ident", "")
+    if ident == "000001":
+        certs = models.StaffCert.objects.select_related("staff", "cert_type").all()
+    else:
+        certs = models.StaffCert.objects.select_related("staff", "cert_type").filter(staff__department=dept)
+    certs = certs.order_by("-created_at")
 
     cert_type_id = request.GET.get("cert_type")
     if cert_type_id:

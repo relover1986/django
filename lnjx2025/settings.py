@@ -36,7 +36,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'schema_graph',
-    'schematic',
 ]
 
 MIDDLEWARE = [

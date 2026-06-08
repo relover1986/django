@@ -355,8 +355,21 @@ class PhotoUploadAPIView(APIView):
                         white_background=bg_files['white']
                     )
 
+                    # 生成白底一寸照缩略图（white_bg_single）
+                    try:
+                        from app01.services.photo_service import generate_white_bg_single
+                        white_bytes = generate_white_bg_single(uploaded_photo.photo.path)
+                        uploaded_photo.white_bg_single.save(
+                            f"{filename}_white_single.jpg",
+                            ContentFile(white_bytes)
+                        )
+                        uploaded_photo.save()
+                    except Exception as bg_err:
+                        # 白底生成失败不影响上传主流程
+                        print(f"white_bg_single generation failed: {bg_err}")
+
                     # 序列化返回数据
-                    serializer = UploadedZhaopianSerializer(uploaded_photo)
+                    from app01.serializers import UploadedZhaopianSerializer; serializer = UploadedZhaopianSerializer(uploaded_photo)
                     results.append(serializer.data)
 
             except Exception as e:
