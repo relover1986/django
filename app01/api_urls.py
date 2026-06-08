@@ -18,6 +18,8 @@ router.register(r'candidates', api_views.CandidateViewSet)
 router.register(r'explosive-staff', api_views.ExplosiveStaffViewSet)
 router.register(r'weighing-records', api_views.WeighingRecordViewSet)
 router.register(r'blasting-certificates', api_views.BlastingCertificateViewSet)
+router.register(r'workers', api_views.WorkerViewSet)
+router.register(r'job-types', api_views.JobTypeViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
