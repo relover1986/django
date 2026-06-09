@@ -60,6 +60,9 @@ urlpatterns = [
     # Quiz
     path('', include('app01.urls.quiz')),
 
+    # Info Collect
+    path('', include('app01.urls.info_collect')),
+
     # PWA
     path('', include('app01.urls.pwa')),
 
