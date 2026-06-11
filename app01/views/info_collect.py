@@ -1,6 +1,6 @@
 import uuid
 import os
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 from app01.forms.info_collect import InfoCollectForm
 from app01.models.staff import Staff, StaffCert, StaffCertFile, CertType
@@ -57,3 +57,49 @@ def info_collect(request):
 def info_collect_success(request):
     """提交成功页"""
     return render(request, 'info_collect_success.html')
+
+from app01.forms.info_collect import InfoSubmissionForm
+from app01.models.info_collect import InfoSubmission
+
+
+def info_submission_edit(request, pk):
+    """Staff 编辑提交记录"""
+    submission = get_object_or_404(InfoSubmission, pk=pk)
+    if request.method == 'POST':
+        form = InfoSubmissionForm(request.POST, request.FILES, instance=submission)
+        if form.is_valid():
+            import uuid, os
+            s = form.save(commit=False)
+            for field in ['front_photo', 'back_photo', 'one_inch_photo']:
+                f = request.FILES.get(field)
+                if f:
+                    ext = os.path.splitext(f.name)[1]
+                    f.name = f"{uuid.uuid4().hex}{ext}"
+                    setattr(s, field, f)
+            s.save()
+            return redirect('/home/staff/info_submissions/')
+        return render(request, 'staff/info_submission_edit.html', {'form': form, 'submission': submission})
+    form = InfoSubmissionForm(instance=submission)
+    return render(request, 'staff/info_submission_edit.html', {'form': form, 'submission': submission})
+
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from app01.permissions import login_required
+
+
+@login_required
+def info_submissions_list(request):
+    """Staff 信息提交列表"""
+    data = InfoSubmission.objects.all().order_by("-created_at")
+    paginator = Paginator(data, 20)
+    page_number = request.GET.get("page", 1)
+    try:
+        page_obj = paginator.page(page_number)
+    except (PageNotAnInteger, EmptyPage):
+        page_obj = paginator.page(1)
+    return render(request, "staff/info_submissions_list.html", {
+        "data": page_obj,
+        "title": "信息收集记录",
+        "is_paginated": True,
+        "paginator": paginator,
+        "page_obj": page_obj,
+    })

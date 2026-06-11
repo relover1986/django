@@ -1,0 +1,99 @@
+{% extends "home.html" %}
+{% block content %}
+<div class="container-fluid pt-4">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">{{ title }}</h3>
+                </div>
+                <div class="card-body">
+                    <!-- 表格 -->
+                    <div class="table-responsive">
+                        <table class="table table-hover w-100">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center">姓名</th>
+                                    <th class="text-center">身份证号</th>
+                                    <th class="text-center">手机号</th>
+                                    <th class="text-center">地址</th>
+                                    <th class="text-center">备注</th>
+                                    <th class="text-center">提交时间</th>
+                                    <th class="text-center">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="table-group-divider">
+                                {% for obj in page_obj %}
+                                <tr class="align-middle">
+                                    <td class="text-center">{{ obj.name|default:'—' }}</td>
+                                    <td class="text-center">{{ obj.id_number|default:'—' }}</td>
+                                    <td class="text-center">{{ obj.phone }}</td>
+                                    <td class="text-center">{{ obj.address|default:'—' }}</td>
+                                    <td class="text-center">{{ obj.remark|default:'—' }}</td>
+                                    <td class="text-center">{{ obj.created_at|date:"Y-m-d H:i" }}</td>
+                                    <td class="text-center">
+                                        <a href="/home/staff/info_submissions/{{ obj.id }}/edit/" class="btn btn-primary btn-sm">编辑</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-4">
+                                        暂无信息收集记录
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 分页 -->
+                    {% if is_paginated %}
+                    <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+                        <small class="text-muted">
+                            共 {{ paginator.count }} 条记录，第 {{ page_obj.number }} / {{ paginator.num_pages }} 页
+                        </small>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1">&laquo; 首页</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">上一页</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">&laquo; 首页</span></li>
+                                    <li class="page-item disabled"><span class="page-link">上一页</span></li>
+                                {% endif %}
+
+                                {% for num in paginator.page_range %}
+                                    {% if num == page_obj.number %}
+                                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">下一页</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ paginator.num_pages }}">末页 &raquo;</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">下一页</span></li>
+                                    <li class="page-item disabled"><span class="page-link">末页 &raquo;</span></li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

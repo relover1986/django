@@ -10,3 +10,17 @@ class InfoCollectForm(forms.Form):
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '请输入11位手机号'}),
         validators=[RegexValidator(regex=r'^1\d{10}$')]
     )
+
+from app01.models.info_collect import InfoSubmission
+
+
+class InfoSubmissionForm(forms.ModelForm):
+    class Meta:
+        model = InfoSubmission
+        fields = ['name', 'id_number', 'phone', 'front_photo', 'back_photo', 'one_inch_photo', 'address', 'remark']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name, field in self.fields.items():
+            css = 'form-select' if hasattr(field, 'choices') and field.choices else 'form-control'
+            field.widget.attrs.update({'class': css})
