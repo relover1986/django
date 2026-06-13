@@ -142,8 +142,9 @@ class WorkerViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
+        ident = self.request.session.get("info", {}).get("ident", "")
         dept = self.request.session.get("info", {}).get("department", "")
-        if dept:
+        if dept and ident not in ("000001", "000002"):
             qs = qs.filter(department=dept)
         return qs
 

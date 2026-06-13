@@ -91,8 +91,9 @@ from app01.image_utils import (
 def mine_card_index(request):
     """首页：Excel 导入 + 人员列表 + 逐行照片上传"""
     dept = request.session.get("info", {}).get("department", "")
+    ident = request.session.get("info", {}).get("ident", "")
     workers = models.Worker.objects.all().order_by("id")
-    if dept:
+    if dept and ident not in ("000001", "000002"):
         workers = workers.filter(department=dept)
     excel_form = ExcelUploadForm()
     worker_form = WorkerForm(initial={"job_type": ""})
