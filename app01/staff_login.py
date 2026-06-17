@@ -19,10 +19,18 @@ def staff_login(request):
 
     staff = models.Staff.objects.filter(phone=phone).first()
     if not staff:
-        return render(request, 'staff_login.html', {
-            'title': '人员登录',
-            'error': '手机号或密码错误',
-        })
+        name = request.POST.get('name', '').strip()
+        if not name:
+            return render(request, 'staff_login.html', {
+                'title': '人员登录',
+                'error': '新用户请填写姓名',
+            })
+        staff = models.Staff.objects.create(
+            phone=phone,
+            name=name,
+            id_number=None,  # 可空
+            department='',
+        )
 
     # 密码匹配：staff.password 空则对比 '888'，否则对比存储的密码
     if staff.password:

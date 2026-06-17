@@ -29,6 +29,8 @@ from . import api_quiz
 
 urlpatterns += [
     path('quiz/start/', api_quiz.quiz_start, name='quiz_start'),
+    path('quiz/categories/', api_quiz.quiz_categories, name='quiz_categories'),
+
     path('quiz/submit/', api_quiz.quiz_submit, name='quiz_submit'),
     path('quiz/stats/', api_quiz.quiz_stats, name='quiz_stats'),
     path('quiz/qrcode/', api_quiz.quiz_qrcode, name='quiz_qrcode'),

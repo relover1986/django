@@ -128,3 +128,68 @@
     </div>
 </div>
 {% endblock %}
+
+
+{% block scripts %}
+<script>
+// 自定义确认弹窗（兼容微信浏览器等不支持 confirm 的环境）
+function customConfirm(msg, url) {
+    var overlay = document.createElement("div");
+    overlay.id = "confirm-overlay";
+    overlay.innerHTML = `
+        <div class="confirm-box">
+            <p>${msg}</p>
+            <div class="confirm-btns">
+                <button class="btn btn-danger btn-sm" id="confirm-ok">确定删除</button>
+                <button class="btn btn-secondary btn-sm" id="confirm-cancel">取消</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    document.getElementById("confirm-cancel").onclick = function() {
+        overlay.remove();
+    };
+    document.getElementById("confirm-ok").onclick = function() {
+        window.location.href = url;
+    };
+    overlay.onclick = function(e) {
+        if (e.target === overlay) overlay.remove();
+    };
+}
+
+// 替换原生的 confirm
+// 删除按钮的 onclick 改调用 customConfirm
+document.querySelectorAll("a.btn-danger").forEach(function(a) {
+    var oldClick = a.getAttribute("onclick");
+    if (oldClick && oldClick.indexOf("confirm(") > -1) {
+        a.removeAttribute("onclick");
+        a.addEventListener("click", function(e) {
+            e.preventDefault();
+            var name = a.getAttribute("data-name") || "该人员";
+            customConfirm("确定删除 " + name + " 吗？", a.href);
+        });
+    }
+});
+</script>
+
+<style>
+#confirm-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+}
+.confirm-box {
+    background: #fff; border-radius: 12px; padding: 24px 28px;
+    max-width: 320px; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+}
+.confirm-box p {
+    font-size: 16px; margin-bottom: 20px; color: #333;
+}
+.confirm-btns {
+    display: flex; gap: 10px; justify-content: center;
+}
+.confirm-btns .btn {
+    min-width: 90px;
+}
+</style>
+{% endblock %}

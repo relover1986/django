@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError
 class Staff(models.Model):
     """人员基础信息主表"""
     name = models.CharField(max_length=32, verbose_name="姓名", blank=True)
-    id_number = models.CharField(max_length=18, verbose_name="身份证号", unique=True, blank=True)
+    id_number = models.CharField(max_length=18, verbose_name="身份证号", blank=True, null=True)
     phone = models.CharField(max_length=11, verbose_name="手机号")
     password = models.CharField(max_length=128, verbose_name="密码", default='888')
     department = models.CharField(max_length=64, verbose_name="部门", blank=True)

@@ -205,6 +205,16 @@ def quiz_stats(request):
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
+def quiz_categories(request):
+    """返回所有题库类别（去重）"""
+    from .models.quiz import Question
+    cats = Question.objects.values_list("category", flat=True).distinct().order_by("category")
+    return JsonResponse({"categories": list(cats)})
+
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
 def quiz_qrcode(request):
     """返回 staff_login 二维码 PNG（base64）"""
     import qrcode, io, base64 as b64

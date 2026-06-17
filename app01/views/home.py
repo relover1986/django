@@ -149,4 +149,6 @@ def department_quiz_stats(request):
 # Vue 前端入口
 def vue_app(request, vue_path=None):
     from django.shortcuts import render
-    return render(request, 'vue/index.html')
+    from app01.models.quiz import Question
+    cats = list(Question.objects.values_list('category', flat=True).distinct().order_by('category'))
+    return render(request, 'vue/index.html', {'categories': cats})
