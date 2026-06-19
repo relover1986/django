@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>主要负责人督办看板</title>
+<!-- Bootstrap 5 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Font Awesome -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<!-- ECharts -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+:root {
+  --mine-blue: #1a3a5c;
+  --mine-dark: #2c3e50;
+  --mine-gray: #5a6b7d;
+  --danger-red: #dc3545;
+  --warning-orange: #fd7e14;
+  --success-green: #198754;
+  --info-cyan: #0dcaf0;
+  --bg-light: #f0f2f5;
+  --card-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --card-radius: 12px;
+}
+
+body {
+  background: var(--bg-light);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+  color: #333;
+  padding-bottom: 40px;
+}
+
+/* 顶部标题栏 */
+.header-bar {
+  background: linear-gradient(135deg, #1a3a5c 0%, #1f4d7a 40%, #1a3a5c 100%);
+  color: #fff;
+  padding: 20px 0;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(26,58,92,0.25);
+  position: relative;
+  overflow: hidden;
+}
+.header-bar::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 40px,
+    rgba(255,255,255,0.015) 40px,
+    rgba(255,255,255,0.015) 41px
+  );
+  pointer-events: none;
+}
+.header-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin: 0;
+}
+.header-subtitle {
+  font-size: 0.9rem;
+  opacity: 0.85;
+  margin: 4px 0 0 0;
+  letter-spacing: 1px;
+}
+.header-icon {
+  font-size: 2rem;
+  margin-right: 12px;
+  vertical-align: middle;
+}
+
+/* 刷新按钮 */
+.btn-refresh {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 0.9rem;
+  transition: all 0.3s;
+}
+.btn-refresh:hover {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+  border-color: rgba(255,255,255,0.5);
+}
+.btn-refresh.spinning i {
+  animation: spin 0.8s ease-in-out;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 指标卡片 */
+.metric-card {
+  background: #fff;
+  border-radius: var(--card-radius);
+  padding: 20px 18px;
+  box-shadow: var(--card-shadow);
+  border-left: 5px solid var(--mine-blue);
+  transition: transform 0.2s, box-shadow 0.2s;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+}
+.metric-card.danger  { border-left-color: var(--danger-red); }
+.metric-card.warning { border-left-color: var(--warning-orange); }
+.metric-card.info    { border-left-color: var(--info-cyan); }
+.metric-card.primary { border-left-color: #0d6efd; }
+.metric-icon {
+  font-size: 2.2rem;
+  opacity: 0.15;
+  position: absolute;
+  right: 16px;
+  top: 12px;
+}
+.metric-value {
+  font-size: 2.0rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.metric-label {
+  font-size: 0.85rem;
+  color: var(--mine-gray);
+  font-weight: 500;
+}
+.metric-trend {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-top: 4px;
+}
+.metric-sub {
+  font-size: 0.78rem;
+  color: #999;
+  margin-top: 2px;
+}
+
+/* 表格区域 */
+.table-card {
+  background: #fff;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+.table-card .card-header {
+  background: #fff;
+  border-bottom: 2px solid #e9ecef;
+  padding: 16px 20px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.table > thead {
+  background: #f8f9fa;
+}
+.table > thead th {
+  font-weight: 700;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #555;
+  border-bottom: 2px solid #dee2e6;
+  white-space: nowrap;
+}
+.table-clickable-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.table-clickable-row:hover {
+  background: #f0f6ff !important;
+}
+.row-overdue {
+  background: #fff5f5 !important;
+}
+.row-urgent {
+  background: #fffbf0 !important;
+}
+
+/* 状态徽章 */
+.badge-status {
+  font-size: 0.78rem;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+.badge-overdue {
+  background: #ffe0e0;
+  color: #c0392b;
+  border: 1px solid #f5c6cb;
+}
+.badge-urgent {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+}
+.badge-progress {
+  background: #e0f0ff;
+  color: #1a5276;
+  border: 1px solid #bee5eb;
+}
+
+/* 排查计划 */
+.plan-card {
+  background: #fff;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+}
+.plan-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  gap: 14px;
+}
+.plan-item:last-child { border-bottom: none; }
+.plan-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.plan-dot.done { background: #198754; }
+.plan-dot.pending { background: #adb5bd; }
+
+/* 季度卡片 */
+.quarter-card {
+  background: #fff;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 24px;
+}
+.progress {
+  height: 10px;
+  border-radius: 5px;
+}
+
+/* Chart 容器 */
+.chart-card {
+  background: #fff;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+}
+.chart-card .card-header {
+  background: #fff;
+  border-bottom: 2px solid #e9ecef;
+  padding: 14px 20px;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.chart-box {
+  width: 100%;
+  height: 380px;
+}
+
+/* Modal */
+.modal-header {
+  background: linear-gradient(135deg, #1a3a5c, #1f4d7a);
+  color: #fff;
+}
+.modal-header .btn-close {
+  filter: brightness(0) invert(1);
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .header-title { font-size: 1.2rem; }
+  .metric-value { font-size: 1.5rem; }
+  .chart-box { height: 280px; }
+}
+
+/* 发送督办按钮 */
+.btn-send-order {
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  border-radius: 5px;
+}
+
+/* 刷新波纹 */
+@keyframes pulse-once {
+  0% { box-shadow: 0 0 0 0 rgba(13,110,253,0.4); }
+  70% { box-shadow: 0 0 0 12px rgba(13,110,253,0); }
+  100% { box-shadow: 0 0 0 0 rgba(13,110,253,0); }
+}
+.pulse-animate {
+  animation: pulse-once 0.6s ease-out;
+}
+
+/* 邮件预览模态框样式 */
+.email-preview {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 16px;
+  font-family: "Courier New", monospace;
+  font-size: 0.9rem;
+}
+.email-field {
+  margin-bottom: 8px;
+}
+.email-field strong {
+  display: inline-block;
+  width: 60px;
+  color: #555;
+}
+.email-body {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #ccc;
+  white-space: pre-wrap;
+  line-height: 1.7;
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== 顶部标题栏 ==================== -->
+<div class="header-bar">
+  <div class="container-fluid px-4">
+    <!-- 宏鹏矿业：全宽居中 -->
+    <div style="text-align:center;width:100%;padding-bottom:4px;">
+      <span style="font-size:32px;font-weight:700;color:#fff;letter-spacing:6px;">宏鹏矿业</span>
+    </div>
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <i class="fa-solid fa-hard-hat header-icon" style="vertical-align:middle;"></i>
+        <span class="header-title">主要负责人督办看板</span>
+        <p class="header-subtitle"><i class="fa-regular fa-clock me-1"></i>实时更新 · 2026年7月 · 安全生产管理</p>
+      </div>
+      <button class="btn btn-refresh" id="btnRefresh" title="刷新数据">
+        <i class="fa-solid fa-arrows-rotate me-1"></i>刷新
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid px-4">
+
+  <!-- ==================== 4个核心指标卡 ==================== -->
+  <div class="row g-3 mb-4" id="metricRow">
+    <div class="col-6 col-lg-3">
+      <div class="metric-card danger">
+        <i class="fa-solid fa-triangle-exclamation metric-icon"></i>
+        <div class="metric-value text-danger">12</div>
+        <div class="metric-label">重大隐患总数</div>
+        <div class="metric-trend text-danger"><i class="fa-solid fa-arrow-up me-1"></i>较上月+2</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="metric-card primary">
+        <i class="fa-solid fa-wrench metric-icon"></i>
+        <div class="metric-value text-primary">5</div>
+        <div class="metric-label">整改中</div>
+        <div class="metric-sub">占总数 41.7%</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="metric-card warning">
+        <i class="fa-solid fa-chart-line metric-icon"></i>
+        <div class="metric-value text-warning" style="color:#fd7e14 !important;">82%</div>
+        <div class="metric-label">按期完成率</div>
+        <div class="metric-trend" style="color:#fd7e14;"><i class="fa-solid fa-flag me-1"></i>目标 ≥ 90%</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="metric-card danger">
+        <i class="fa-solid fa-circle-exclamation metric-icon"></i>
+        <div class="metric-value text-danger">2</div>
+        <div class="metric-label">超期未销号 <span class="badge bg-danger ms-2" style="font-size:0.7rem;">⚠️ 预警</span></div>
+        <div class="metric-sub">需主要负责人立即督办</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 下半部分：双图表 ==================== -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-7">
+      <div class="chart-card">
+        <div class="card-header">
+          <i class="fa-solid fa-chart-line me-2" style="color:#1a3a5c;"></i>近12个月隐患发现数 vs 销号数
+        </div>
+        <div class="chart-box" id="chartLine"></div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="chart-card">
+        <div class="card-header">
+          <i class="fa-solid fa-chart-pie me-2" style="color:#1a3a5c;"></i>隐患分类分布
+        </div>
+        <div class="chart-box" id="chartPie"></div>
+      </div>
+    </div>
+  </div>
+
+  
+
+<!-- ==================== 中段：五落实倒计时表格 ==================== -->
+  <div class="table-card mb-4">
+    <div class="card-header">
+      <div>
+        <i class="fa-solid fa-list-check me-2" style="color:#1a3a5c;"></i>
+        五落实倒计时 · 隐患整改跟踪表
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span id="filterBadge" class="badge rounded-pill" style="background:#e9ecef;color:#495057;font-size:0.8rem;display:none;">
+          <i class="fa-solid fa-filter me-1"></i>筛选：<span id="filterLabel"></span>
+          <a href="javascript:clearFilter()" class="ms-2 text-decoration-none" style="color:#dc3545;"><i class="fa-solid fa-xmark"></i></a>
+        </span>
+      </div>
+      <span class="badge rounded-pill" style="background:#1a3a5c; font-size:0.85rem; padding:6px 14px;">
+        <i class="fa-regular fa-calendar me-1"></i>本月 2026年7月
+      </span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" style="min-width:1200px;">
+        <thead>
+          <tr>
+            <th>隐患编号</th>
+            <th>隐患名称</th>
+            <th>地点</th>
+            <th>责任人</th>
+            <th>完成时限</th>
+            <th>剩余天数</th>
+            <th>资金落实</th>
+            <th>预案落实</th>
+            <th>状态</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== 本月排查计划 ==================== -->
+  <div class="plan-card mb-4">
+    <div class="card-header" style="background:#fff; border-bottom:2px solid #e9ecef; padding:14px 20px; font-weight:700; font-size:1.0rem;">
+      <i class="fa-solid fa-calendar-check me-2" style="color:#198754;"></i>本月排查计划 · 2026年7月
+    </div>
+    <div id="planList">
+      <div class="plan-item">
+        <div class="plan-dot done"></div>
+        <div style="flex:1;">
+          <strong>7月15日 · 重大隐患排查</strong>
+          <small class="text-muted ms-2">主要负责人带队</small>
+        </div>
+        <span class="badge rounded-pill" style="background:#d4edda; color:#155724; font-weight:500;">✅ 已完成</span>
+      </div>
+      <div class="plan-item">
+        <div class="plan-dot pending"></div>
+        <div style="flex:1;">
+          <strong>7月20日 · 通风系统专项排查</strong>
+        </div>
+        <span class="badge rounded-pill" style="background:#e9ecef; color:#6c757d; font-weight:500;">📋 待执行</span>
+      </div>
+      <div class="plan-item">
+        <div class="plan-dot pending"></div>
+        <div style="flex:1;">
+          <strong>7月28日 · 机电运输专项排查</strong>
+        </div>
+        <span class="badge rounded-pill" style="background:#e9ecef; color:#6c757d; font-weight:500;">📋 待执行</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 底部：季度上报状态 ==================== -->
+  <div class="quarter-card mb-3">
+    <div class="row align-items-center">
+      <div class="col-md-6">
+        <h5 class="mb-2"><i class="fa-solid fa-file-signature me-2" style="color:#1a3a5c;"></i>季度报告上报状态</h5>
+        <p class="text-muted mb-1">2026年 第2季度安全生产报告
+          <button class="btn btn-outline-primary btn-sm ms-3" onclick="previewReport()">
+            <i class="fa-solid fa-eye me-1"></i>预览报告
+          </button>
+        </p>
+        <p class="mb-0"><span class="badge rounded-pill" style="background:#d4edda; color:#155724;">✅ 已上报</span> <small class="text-muted ms-2">上报日期：2026-07-05</small></p>
+      </div>
+      <div class="col-md-6 mt-3 mt-md-0">
+        <div class="d-flex justify-content-between mb-1">
+          <small class="fw-bold">距离下次上报（第3季度）</small>
+          <small class="text-muted">82 / 92 天</small>
+        </div>
+        <div class="progress">
+          <div class="progress-bar bg-success" role="progressbar" style="width: 89%;" aria-valuenow="89" aria-valuemin="0" aria-valuemax="100">89%</div>
+        </div>
+        <small class="text-muted mt-1 d-block">预计截止日：2026-10-10 · 剩余10天窗口期</small>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container-fluid -->
+
+<!-- ==================== Modal：隐患详情 ==================== -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-magnifying-glass me-2"></i>隐患详情</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="detailContent">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== Modal：发送督办邮件预览 ==================== -->
+<div class="modal fade" id="orderModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, #c0392b, #e74c3c);">
+        <h5 class="modal-title"><i class="fa-solid fa-paper-plane me-2"></i>发送督办通知</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="orderContent">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-danger" id="btnConfirmSend">
+          <i class="fa-solid fa-paper-plane me-1"></i>确认发送
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// ==================== 模拟数据 ====================
+const hazardData = [
+  { id:'YK-2026-012', name:'主井提升机闸瓦间隙超标', category:'机电', location:'主井', person:'张XX', deadline:'2026-07-15', days:-3, fund:true,  plan:true,  status:'overdue',  statusText:'🚨 超期督办', desc:'闸瓦间隙实测值1.8mm，超过《煤矿安全规程》第426条规定最大值1.5mm，存在提升机制动失效风险。需立即调整闸瓦间隙并更换磨损闸瓦片。', measure:'1. 停机调整闸瓦间隙至1.2mm以内；\n2. 更换全部磨损闸瓦片（12片）；\n3. 调整后静载试验3次；\n4. 经机电科验收合格后方可恢复运行。', photo:'/media/kanban/OIP-C.CyH-BDzoFap0rbsJE6xNqwHaEK.webp' },
+  { id:'YK-2026-013', name:'北翼采区风量不足报警', category:'通风', location:'北翼采区', person:'刘XX', deadline:'2026-07-25', days:7,  fund:true,  plan:true,  status:'warning',  statusText:'⚠️ 催办', desc:'北翼采区回风巷实测风量680m³/min，低于设计值850m³/min，已触发安全监控系统报警。', measure:'1. 清理回风巷堆积物料；\n2. 调整局部通风机运行参数；\n3. 增设辅助通风设施。', photo:'/media/kanban/OIP-C.OEpYEGXI-_iUmvJlYd3FHwHaD2.webp' },
+  { id:'YK-2026-014', name:'副井罐笼防坠器过期未检', category:'机电', location:'副井', person:'陈XX', deadline:'2026-08-05', days:18, fund:true,  plan:false, status:'progress', statusText:'⚠️ 预案缺失', desc:'副井罐笼防坠器上次检测日期为2025-12-10，已超出6个月检测周期，存在罐笼坠落重大风险。', measure:'1. 联系有资质检测机构；\n2. 编制检测方案及应急预案；\n3. 检测期间罐笼停用，人员改乘主井。', photo:'/media/kanban/OIP-C.V6MJsoBqEkkyiGBJu6gzYQHaFj.webp' },
+  { id:'YK-2026-015', name:'南翼采区瓦斯传感器缺失', category:'通风', location:'南翼采区', person:'李XX', deadline:'2026-07-20', days:2,  fund:true,  plan:false, status:'urgent',   statusText:'⚠️ 催办', desc:'南翼采区3号工作面缺少瓦斯传感器探头，不符合《煤矿安全监控系统通用技术要求》中每100m布置一个传感器的规定。', measure:'1. 立即采购并安装GJC4型瓦斯传感器2台；\n2. 接入安全监控系统并校准；\n3. 监控中心验证数据上传。', photo:'/media/kanban/OIP-C.bx3nCpkeyOQnr07_zdmavAHaFj.webp' },
+  { id:'YK-2026-016', name:'2号皮带运输机急停失效', category:'机电', location:'主运输巷', person:'马XX', deadline:'2026-07-30', days:12, fund:true,  plan:true,  status:'progress', statusText:'整改中', desc:'2号皮带运输机沿线3处急停拉线开关测试无响应，紧急情况下无法及时停机。', measure:'1. 更换失效急停开关及拉线；\n2. 全线急停功能测试；\n3. 建立每班点检台账。', photo:'/media/kanban/OIP-C.dvexqonyX1XTjwMuKbdNOAHaEK.webp' },
+  { id:'YK-2026-017', name:'井下中央变电所绝缘监测异常', category:'机电', location:'中央变电所', person:'周XX', deadline:'2026-08-10', days:23, fund:false, plan:true,  status:'progress', statusText:'资金未到位', desc:'绝缘监测装置显示6kV母线绝缘电阻下降至0.8MΩ，接近规程下限0.5MΩ，需查明原因并处理。', measure:'1. 逐路排查馈出线路绝缘；\n2. 更换老化电缆头；\n3. 采购绝缘监测装置备件。', photo:'/media/kanban/OIP-C.jCPUlE5FmyfxxC4j-gJdzwHaFj.webp' },
+  { id:'YK-2026-018', name:'尾矿库排洪涵洞裂缝', category:'水害', location:'尾矿库', person:'王XX', deadline:'2026-08-01', days:14, fund:true,  plan:true,  status:'progress', statusText:'整改中', desc:'尾矿库排洪涵洞K0+120处发现纵向裂缝，长度约3.2m，宽度0.5-1.2mm，汛期可能扩大导致溃坝风险。', measure:'1. 裂缝注浆封堵；\n2. 涵洞内衬碳纤维加固；\n3. 安装裂缝监测计实时监控。', photo:'/media/kanban/OIP-C.n1nEazLhDTQQBN3-YK-d9gHaE6.webp' },
+  { id:'YK-2026-019', name:'回采工作面支护密度不足', category:'顶板', location:'2号工作面', person:'吴XX', deadline:'2026-07-14', days:-4, fund:true,  plan:true,  status:'overdue',  statusText:'🚨 超期督办', desc:'2号回采工作面实测支护密度为1.2根/m²，低于作业规程要求的1.6根/m²，顶板已出现局部离层。', measure:'1. 立即停止该工作面回采作业；\n2. 补打单体液压支柱至设计密度；\n3. 顶板离层仪加密监测。', photo:'/media/kanban/OIP-C.s8ACXQqD9M7wHF2HUgRsEQHaGn.webp' },
+  { id:'YK-2026-020', name:'炸药库监控系统故障', category:'其他', location:'地面炸药库', person:'郑XX', deadline:'2026-08-18', days:31, fund:true,  plan:true,  status:'progress', statusText:'整改中', desc:'炸药库视频监控系统4路摄像头中2路无信号，录像存储仅保留3天，不符合民用爆炸物品安全管理规定。', measure:'1. 检修故障摄像头线路；\n2. 更换损坏的NVR主机；\n3. 确保录像保存≥30天。', photo:'/media/kanban/Unknown 2.webp' },
+  { id:'YK-2026-021', name:'3号采空区未稳定性评估', category:'顶板', location:'3号区', person:'赵XX', deadline:'2026-08-15', days:28, fund:false, plan:true,  status:'progress', statusText:'资金未到位', desc:'3号采空区面积约4500m²，尚未开展稳定性评估，地表已出现轻微沉降，威胁下方工业广场安全。', measure:'1. 委托有资质单位进行采空区稳定性评价；\n2. 根据地勘结果制定充填或封闭方案；\n3. 设置地表沉降观测点。', photo:'/media/kanban/Unknown 3.webp' },
+  { id:'YK-2026-022', name:'压风机房消防设施缺损', category:'其他', location:'压风机房', person:'钱XX', deadline:'2026-09-05', days:47, fund:true,  plan:false, status:'progress', statusText:'预案缺失', desc:'压风机房配置的灭火器已过期3个月，且未安装烟雾报警装置，存在火灾初期无法及时发现的风险。', measure:'1. 更换全部过期灭火器（8具）；\n2. 安装独立式烟雾报警器4个；\n3. 编制压风机房消防应急预案。', photo:'/media/kanban/Unknown 4.webp' },
+  { id:'YK-2026-023', name:'矿井水文监测系统数据断传', category:'水害', location:'水文监测站', person:'孙XX', deadline:'2026-07-22', days:4,  fund:true,  plan:true,  status:'urgent',   statusText:'⚠️ 催办', desc:'水文长期观测孔水位数据自7月10日起中断上传，无法实时掌握含水层水位变化，汛期风险加大。', measure:'1. 排查数据传输线路及传感器；\n2. 更换故障RTU模块；\n3. 恢复数据并核验历史记录。', photo:'/media/kanban/Unknown.webp' },
+];
+
+// 图表筛选状态
+var currentFilter = null;
+
+function getFilteredData() {
+  if (!currentFilter) return hazardData;
+  if (currentFilter.type === 'category') {
+    return hazardData.filter(function(h) { return h.category === currentFilter.value; });
+  }
+  return hazardData;
+}
+
+function updateFilterBadge() {
+  var badge = document.getElementById('filterBadge');
+  var label = document.getElementById('filterLabel');
+  if (!currentFilter) {
+    badge.style.display = 'none';
+    return;
+  }
+  badge.style.display = 'inline-block';
+  label.textContent = currentFilter.value;
+}
+
+function clearFilter() {
+  currentFilter = null;
+  updateFilterBadge();
+  renderTable();
+}
+
+// Bootstrap Modal 实例
+let detailModal, orderModal;
+
+document.addEventListener('DOMContentLoaded', () => {
+  detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
+  orderModal = new bootstrap.Modal(document.getElementById('orderModal'));
+
+  renderTable();
+  initLineChart();
+  initPieChart();
+  initRefreshButton();
+  initSendConfirm();
+});
+
+// ==================== 渲染表格 ====================
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  var data = getFilteredData();
+  tbody.innerHTML = data.map((h, idx) => {
+    let rowClass = '';
+    if (h.status === 'overdue') rowClass = 'row-overdue';
+    else if (h.status === 'urgent') rowClass = 'row-urgent';
+
+    const daysDisplay = h.days < 0
+      ? `<span class="text-danger fw-bold">${h.days}天</span>`
+      : (h.days <= 7 ? `<span class="text-warning fw-bold">${h.days}天</span>` : `${h.days}天`);
+
+    const fundIcon = h.fund ? '<span class="text-success fw-bold">✅</span>' : '<span class="text-danger fw-bold">❌</span>';
+    const planIcon = h.plan ? '<span class="text-success fw-bold">✅</span>' : '<span class="text-danger fw-bold">❌</span>';
+
+    let statusBadge = '';
+    if (h.status === 'overdue') statusBadge = `<span class="badge badge-overdue">${h.statusText}</span>`;
+    else if (h.status === 'urgent') statusBadge = `<span class="badge badge-urgent">${h.statusText}</span>`;
+    else statusBadge = `<span class="badge badge-progress">${h.statusText}</span>`;
+
+    const showSendBtn = (h.status === 'overdue' || h.status === 'urgent');
+
+    return `
+      <tr class="table-clickable-row ${rowClass}" data-index="${idx}">
+        <td><code style="background:#e9ecef; padding:2px 6px; border-radius:4px;">${h.id}</code></td>
+        <td class="fw-bold">${h.name}</td>
+        <td>${h.location}</td>
+        <td>${h.person}</td>
+        <td>${h.deadline}</td>
+        <td>${daysDisplay}</td>
+        <td class="text-center">${fundIcon}</td>
+        <td class="text-center">${planIcon}</td>
+        <td>${statusBadge}</td>
+        <td>
+          ${showSendBtn
+            ? `<button class="btn btn-sm btn-outline-danger btn-send-order" data-index="${idx}" onclick="event.stopPropagation();openOrderModal(${idx})"><i class="fa-solid fa-bolt me-1"></i>发送督办</button>`
+            : `<button class="btn btn-sm btn-outline-secondary btn-send-order" disabled style="opacity:0.5;">—</button>`
+          }
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  // 绑定行点击 → 详情 Modal
+  tbody.querySelectorAll('tr.table-clickable-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const idx = parseInt(row.dataset.index);
+      openDetailModal(idx);
+    });
+  });
+}
+
+// ==================== 打开详情 Modal ====================
+function openDetailModal(idx) {
+  const h = hazardData[idx];
+  const detailContent = document.getElementById('detailContent');
+  const daysClass = h.days < 0 ? 'text-danger fw-bold' : (h.days <= 7 ? 'text-warning fw-bold' : '');
+  detailContent.innerHTML = `
+    <div class="row mb-3">
+      <div class="col-sm-6">
+        <p class="mb-1"><strong>隐患编号：</strong><code>${h.id}</code></p>
+        <p class="mb-1"><strong>隐患名称：</strong>${h.name}</p>
+        <p class="mb-1"><strong>地点：</strong>${h.location}</p>
+        <p class="mb-1"><strong>主要责任人：</strong>${h.person}</p>
+      </div>
+      <div class="col-sm-6">
+        <p class="mb-1"><strong>完成时限：</strong>${h.deadline}</p>
+        <p class="mb-1"><strong>剩余天数：</strong><span class="${daysClass}">${h.days}天</span></p>
+        <p class="mb-1"><strong>资金落实：</strong>${h.fund ? '✅ 已落实' : '❌ 未到位'}</p>
+        <p class="mb-1"><strong>预案落实：</strong>${h.plan ? '✅ 已落实' : '❌ 未到位'}</p>
+      </div>
+    </div>
+    <hr>
+    <h6 class="fw-bold"><i class="fa-solid fa-file-lines me-2" style="color:#1a3a5c;"></i>隐患描述</h6>
+    <p>${h.desc}</p>
+    <h6 class="fw-bold mt-3"><i class="fa-solid fa-clipboard-check me-2" style="color:#198754;"></i>措施明细</h6>
+    <p style="white-space:pre-wrap;">${h.measure}</p>
+    <h6 class="fw-bold mt-3"><i class="fa-solid fa-camera me-2" style="color:#1a3a5c;"></i>整改照片</h6>
+    <div class="text-center p-3" style="background:#f8f9fa; border-radius:8px;">
+      <img src="${h.photo}" alt="整改照片" class="img-fluid rounded" style="max-height:280px;" onerror="this.parentElement.innerHTML='<div class=\\'p-5 text-muted\\'><i class=\\'fa-solid fa-image fa-3x mb-2\\' style=\\'opacity:0.3;\\'></i><br>整改照片（现场采集上传中）</div>';">
+    </div>
+  `;
+  detailModal.show();
+}
+
+// ==================== 打开督办 Modal ====================
+function openOrderModal(idx) {
+  const h = hazardData[idx];
+  const now = new Date();
+  const dateStr = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日';
+  const urgency = h.status === 'overdue' ? '【紧急·超期】' : '【预警·催办】';
+  const overdueDays = Math.abs(h.days);
+
+  const orderContent = document.getElementById('orderContent');
+  orderContent.dataset.hazardId = h.id;
+  orderContent.innerHTML = `
+    <div class="alert alert-danger mb-3">
+      <i class="fa-solid fa-triangle-exclamation me-2"></i>
+      即将向 <strong>${h.person}</strong> 发送督办通知
+    </div>
+    <div class="email-preview">
+      <div class="email-field"><strong>收件人：</strong>${h.person}@mine-coal.com</div>
+      <div class="email-field"><strong>抄送：</strong>安全副矿长、总工程师</div>
+      <div class="email-field"><strong>主题：</strong>${urgency}安全隐患整改督办——${h.id} ${h.name}</div>
+      <div class="email-body">
+<b>${h.person}同志：</b>
+
+经安全监控系统排查，你分管的 <b>${h.name}</b> 隐患（编号 ${h.id}）截至今日（${dateStr}）<b style="color:#c0392b;">已超期 ${overdueDays} 天</b>仍未完成整改销号。
+
+根据《安全生产事故隐患排查治理暂行规定》第十五条及矿安全生产责任制，现对你发出<b>正式督办通知</b>：
+
+1. 请在 <b>3个工作日内</b> 书面汇报整改进展及预计完成时间；
+2. 落实整改资金、人员、预案到位情况；
+3. 整改完成前应采取临时管控措施确保安全；
+4. 逾期未回复将按《安全责任追究制度》启动问责程序。
+
+请务必高度重视，立即组织整改。
+附件：隐患详细台账及措施清单
+
+<b style="color:#c0392b;">本邮件由安全督办系统自动发出</b>
+签发人：矿长（主要负责人）
+发送时间：${dateStr}
+      </div>
+    </div>
+  `;
+  orderModal.show();
+}
+
+// ==================== 确认发送 ====================
+function initSendConfirm() {
+  document.getElementById('btnConfirmSend').addEventListener('click', () => {
+    const orderContent = document.getElementById('orderContent');
+    const hazardId = orderContent.dataset.hazardId || '未知';
+    alert('✅ 督办通知已成功发送！\n\n隐患编号：' + hazardId + '\n系统已记录发送时间，请督促整改。');
+    orderModal.hide();
+  });
+}
+
+// ==================== 刷新按钮 ====================
+function initRefreshButton() {
+  const btn = document.getElementById('btnRefresh');
+  btn.addEventListener('click', () => {
+    btn.classList.add('spinning');
+    // 给指标卡片加脉冲动画
+    document.querySelectorAll('.metric-card').forEach(c => c.classList.add('pulse-animate'));
+
+    // 模拟数据微调刷新
+    setTimeout(() => {
+      btn.classList.remove('spinning');
+      document.querySelectorAll('.metric-card').forEach(c => c.classList.remove('pulse-animate'));
+
+      // 随机微调完成率
+      const rate = 80 + Math.floor(Math.random() * 6);
+      const rateEl = document.querySelector('.metric-card.warning .metric-value');
+      if (rateEl) rateEl.textContent = rate + '%';
+
+      // 图表刷新
+      initLineChart();
+      initPieChart();
+
+      // 轻提示
+      const toast = document.createElement('div');
+      toast.className = 'position-fixed top-0 end-0 m-4 p-2 px-3 bg-success text-white rounded-pill shadow';
+      toast.style.cssText = 'z-index:9999; font-size:0.85rem; animation: fadeInDown 0.3s ease-out;';
+      toast.innerHTML = '<i class="fa-solid fa-check-circle me-1"></i>数据已刷新';
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.remove(); }, 2000);
+    }, 800);
+
+    // 重新渲染表格
+    renderTable();
+  });
+}
+
+// ==================== ECharts 折线图 ====================
+function initLineChart() {
+  const dom = document.getElementById('chartLine');
+  if (!dom) return;
+  const old = echarts.getInstanceByDom(dom);
+  if (old) old.dispose();
+
+  const chart = echarts.init(dom);
+  const months = ['25/08','25/09','25/10','25/11','25/12','26/01','26/02','26/03','26/04','26/05','26/06','26/07'];
+  const found   = [8, 11, 9, 14, 10, 12, 15, 9, 13, 11, 16, 14];
+  const cleared = [6, 9, 10, 12, 8, 10, 13, 11, 10, 12, 14, 12];
+
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: '#fff',
+      borderColor: '#ddd',
+      textStyle: { color: '#333', fontSize: 13 },
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      formatter: function(params) {
+        return '<b>' + params[0].axisValue + '</b><br/>' +
+          params[0].marker + ' 隐患发现数：<b>' + params[0].value + '</b> 项<br/>' +
+          params[1].marker + ' 销号数：<b>' + params[1].value + '</b> 项';
+      }
+    },
+    legend: {
+      data: ['隐患发现数', '销号数'],
+      bottom: 0,
+      textStyle: { fontSize: 13 },
+      itemWidth: 20,
+      itemHeight: 10
+    },
+    grid: { left: '3%', right: '5%', top: '8%', bottom: '12%', containLabel: true },
+    xAxis: {
+      type: 'category',
+      data: months,
+      axisLine: { lineStyle: { color: '#ccc' } },
+      axisTick: { show: false },
+      axisLabel: { fontSize: 11, color: '#666' }
+    },
+    yAxis: {
+      type: 'value',
+      name: '项数',
+      nameTextStyle: { fontSize: 12, color: '#999' },
+      minInterval: 2,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      splitLine: { lineStyle: { color: '#f0f0f0', type: 'dashed' } }
+    },
+    series: [
+      {
+        name: '隐患发现数',
+        type: 'line',
+        data: found,
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 8,
+        lineStyle: { color: '#dc3545', width: 2.5 },
+        itemStyle: { color: '#dc3545', borderColor: '#fff', borderWidth: 2 },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0,0,0,1, [
+            { offset: 0, color: 'rgba(220,53,69,0.25)' },
+            { offset: 1, color: 'rgba(220,53,69,0.02)' }
+          ])
+        },
+        markLine: {
+          silent: true,
+          data: [{ yAxis: 10, name: '月均基线', label: { formatter: '月均基线\n{b}' } }],
+          lineStyle: { color: '#999', type: 'dashed', width: 1 },
+          symbol: 'none'
+        }
+      },
+      {
+        name: '销号数',
+        type: 'line',
+        data: cleared,
+        smooth: true,
+        symbol: 'diamond',
+        symbolSize: 9,
+        lineStyle: { color: '#198754', width: 2.5 },
+        itemStyle: { color: '#198754', borderColor: '#fff', borderWidth: 2 },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0,0,0,1, [
+            { offset: 0, color: 'rgba(25,135,84,0.20)' },
+            { offset: 1, color: 'rgba(25,135,84,0.02)' }
+          ])
+        }
+      }
+    ]
+  };
+  chart.setOption(option);
+  chart.on('click', function() { clearFilter(); });
+  window.addEventListener('resize', () => chart.resize());
+}
+
+// ==================== ECharts 饼图（环形） ====================
+function initPieChart() {
+  const dom = document.getElementById('chartPie');
+  if (!dom) return;
+  const old = echarts.getInstanceByDom(dom);
+  if (old) old.dispose();
+
+  const chart = echarts.init(dom);
+  const data = [
+    { value: 35, name: '顶板', itemStyle: { color: '#e74c3c' } },
+    { value: 25, name: '通风', itemStyle: { color: '#3498db' } },
+    { value: 18, name: '机电', itemStyle: { color: '#f39c12' } },
+    { value: 10, name: '水害', itemStyle: { color: '#1abc9c' } },
+    { value: 12, name: '其他', itemStyle: { color: '#95a5a6' } }
+  ];
+
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: '#fff',
+      borderColor: '#ddd',
+      textStyle: { color: '#333', fontSize: 13 },
+      formatter: '{b}: {c} 项 ({d}%)'
+    },
+    legend: {
+      orient: 'vertical',
+      right: '8%',
+      top: 'center',
+      textStyle: { fontSize: 13, color: '#555' },
+      itemWidth: 12,
+      itemHeight: 12,
+      itemGap: 16
+    },
+    series: [{
+      name: '隐患分类',
+      type: 'pie',
+      radius: ['50%', '78%'],
+      center: ['38%', '50%'],
+      avoidLabelOverlap: false,
+      itemStyle: {
+        borderRadius: 6,
+        borderColor: '#fff',
+        borderWidth: 3
+      },
+      label: {
+        show: true,
+        position: 'inside',
+        formatter: '{d}%',
+        fontSize: 13,
+        fontWeight: 700,
+        color: '#fff',
+        textShadowColor: 'rgba(0,0,0,0.3)',
+        textShadowBlur: 2
+      },
+      emphasis: {
+        label: { fontSize: 18, fontWeight: 'bold' },
+        scaleSize: 8
+      },
+      data: data
+    }]
+  };
+  chart.setOption(option);
+  chart.on('click', function(params) {
+    if (params.name === '其他') return;
+    var cat = params.name;
+    if (currentFilter && currentFilter.type === 'category' && currentFilter.value === cat) {
+      clearFilter();
+      return;
+    }
+    currentFilter = {type:'category', value: cat};
+    updateFilterBadge();
+    renderTable();
+  });
+  window.addEventListener('resize', () => chart.resize());
+}
+
+// ==================== 响应式图表 resize ====================
+window.addEventListener('resize', () => {
+  ['chartLine', 'chartPie'].forEach(id => {
+    const dom = document.getElementById(id);
+    if (dom) {
+      const inst = echarts.getInstanceByDom(dom);
+      if (inst) inst.resize();
+    }
+  });
+});
+
+// 预览季度报告 - 打开新页面
+function previewReport() {
+  var w = window.open('', '_blank');
+  w.document.write('<html><head><meta charset="utf-8"><title>2026年第2季度 重大事故隐患排查治理报告</title>');
+  w.document.write('<style>body{font-family:"Microsoft YaHei",sans-serif;padding:40px 60px;color:#333;}');
+  w.document.write('h1{text-align:center;font-size:22px;margin-bottom:30px;}');
+  w.document.write('h2{font-size:18px;border-bottom:2px solid #1a3a5c;padding-bottom:5px;margin-top:25px;}');
+  w.document.write('table{width:100%;border-collapse:collapse;margin:10px 0;}');
+  w.document.write('th,td{border:1px solid #ccc;padding:8px 12px;text-align:left;font-size:14px;}');
+  w.document.write('th{background:#f0f4f8;}');
+  w.document.write('.footer{text-align:right;margin-top:40px;font-size:14px;color:#666;}.seal{margin-top:15px;font-size:16px;}');
+  w.document.write('.sign-line{display:flex;justify-content:space-between;margin-top:30px;}');
+  w.document.write('.notice{background:#fff3cd;border:1px solid #ffc107;padding:10px 15px;border-radius:6px;margin:15px 0;font-size:13px;}');
+  w.document.write('</style></head><body>');
+
+  w.document.write('<h1>2026年第2季度 重大事故隐患排查治理报告</h1>');
+  w.document.write('<p style="text-align:center;color:#666;">报告单位：XX矿业有限公司 · 报告日期：2026年7月5日</p>');
+  
+  w.document.write('<div class="notice">📋 根据《矿安[2026]77号》要求，本报告经主要负责人签字确认后，每季度向属地矿山安全监管部门和监察机构报告。</div>');
+
+  w.document.write('<h2>一、本季度隐患排查概况</h2>');
+  w.document.write('<table><tr><th>项目</th><th>数量</th></tr>');
+  w.document.write('<tr><td>本季度排查次数</td><td>3 次（含1次主要负责人带队）</td></tr>');
+  w.document.write('<tr><td>发现重大隐患</td><td>4 项</td></tr>');
+  w.document.write('<tr><td>已完成整改销号</td><td>2 项</td></tr>');
+  w.document.write('<tr><td>整改中</td><td>2 项</td></tr>');
+  w.document.write('<tr><td>按期完成率</td><td>82%</td></tr>');
+  w.document.write('</table>');
+
+  w.document.write('<h2>二、重大隐患明细</h2>');
+  w.document.write('<table><tr><th>编号</th><th>隐患名称</th><th>地点</th><th>责任人</th><th>状态</th></tr>');
+  w.document.write('<tr><td>YK-2026-012</td><td>主井提升机闸瓦间隙超标</td><td>主井</td><td>张XX</td><td style="color:#dc3545;">超期整改中</td></tr>');
+  w.document.write('<tr><td>YK-2026-015</td><td>南翼采区瓦斯传感器缺失</td><td>南翼</td><td>李XX</td><td style="color:#ffc107;">整改中</td></tr>');
+  w.document.write('<tr><td>YK-2026-018</td><td>尾矿库排洪涵洞裂缝</td><td>尾矿库</td><td>王XX</td><td style="color:#28a745;">已销号</td></tr>');
+  w.document.write('<tr><td>YK-2026-021</td><td>3号采空区未稳定性评估</td><td>3号区</td><td>赵XX</td><td style="color:#28a745;">已销号</td></tr>');
+  w.document.write('</table>');
+
+  w.document.write('<h2>三、整改"五落实"情况</h2>');
+  w.document.write('<p>所有重大隐患均已落实责任、措施、资金、时限、预案要求。详见附件《五落实台账明细表》。</p>');
+
+  w.document.write('<h2>四、下季度工作计划</h2>');
+  w.document.write('<ol><li>持续跟踪YK-2026-012、YK-2026-015整改，确保三季度前完成销号</li>');
+  w.document.write('<li>7月28日开展机电运输专项排查</li>');
+  w.document.write('<li>8月中旬组织主要负责人带队重大隐患排查</li></ol>');
+
+  w.document.write('<div class="sign-line">');
+  w.document.write('<div><strong>主要负责人签字：</strong><br><br><span style="border-bottom:1px solid #333;padding:0 80px 0 10px;">________</span></div>');
+  w.document.write('<div><strong>日期：</strong>2026年7月5日</div>');
+  w.document.write('</div>');
+  w.document.write('<div class="seal"><strong>（企业公章）</strong></div>');
+  w.document.write('<div class="footer">本报告已报送：属地矿山安全监管部门 · 国家矿山安全监察局XX省级局</div>');
+  w.document.write('</body></html>');
+  w.document.close();
+}
+</script>
+
+</body>
+</html>

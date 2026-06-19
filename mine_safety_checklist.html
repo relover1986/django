@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<title>矿山安全生产数字化管理清单 · 矿安[2026]77号</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+:root {
+  --bg: #0f1724;
+  --card: #1a2332;
+  --border: #2a3648;
+  --text: #d1d5db;
+  --text-muted: #8892a4;
+  --accent: #3ecf8e;
+  --accent-dim: #2a9d6e;
+  --header-bg: #141e2d;
+  --tag-bg: #1e2d3d;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+/* Layout */
+.container { max-width: 960px; margin: 0 auto; padding: 20px 16px 60px; }
+@media (max-width: 640px) {
+  .container { padding: 12px 10px 40px; }
+}
+
+/* Header */
+.header {
+  padding: 32px 24px;
+  background: linear-gradient(135deg, #0f1724 0%, #1a2332 100%);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+.header h1 {
+  font-size: clamp(20px, 4vw, 28px);
+  color: #fff;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+.header .sub {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.header .badge {
+  display: inline-block;
+  background: var(--accent);
+  color: #0f1724;
+  padding: 2px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+/* TOC */
+.toc {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 32px;
+}
+.toc-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.toc-list { list-style: none; }
+.toc-list li { margin: 6px 0; }
+.toc-list a {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s;
+  display: block;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.toc-list a:hover { color: var(--accent); background: var(--tag-bg); }
+.toc-list .num { color: var(--accent-dim); margin-right: 6px; }
+
+/* Section header */
+.section-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--header-bg);
+  padding: 12px 20px;
+  margin: 0 -20px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: clamp(16px, 3vw, 20px);
+  font-weight: 700;
+  color: #fff;
+}
+.section-header .section-toggle {
+  margin-right: 10px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+@media (max-width: 640px) {
+  .section-header { margin: 0 -10px 12px; padding: 10px 14px; }
+}
+
+/* Item card */
+.item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.item:hover { border-color: var(--accent-dim); }
+.item.section-folded { display: none; }
+.item-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+}
+.item-header .id {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 32px;
+}
+.item-header .title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+.item-body { padding: 0 20px 20px; }
+
+/* Info table */
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 14px;
+}
+.info-table th {
+  background: var(--tag-bg);
+  color: var(--accent);
+  font-weight: 600;
+  padding: 8px 14px;
+  text-align: left;
+  width: 100px;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+}
+.info-table td {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+@media (max-width: 640px) {
+  .info-table th { width: 72px; font-size: 12px; padding: 6px 8px; }
+  .info-table td { font-size: 13px; padding: 6px 8px; }
+}
+
+/* Mermaid diagram container */
+.diagram-wrap {
+  position: relative;
+  margin: 16px 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #0d1520;
+  overflow: hidden;
+}
+.diagram-wrap .diagram-inner {
+  padding: 20px 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+}
+.diagram-wrap .diagram-inner svg {
+  display: block;
+  margin: 0 auto;
+  max-width: none !important;
+}
+.diagram-wrap .zoom-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  backdrop-filter: blur(4px);
+}
+.diagram-wrap .zoom-btn:hover { background: var(--accent); color: #0f1724; }
+
+/* Zoom modal */
+.zoom-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0,0,0,0.92);
+  backdrop-filter: blur(8px);
+  touch-action: none;
+}
+.zoom-overlay.active { display: flex; align-items: center; justify-content: center; }
+.zoom-overlay .zoom-close {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1001;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.zoom-overlay .zoom-content {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  touch-action: pan-x pan-y;
+}
+.zoom-overlay .zoom-content svg {
+  width: auto;
+  height: auto;
+  max-width: none !important;
+  max-height: none !important;
+}
+.zoom-overlay .zoom-hint {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255,255,255,0.4);
+  font-size: 13px;
+  background: rgba(0,0,0,0.5);
+  padding: 6px 16px;
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Data blocks (code blocks) */
+.data-block {
+  background: #0d1520;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 12px 0;
+  font-family: "SF Mono", "Fira Code", "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--accent);
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* Period table (尾矿库) */
+.period-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 14px;
+}
+.period-table th {
+  background: var(--tag-bg);
+  color: var(--accent);
+  font-weight: 600;
+  padding: 8px 14px;
+  text-align: left;
+  border: 1px solid var(--border);
+}
+.period-table td {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.period-table tr:hover td { background: var(--tag-bg); }
+
+/* 一库四机制 grid */
+.mechanism-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+.mechanism-card {
+  background: var(--tag-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.mechanism-card .m-title {
+  font-weight: 600;
+  color: var(--accent);
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+.mechanism-card .m-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* 附录架构图 */
+.appendix-diagram {
+  margin: 20px 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #0d1520;
+  overflow: hidden;
+}
+.appendix-diagram .diagram-inner {
+  padding: 24px 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Extra */
+.note {
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 16px 20px;
+  border-left: 3px solid var(--accent);
+  background: var(--tag-bg);
+  border-radius: 0 8px 8px 0;
+  margin: 16px 0;
+}
+
+.footer {
+  text-align: center;
+  padding: 32px 20px;
+  color: var(--text-muted);
+  font-size: 13px;
+  border-top: 1px solid var(--border);
+  margin-top: 40px;
+}
+
+/* Sub-items (inline like 11,12 etc.) */
+.sub-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 20px;
+}
+.sub-item {
+  background: var(--tag-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Scroll to top */
+.scroll-top {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 50;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #0f1724;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  box-shadow: 0 4px 12px rgba(62,207,142,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.scroll-top.visible { opacity: 1; }
+.scroll-top:hover { transform: translateY(-2px); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⛏ 矿山安全生产数字化管理清单</h1>
+  <div class="sub">矿安[2026]77号 · 58项可数字化管理内容 · 四大板块</div>
+  <div class="badge">v1.0</div>
+</div>
+
+<div class="container">
+
+<!-- TOC -->
+<div class="toc">
+  <div class="toc-title">📋 目录</div>
+  <ul class="toc-list">
+    <li><a href="#s1"><span class="num">一</span>压实企业各方责任（1-9）</a></li>
+    <li><a href="#s2"><span class="num">二</span>管控重大风险隐患（10-35）</a></li>
+    <li><a href="#s3"><span class="num">三</span>筑牢安全生产基础（36-44）</a></li>
+    <li><a href="#s4"><span class="num">四</span>强化应急响应保障（45-58）</a></li>
+    <li><a href="#appendix"><span class="num">附</span>核心系统架构关系</a></li>
+  </ul>
+</div>
+
+<!-- ===== 板块一 ===== -->
+<div class="section-header" id="s1"><span class="section-toggle" id="st1">▶</span>一、压实企业各方责任</div>
+
+<!-- 1 -->
+<div class="item" id="item-1">
+  <div class="item-header">
+    <span class="id">01</span>
+    <span class="title">安全办公会议</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>主要负责人每月组织召开，研究部署安全生产重大事项</td></tr>
+      <tr><th>数字化</th><td>会议管理系统</td></tr>
+    </table>
+    <div class="diagram-wrap">
+      <div class="diagram-inner">
+        <pre class="mermaid">
+flowchart LR
+    A[发起会议通知] --> B[议题征集<br>各部门提交]
+    B --> C[召开会议<br>主要负责人主持]
+    C --> D[生成会议纪要]
+    D --> E[议题督办<br>责任到人]
+    E --> F{限期完成?}
+    F -->|是| G[闭环销号]
+    F -->|否| H[预警提醒<br>下次会议通报]
+    H --> C
+        </pre>
+      </div>
+      <button class="zoom-btn" onclick="zoomDiagram(this)" title="放大">⛶</button>
+    </div>
+    <div style="color:var(--text-muted);font-size:13px;margin-top:4px">核心字段：会议主题、时间地点、参会人员（签到）、议题列表、决议事项、责任人、完成时限</div>
+  </div>
+</div>
+
+<!-- 2 -->
+<div class="item" id="item-2">
+  <div class="item-header">
+    <span class="id">02</span>
+    <span class="title">主要负责人履职记录</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>主要负责人每月带班下井≥5次，与工人同下同升</td></tr>
+      <tr><th>数字化</th><td>下井考勤系统（人脸识别+定位+时间）</td></tr>
+    </table>
+    <div class="diagram-wrap">
+      <div class="diagram-inner">
+        <pre class="mermaid">
+flowchart LR
+    A[入井刷脸/定位卡] --> B[系统记录<br>入井时间]
+    B --> C[井下轨迹跟踪<br>重点区域巡检]
+    C --> D[升井刷脸<br>记录升井时间]
+    D --> E[自动计算<br>带班时长/次数]
+    E --> F{本月≥5次?}
+    F -->|是| G[✅ 达标]
+    F -->|否| H[⚠️ 预警推送<br>主要负责人]
+        </pre>
+      </div>
+      <button class="zoom-btn" onclick="zoomDiagram(this)" title="放大">⛶</button>
+    </div>
+    <div style="color:var(--text-muted);font-size:13px;margin-top:4px">核心字段：姓名、日期、入井时间、升井时间、带班时长、巡检路线、巡检部位</div>
+  </div>
+</div>
+
+<!-- 3 -->
+<div class="item" id="item-3">
+  <div class="item-header">
+    <span class="id">03</span>
+    <span class="title">井下交接班记录</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>严格执行交接班制度，说明安全状况、问题处理、注意事项</td></tr>
+      <tr><th>数字化</th><td>交接班电子签录系统</td></tr>
+    </table>
+    <div class="diagram-wrap">
+      <div class="diagram-inner">
+        <pre class="mermaid">
+flowchart LR
+    A[交班人填写<br>当班状况] --> B{存在问题?}
+    B -->|是| C[记录问题清单<br>处理情况]
+    B -->|否| D[填写正常交接]
+    C --> E[交班人电子签名]
+    D --> E
+    E --> F[接班人确认<br>电子签名]
+    F --> G[系统归档<br>不可篡改]
+        </pre>
+      </div>
+      <button class="zoom-btn" onclick="zoomDiagram(this)" title="放大">⛶</button>
+    </div>
+  </div>
+</div>
+
+<!-- 4 -->
+<div class="item" id="item-4">
+  <div class="item-header">
+    <span class="id">04</span>
+    <span class="title">全员安全生产责任制</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>建立健全全员责任制，明确各岗位责任及可量化考核标准</td></tr>
+      <tr><th>数字化</th><td>责任制管理平台（岗位-责任-考核关联）</td></tr>
+    </table>
+    <div class="data-block">岗位树（矿级→专业→区队→班组→个人）
+  ├─ 各岗位责任清单
+  ├─ 考核标准（量化指标）
+  └─ 考核记录（年度评分）</div>
+  </div>
+</div>
+
+<!-- 5 -->
+<div class="item" id="item-5">
+  <div class="item-header">
+    <span class="id">05</span>
+    <span class="title">责任制考核</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>每年全面考核≥1次</td></tr>
+      <tr><th>数字化</th><td>考核管理系统</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 6 -->
+<div class="item" id="item-6">
+  <div class="item-header">
+    <span class="id">06</span>
+    <span class="title">安全生产费用管理</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>足额提取安全生产费用，保证有效实施</td></tr>
+      <tr><th>数字化</th><td>费用管理系统</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 7 -->
+<div class="item" id="item-7">
+  <div class="item-header">
+    <span class="id">07</span>
+    <span class="title">外包作业管理</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>加强外包管理，严禁违法外包、以包代管</td></tr>
+      <tr><th>数字化</th><td>承包商管理系统</td></tr>
+    </table>
+    <div class="diagram-wrap">
+      <div class="diagram-inner">
+        <pre class="mermaid">
+flowchart LR
+    A[承包商入库<br>资质审核] --> B[签订合同<br>明确安全责任]
+    B --> C[入场培训<br>考核合格]
+    C --> D[作业过程<br>现场监管]
+    D --> E[定期考核评价]
+    E --> F{合格?}
+    F -->|是| G[续约/扩大业务]
+    F -->|否| H[整改/清退]
+        </pre>
+      </div>
+      <button class="zoom-btn" onclick="zoomDiagram(this)" title="放大">⛶</button>
+    </div>
+  </div>
+</div>
+
+<!-- 8 -->
+<div class="item" id="item-8">
+  <div class="item-header">
+    <span class="id">08</span>
+    <span class="title">矿长考核记分制度</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>推广记分制度</td></tr>
+      <tr><th>数字化</th><td>矿长记分系统</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 9 -->
+<div class="item" id="item-9">
+  <div class="item-header">
+    <span class="id">09</span>
+    <span class="title">关键人员权责清单</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>制定实际控制人、董事长、总经理等关键人员权责清单</td></tr>
+      <tr><th>数字化</th><td>权责清单管理系统</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ===== 板块二 ===== -->
+<div class="section-header" id="s2"><span class="section-toggle" id="st2">▶</span>二、管控重大风险隐患</div>
+
+<!-- 10 -->
+<div class="item" id="item-10">
+  <div class="item-header">
+    <span class="id">10</span>
+    <span class="title">安全风险辨识评估</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>每年开展覆盖全矿各系统、各环节风险辨识≥1次</td></tr>
+      <tr><th>数字化</th><td>风险辨识数据库</td></tr>
+    </table>
+    <div class="diagram-wrap">
+      <div class="diagram-inner">
+        <pre class="mermaid">
+flowchart LR
+    A[制定年度<br>辨识计划] --> B[划分辨识单元<br>系统/环节]
+    B --> C[危险源识别<br>现场+资料]
+    C --> D[风险评价<br>LEC/LS法]
+    D --> E[风险等级划分<br>红橙黄蓝]
+    E --> F[管控措施制定]
+    F --> G[措施落实<br>责任人+时限]
+    G --> H[动态更新]
+        </pre>
+      </div>
+      <button class="zoom-btn" onclick="zoomDiagram(this)" title="放大">⛶</button>
+    </div>
+  </div>
+</div>
+
+<!-- 11-12 -->
+<div class="item" id="item-11">
+  <div class="item-header">
+    <span class="id">11</span>
+    <span class="title">风险等级评定与管控</span>
+  </div>
+</div>
+<div class="item" id="item-12">
+  <div class="item-header">
+    <span class="id">12</span>
+    <span class="title">重大风险区域监控</span>
+  </div>
+</div>
+
+<!-- 13-17 -->
+<div class="item" id="item-13">
+  <div class="item-header">
+    <span class="id">13-17</span>
+    <span class="title">重大事故隐患数据库（一库四机制）</span>
+  </div>
+  <div class="item-body">
+    <div class="diagram-wrap">
+      <div class="diagram-inner">
+        <pre class="mermaid">
+flowchart TD
+    A[排查/举报] --> B{隐患等级?}
+    B -->|一般| C[即查即改<br>自动闭环]
+    B -->|重大| D[进入数据库<br>主要负责人跟踪督办]
+    D --> E[制定五落实方案<br>责任·措施·资金·时限·预案]
+    E --> F[整改实施]
+    F --> G{到期检查}
+    G -->|未完成| H[亮灯预警<br>升级督办]
+    H --> F
+    G -->|已完成| I[申请销号]
+    I --> J[主要负责人验收]
+    J --> K{通过?}
+    K -->|否| L[退回整改]
+    L --> F
+    K -->|是| M[签字确认<br>生成排查治理报告]
+    M --> N[每季度上报<br>属地监管+监察机构]
+    N --> O[归档]
+        </pre>
+      </div>
+      <button class="zoom-btn" onclick="zoomDiagram(this)" title="放大">⛶</button>
+    </div>
+    <div style="margin:12px 0 0;font-weight:600;color:var(--accent);font-size:14px">一库四机制</div>
+    <div class="mechanism-grid">
+      <div class="mechanism-card">
+        <div class="m-title">🗄️ 重大事故隐患数据库</div>
+        <div class="m-desc">全生命周期管理：发现→跟踪→整改→销号→报告</div>
+      </div>
+      <div class="mechanism-card">
+        <div class="m-title">🔄 自查自改常态化</div>
+        <div class="m-desc">移动端排查，一般隐患即查即改，重大隐患自动转入督办</div>
+      </div>
+      <div class="mechanism-card">
+        <div class="m-title">👣 治理跟踪督办</div>
+        <div class="m-desc">五落实倒计时，超期自动预警，主要负责人看板</div>
+      </div>
+      <div class="mechanism-card">
+        <div class="m-title">🔍 调查处理</div>
+        <div class="m-desc">根因分析，重复隐患标记，预防措施库</div>
+      </div>
+      <div class="mechanism-card">
+        <div class="m-title">🏆 报告奖励</div>
+        <div class="m-desc">匿名举报通道，受理→核查→奖励闭环</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 18-19 -->
+<div class="item" id="item-18">
+  <div class="item-header">
+    <span class="id">18-19</span>
+    <span class="title">隐蔽致灾因素普查</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>每3年一次全面普查，常态化动态补充，填报更新管理系统</td></tr>
+      <tr><th>数字化</th><td>普查数据管理系统</td></tr>
+    </table>
+    <div class="diagram-wrap">
+      <div class="diagram-inner">
+        <pre class="mermaid">
+flowchart LR
+    A[制定普查方案] --> B[钻探/物探/化探<br>现场实施]
+    B --> C[数据分析<br>灾害风险评估]
+    C --> D[编制普查报告]
+    D --> E[审查/上报]
+    E --> F[管控措施制定]
+    F --> G[常态化补充普查]
+    G --> H[动态更新数据库]
+    H --> I{生产区域变化?}
+    I -->|是| G
+        </pre>
+      </div>
+      <button class="zoom-btn" onclick="zoomDiagram(this)" title="放大">⛶</button>
+    </div>
+  </div>
+</div>
+
+<!-- 20 -->
+<div class="item" id="item-20">
+  <div class="item-header">
+    <span class="id">20</span>
+    <span class="title">边坡稳定性分析</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>现状高度超100米逐年分析</td></tr>
+      <tr><th>数字化</th><td>边坡监测分析系统</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 21 -->
+<div class="item" id="item-21">
+  <div class="item-header">
+    <span class="id">21</span>
+    <span class="title">边坡监测预警系统</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>超150米建立，自动实时在线监测并联网</td></tr>
+      <tr><th>数字化</th><td>在线监测预警系统</td></tr>
+    </table>
+    <div class="diagram-wrap">
+      <div class="diagram-inner">
+        <pre class="mermaid">
+flowchart LR
+    A[传感器<br>GNSS/裂缝计/雨量] --> B[数据采集站]
+    B --> C[4G/有线传输]
+    C --> D[监测平台<br>实时解算]
+    D --> E{阈值判断}
+    E -->|正常| B
+    E -->|黄色预警| F[短信预警<br>值班人员]
+    E -->|红色预警| G[立即撤离<br>启动应急预案]
+    F --> H[现场核查]
+    H --> I[处置/加固]
+    I --> B
+        </pre>
+      </div>
+      <button class="zoom-btn" onclick="zoomDiagram(this)" title="放大">⛶</button>
+    </div>
+  </div>
+</div>
+
+<!-- 22-24 -->
+<div class="item"><div class="item-header"><span class="id">22</span><span class="title">采掘接续管理</span></div></div>
+<div class="item"><div class="item-header"><span class="id">23</span><span class="title">顶板分级支护</span></div></div>
+<div class="item"><div class="item-header"><span class="id">24</span><span class="title">采空区稳定性评估</span></div></div>
+
+<!-- 25-27 -->
+<div class="item" id="item-25">
+  <div class="item-header">
+    <span class="id">25-27</span>
+    <span class="title">尾矿库管理（检测/调洪/稳定性）</span>
+  </div>
+  <div class="item-body">
+    <div class="diagram-wrap">
+      <div class="diagram-inner">
+        <pre class="mermaid">
+flowchart TD
+    subgraph 尾矿库全生命周期管理
+        A[设计参数录入] --> B[筑坝作业<br>按设计参数]
+        B --> C[日常监测<br>浸润线/位移]
+        C --> D[定期检测<br>排洪构筑物3年/次]
+        D --> E[汛前调洪演算]
+        E --> F[坝体稳定性分析]
+        F --> G{达标?}
+        G -->|是| C
+        G -->|否| H[隐患整改]
+        H --> C
+    end
+        </pre>
+      </div>
+      <button class="zoom-btn" onclick="zoomDiagram(this)" title="放大">⛶</button>
+    </div>
+    <table class="period-table">
+      <tr><th>检测项目</th><th>周期</th></tr>
+      <tr><td>排洪构筑物质量检测</td><td>运行前必检，投用后每3年</td></tr>
+      <tr><td>调洪演算</td><td>每年汛前</td></tr>
+      <tr><td>坝体稳定性分析</td><td>定期</td></tr>
+      <tr><td>安全性复核</td><td>按规定</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 28 -->
+<div class="item"><div class="item-header"><span class="id">28</span><span class="title">井下劳动定员 — 严禁超定员安排人员下井 · 人员定位系统</span></div></div>
+
+<!-- 29 -->
+<div class="item" id="item-29">
+  <div class="item-header">
+    <span class="id">29</span>
+    <span class="title">动火作业审批</span>
+  </div>
+  <div class="item-body">
+    <div class="diagram-wrap">
+      <div class="diagram-inner">
+        <pre class="mermaid">
+flowchart LR
+    A[申请<br>动火作业] --> B[制定专项<br>安全技术措施]
+    B --> C[现场条件验收]
+    C --> D{合格?}
+    D -->|否| A
+    D -->|是| E[报调度室备案]
+    E --> F[实施作业]
+    F --> G[完工确认<br>现场清理]
+        </pre>
+      </div>
+      <button class="zoom-btn" onclick="zoomDiagram(this)" title="放大">⛶</button>
+    </div>
+  </div>
+</div>
+
+<!-- 30-32 -->
+<div class="item"><div class="item-header"><span class="id">30</span><span class="title">敲帮问顶及围岩观测</span></div></div>
+<div class="item"><div class="item-header"><span class="id">31</span><span class="title">通风系统监测</span></div></div>
+<div class="item"><div class="item-header"><span class="id">32</span><span class="title">反风试验</span></div></div>
+
+<!-- 33 -->
+<div class="item" id="item-33">
+  <div class="item-header">
+    <span class="id">33</span>
+    <span class="title">图纸更新管理</span>
+  </div>
+  <div class="item-body">
+    <table class="period-table">
+      <tr><th>矿山类型</th><th>更新频率</th></tr>
+      <tr><td>金属非金属地下生产矿山</td><td>至少每3个月</td></tr>
+      <tr><td>基建矿山</td><td>至少每月</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 34-35 -->
+<div class="item"><div class="item-header"><span class="id">34</span><span class="title">爆破管理（一炮三检/三人连锁）</span></div></div>
+<div class="item">
+  <div class="item-header">
+    <span class="id">35</span>
+    <span class="title">矿山综合信息系统数据填报</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>及时填报更新基础信息、图纸、人员、设备等数据</td></tr>
+      <tr><th>数字化</th><td>对接国家矿山安全生产综合信息系统</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ===== 板块三 ===== -->
+<div class="section-header" id="s3"><span class="section-toggle" id="st3">▶</span>三、筑牢安全生产基础</div>
+
+<!-- 36 -->
+<div class="item">
+  <div class="item-header">
+    <span class="id">36</span>
+    <span class="title">安全管理机构与人员</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>依法设置机构，人员数量、学历、从业经历符合规定</td></tr>
+      <tr><th>数字化</th><td>组织架构/人员档案系统</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 37 -->
+<div class="item">
+  <div class="item-header">
+    <span class="id">37</span>
+    <span class="title">技术管理机构与人员</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>配备中专及以上或中级及以上职称专职技术人员</td></tr>
+      <tr><th>数字化</th><td>技术人员档案管理系统</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 38 -->
+<div class="item">
+  <div class="item-header">
+    <span class="id">38</span>
+    <span class="title">"五职"矿长任职管理</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>不得在本矿兼任2个及以上，不得在其他矿兼职</td></tr>
+      <tr><th>数字化</th><td>任职查重系统</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 39 -->
+<div class="item"><div class="item-header"><span class="id">39</span><span class="title">灾害治理专业人员</span></div></div>
+
+<!-- 40 -->
+<div class="item" id="item-40">
+  <div class="item-header">
+    <span class="id">40</span>
+    <span class="title">第三方服务机构管理</span>
+  </div>
+  <div class="item-body">
+    <div class="diagram-wrap">
+      <div class="diagram-inner">
+        <pre class="mermaid">
+flowchart LR
+    A[服务机构遴选] --> B{资质审核<br>符合条件?}
+    B -->|否| C[淘汰]
+    B -->|是| D[签订服务合同]
+    D --> E[服务过程监督]
+    E --> F[成果验收]
+    F --> G[履约评价<br>建立档案]
+        </pre>
+      </div>
+      <button class="zoom-btn" onclick="zoomDiagram(this)" title="放大">⛶</button>
+    </div>
+  </div>
+</div>
+
+<!-- 41 -->
+<div class="item" id="item-41">
+  <div class="item-header">
+    <span class="id">41</span>
+    <span class="title">设备设施安全管理</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>日常维护保养 + 定期检测检验</td></tr>
+      <tr><th>数字化</th><td>设备管理系统</td></tr>
+    </table>
+    <div class="diagram-wrap">
+      <div class="diagram-inner">
+        <pre class="mermaid">
+flowchart LR
+    A[设备入库<br>台账登记] --> B[日常点检<br>每班/每日]
+    B --> C{异常?}
+    C -->|是| D[报修/维修]
+    D --> B
+    C -->|否| E[定期检定<br>到期预警]
+    E --> F[检定/校准]
+    F --> G{合格?}
+    G -->|否| H[停用/报废]
+    G -->|是| B
+        </pre>
+      </div>
+      <button class="zoom-btn" onclick="zoomDiagram(this)" title="放大">⛶</button>
+    </div>
+  </div>
+</div>
+
+<!-- 42 -->
+<div class="item">
+  <div class="item-header">
+    <span class="id">42</span>
+    <span class="title">电源线路管理</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>煤矿双回路，金属非金属双电源，不得分接负荷</td></tr>
+      <tr><th>数字化</th><td>供电监测系统</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 43 -->
+<div class="item">
+  <div class="item-header">
+    <span class="id">43</span>
+    <span class="title">岗位清单"明白卡"</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>包含岗位职责、操作规程、风险点、应急处置措施</td></tr>
+      <tr><th>数字化</th><td>电子明白卡（扫码查看）</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 44 -->
+<div class="item">
+  <div class="item-header">
+    <span class="id">44</span>
+    <span class="title">安全生产标准化管理</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>双重预防机制为核心，严格对标、动态自检</td></tr>
+      <tr><th>数字化</th><td>标准化管理平台</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ===== 板块四 ===== -->
+<div class="section-header" id="s4"><span class="section-toggle" id="st4">▶</span>四、强化应急响应保障</div>
+
+<!-- 45 -->
+<div class="item" id="item-45">
+  <div class="item-header">
+    <span class="id">45</span>
+    <span class="title">安全培训计划</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>制定年度计划，突出五职矿长/管理人员/特种作业/新上岗</td></tr>
+      <tr><th>数字化</th><td>培训管理系统</td></tr>
+    </table>
+    <div class="diagram-wrap">
+      <div class="diagram-inner">
+        <pre class="mermaid">
+flowchart LR
+    A[年度培训计划] --> B[计划审批]
+    B --> C[培训实施<br>线上/线下]
+    C --> D[学时记录<br>自动累计]
+    D --> E[考核/考试]
+    E --> F{合格?}
+    F -->|是| G[颁发证书<br>归档]
+    F -->|否| H[补考/重修]
+    H --> E
+        </pre>
+      </div>
+      <button class="zoom-btn" onclick="zoomDiagram(this)" title="放大">⛶</button>
+    </div>
+  </div>
+</div>
+
+<!-- 46-48 -->
+<div class="item"><div class="item-header"><span class="id">46</span><span class="title">特种作业人员持证</span></div></div>
+<div class="item"><div class="item-header"><span class="id">47</span><span class="title">新上岗人员岗前培训（≥72学时）</span></div></div>
+<div class="item"><div class="item-header"><span class="id">48</span><span class="title">"五职"矿长专门培训</span></div></div>
+
+<!-- 49-50 -->
+<div class="item" id="item-49">
+  <div class="item-header">
+    <span class="id">49-50</span>
+    <span class="title">应急救援预案与演练</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>预案编制备案+每半年演练≥1次+周期内覆盖全部预案</td></tr>
+      <tr><th>数字化</th><td>预案与演练管理系统</td></tr>
+    </table>
+    <div class="diagram-wrap">
+      <div class="diagram-inner">
+        <pre class="mermaid">
+flowchart TD
+    subgraph 预案管理
+        A[预案编制/修订] --> B[专家评审]
+        B --> C[备案]
+        C --> D[发布/培训]
+    end
+    subgraph 演练管理
+        D --> E[制定演练计划]
+        E --> F[演练实施<br>桌面/实战]
+        F --> G[演练评估]
+        G --> H{发现问题?}
+        H -->|是| I[修订预案]
+        I --> D
+        H -->|否| J[归档]
+    end
+        </pre>
+      </div>
+      <button class="zoom-btn" onclick="zoomDiagram(this)" title="放大">⛶</button>
+    </div>
+  </div>
+</div>
+
+<!-- 51 -->
+<div class="item"><div class="item-header"><span class="id">51</span><span class="title">"头顶库"联合演练</span></div></div>
+
+<!-- 52 -->
+<div class="item" id="item-52">
+  <div class="item-header">
+    <span class="id">52</span>
+    <span class="title">应急救援队伍与装备</span>
+  </div>
+  <div class="item-body">
+    <div class="diagram-wrap">
+      <div class="diagram-inner">
+        <pre class="mermaid">
+flowchart LR
+    A[应急资源普查] --> B{专职队伍?}
+    B -->|是| C[队伍建设管理]
+    B -->|否| D[签订救援协议]
+    C --> E[装备配备]
+    D --> E
+    E --> F[定期维护更新]
+    F --> G[装备台账<br>到期预警]
+        </pre>
+      </div>
+      <button class="zoom-btn" onclick="zoomDiagram(this)" title="放大">⛶</button>
+    </div>
+  </div>
+</div>
+
+<!-- 53-54 -->
+<div class="item" id="item-53">
+  <div class="item-header">
+    <span class="id">53-54</span>
+    <span class="title">多灾种监测预警与处置</span>
+  </div>
+  <div class="item-body">
+    <div class="diagram-wrap">
+      <div class="diagram-inner">
+        <pre class="mermaid">
+flowchart TD
+    A[感知层<br>瓦斯/水文/边坡/应力] --> B[数据汇聚<br>边缘计算]
+    B --> C[分析研判<br>AI预警]
+    C --> D{预警等级}
+    D -->|蓝色| E[系统记录<br>值班关注]
+    D -->|黄色| F[推送责任人<br>现场核查]
+    D -->|橙色| G[启动专项预案<br>加强监测]
+    D -->|红色| H[立即撤人<br>启动应急预案]
+    F --> I[核查处置]
+    I --> J[反馈闭环]
+    G --> I
+    H --> K[应急响应]
+    K --> L[事后复盘]
+        </pre>
+      </div>
+      <button class="zoom-btn" onclick="zoomDiagram(this)" title="放大">⛶</button>
+    </div>
+  </div>
+</div>
+
+<!-- 55 -->
+<div class="item" id="item-55">
+  <div class="item-header">
+    <span class="id">55</span>
+    <span class="title">事故报告</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>即知即报、先报后核，严禁迟报、谎报、瞒报</td></tr>
+      <tr><th>数字化</th><td>事故报告系统</td></tr>
+    </table>
+    <div class="diagram-wrap">
+      <div class="diagram-inner">
+        <pre class="mermaid">
+flowchart LR
+    A[发生事故/险情] --> B[立即电话报告<br>县级监管部门+省级局]
+    B --> C{较大及以上?}
+    C -->|是| D[同时报告省级]
+    D --> E[书面报告<br>24小时内]
+    C -->|否| E
+    E --> F[事故续报<br>进展更新]
+    F --> G[调查报告<br>整改落实]
+        </pre>
+      </div>
+      <button class="zoom-btn" onclick="zoomDiagram(this)" title="放大">⛶</button>
+    </div>
+  </div>
+</div>
+
+<!-- 56-58 -->
+<div class="item">
+  <div class="item-header">
+    <span class="id">56</span>
+    <span class="title">事故证据管理</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>收集固定视听、监测监控等证据</td></tr>
+      <tr><th>数字化</th><td>证据管理系统（防篡改）</td></tr>
+    </table>
+  </div>
+</div>
+<div class="item"><div class="item-header"><span class="id">57</span><span class="title">防范整改措施跟踪</span></div></div>
+<div class="item">
+  <div class="item-header">
+    <span class="id">58</span>
+    <span class="title">全员警示教育</span>
+  </div>
+  <div class="item-body">
+    <table class="info-table">
+      <tr><th>要求</th><td>每年集中≥1次 + 鼓励设警示教育日</td></tr>
+      <tr><th>数字化</th><td>教育管理系统</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ===== 附录 ===== -->
+<div class="section-header" id="appendix"><span class="section-toggle" id="st5">▶</span>附录：核心系统架构关系</div>
+
+<div class="item">
+  <div class="item-header" style="border-bottom:none;padding-bottom:8px">
+    <span class="id">★</span>
+    <span class="title">数据层 → 业务层 → 决策层</span>
+  </div>
+  <div style="padding:0 20px 20px">
+    <div class="diagram-wrap">
+      <div class="diagram-inner">
+        <pre class="mermaid">
+graph TB
+    subgraph 数据层
+        A1[基础信息库] --- A2[隐患数据库]
+        A2 --- A3[风险数据库]
+        A3 --- A4[设备台账库]
+        A4 --- A5[人员档案库]
+        A5 --- A6[培训记录库]
+    end
+
+    subgraph 业务层
+        B1[隐患排查治理] --- B2[风险分级管控]
+        B2 --- B3[应急管理]
+        B3 --- B4[培训管理]
+        B4 --- B5[设备管理]
+    end
+
+    subgraph 决策层
+        C1[主要负责人看板] --- C2[风险预警中心]
+        C2 --- C3[统计分析]
+        C3 --- C4[季度报告]
+    end
+
+    A2 --> B1
+    A3 --> B2
+    A6 --> B4
+    A4 --> B5
+    B1 --> C1
+    B2 --> C2
+    B1 --> C3
+    B3 --> C3
+    B1 --> C4
+        </pre>
+      </div>
+      <button class="zoom-btn" onclick="zoomDiagram(this)" title="放大">⛶</button>
+    </div>
+  </div>
+</div>
+
+<div class="note">本清单共 58 项，其中包含 Mermaid 流程图的核心业务流程已全部标注。各系统可独立建设，也可集成到统一的矿山安全生产数字化管理平台中。</div>
+
+</div><!-- /container -->
+
+<!-- Zoom overlay -->
+<div class="zoom-overlay" id="zoomOverlay" onclick="closeZoom()">
+  <button class="zoom-close" onclick="event.stopPropagation();closeZoom()">✕</button>
+  <div class="zoom-content" id="zoomContent"></div>
+  <div class="zoom-hint">双指缩放 · 拖动平移</div>
+</div>
+
+<!-- Scroll to top -->
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="回到顶部">↑</button>
+
+<script>
+// Init Mermaid
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    fontFamily: '-apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif',
+    fontSize: '16px',
+    primaryColor: '#3ecf8e',
+    primaryTextColor: '#fff',
+    primaryBorderColor: '#2a9d6e',
+    lineColor: '#4a5a7a',
+    secondaryColor: '#1e2d3d',
+    tertiaryColor: '#0d1520',
+    edgeLabelBackground: '#1a2332',
+    nodeBorder: '#2a3648'
+  },
+  flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
+});
+
+
+// Zoom diagram
+function zoomDiagram(btn) {
+  const wrap = btn.closest('.diagram-wrap');
+  const svg = wrap.querySelector('svg');
+  if (!svg) return;
+  const clone = svg.cloneNode(true);
+  clone.style.width = 'auto';
+  clone.style.height = 'auto';
+  clone.style.maxWidth = '2000px';
+  clone.style.maxHeight = '2000px';
+
+  const content = document.getElementById('zoomContent');
+  content.innerHTML = '';
+  content.appendChild(clone);
+
+  document.getElementById('zoomOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeZoom() {
+  document.getElementById('zoomOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+// ESC to close zoom
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeZoom();
+});
+
+// Scroll to top button
+window.addEventListener('scroll', () => {
+  document.getElementById('scrollTop').classList.toggle('visible', window.scrollY > 400);
+});
+
+// Touch zoom support for zoom overlay
+let zoomOverlay = document.getElementById('zoomOverlay');
+let zoomContent = document.getElementById('zoomContent');
+let scale = 1, posX = 0, posY = 0, lastDist = 0, lastX = 0, lastY = 0, isPinching = false;
+
+zoomOverlay.addEventListener('touchstart', function(e) {
+  if (e.target.closest('.zoom-close')) return;
+  if (e.touches.length === 2) {
+    isPinching = true;
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    lastDist = Math.sqrt(dx*dx + dy*dy);
+  } else if (e.touches.length === 1) {
+    if (!isPinching) {
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+    }
+  }
+}, {passive: true});
+
+zoomOverlay.addEventListener('touchmove', function(e) {
+  if (e.target.closest('.zoom-close')) return;
+  e.preventDefault();
+  if (e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    const delta = dist / lastDist;
+    scale = Math.min(Math.max(scale * delta, 0.5), 8);
+    lastDist = dist;
+    zoomContent.style.transform = `scale(${scale}) translate(${posX}px, ${posY}px)`;
+    zoomContent.style.transformOrigin = 'center center';
+  } else if (e.touches.length === 1 && isPinching) {
+    // ignore single touch during pinch
+  } else if (e.touches.length === 1) {
+    const dx = e.touches[0].clientX - lastX;
+    const dy = e.touches[0].clientY - lastY;
+    posX += dx / scale;
+    posY += dy / scale;
+    lastX = e.touches[0].clientX;
+    lastY = e.touches[0].clientY;
+    zoomContent.style.transform = `scale(${scale}) translate(${posX}px, ${posY}px)`;
+  }
+}, {passive: false});
+
+zoomOverlay.addEventListener('touchend', function(e) {
+  if (e.touches.length < 2) isPinching = false;
+}, {passive: true});
+
+</script>
+
+</body>
+</html>

@@ -9,7 +9,7 @@ from django.shortcuts import redirect
 from django.urls import re_path
 from django.views.static import serve
 from schema_graph.views import Schema
-from lnjx2025.urls_tail import architecture_diagram_view
+from lnjx2025.urls_tail import architecture_diagram_view, kanban_view, mine_safety_checklist_view
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -78,6 +78,8 @@ urlpatterns = [
     # Schema ER 图
     # Architecture diagram
     path('arch/', architecture_diagram_view),
+    path('kanban/', kanban_view),
+    path('mine-safety/', mine_safety_checklist_view),
     path('schema/', Schema.as_view()),
 ]
 
