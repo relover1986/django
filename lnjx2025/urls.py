@@ -59,6 +59,7 @@ urlpatterns = [
 
     # Quiz
     path('', include('app01.urls.quiz')),
+    path('home/quiz/', include('quiz_platform.urls')),
 
     # Info Collect
     path('', include('app01.urls.info_collect')),

@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'schema_graph',
+    'quiz_platform',
 ]
 
 MIDDLEWARE = [

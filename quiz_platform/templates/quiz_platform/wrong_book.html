@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>错题本 · 一建矿业</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #f0f4f8; color: #1a1a2e; }
+        .nav { background: #1a1a2e; padding: 12px 24px; display: flex; gap: 24px; align-items: center; }
+        .nav a { color: #a0aec0; text-decoration: none; font-size: 15px; padding: 4px 0; }
+        .nav a:hover, .nav a.active { color: #fff; border-bottom: 2px solid #48bb78; }
+        .nav .brand { color: #fff; font-size: 18px; font-weight: 600; margin-right: 16px; }
+        .container { max-width: 900px; margin: 0 auto; padding: 32px 16px; }
+        .card { background: #fff; border-radius: 12px; padding: 20px 24px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .tag { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .tag-single { background: #bee3f8; color: #2b6cb0; }
+        .tag-multi { background: #fefcbf; color: #975a16; }
+        .tag-wrong { background: #fed7d7; color: #c53030; }
+        .tag-mastered { background: #c6f6d5; color: #276749; }
+        .tag-chapter { background: #e2e8f0; color: #4a5568; }
+        .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+        .filter-bar a { padding: 6px 14px; border-radius: 20px; font-size: 13px; text-decoration: none; color: #4a5568; background: #edf2f7; }
+        .filter-bar a.active { background: #4299e1; color: #fff; }
+        .btn-small { padding: 4px 12px; font-size: 12px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-reset { background: #fc8181; color: #fff; }
+        .btn-reset:hover { background: #f56565; }
+        .btn-save { background: #48bb78; color: #fff; }
+        .btn-save:hover { background: #38a169; }
+        select { padding: 4px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 13px; }
+        .question-text { font-size: 15px; line-height: 1.6; margin: 8px 0; }
+        .meta-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 13px; color: #718096; }
+        .action-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+        .empty { text-align: center; padding: 40px; color: #a0aec0; }
+        .chapter-select { min-width: 100px; }
+        h1 { font-size: 22px; margin-bottom: 16px; }
+        @media (max-width: 600px) { .container { padding: 16px 8px; } }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <span class="brand">📚 一建矿业</span>
+        <a href="{% url 'quiz_platform:index' %}">首页</a>
+        <a href="{% url 'quiz_platform:start-round' %}">刷题</a>
+        <a href="{% url 'quiz_platform:wrong-book' %}" class="active">错题本</a>
+        <a href="{% url 'quiz_platform:stats' %}">统计</a>
+        <a href="{% url 'quiz_platform:qa-page' %}">AI 问答</a>
+    </nav>
+    <div class="container">
+        <h1>📖 错题本</h1>
+
+        <div class="filter-bar">
+            <a href="?type=all{% if current_chapter %}&chapter={{ current_chapter }}{% endif %}" class="{% if filter_type == 'all' %}active{% endif %}">全部</a>
+            <a href="?type=wrong{% if current_chapter %}&chapter={{ current_chapter }}{% endif %}" class="{% if filter_type == 'wrong' %}active{% endif %}">仅错题</a>
+            <a href="?type=mastered{% if current_chapter %}&chapter={{ current_chapter }}{% endif %}" class="{% if filter_type == 'mastered' %}active{% endif %}">已掌握</a>
+            {% if chapters %}
+            <select onchange="location.href='?type={{ filter_type }}&chapter='+this.value">
+                <option value="">全部章节</option>
+                {% for ch in chapters %}
+                <option value="{{ ch }}" {% if current_chapter == ch %}selected{% endif %}>{{ ch }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
+        </div>
+
+        {% if questions %}
+            {% for q in questions %}
+            <div class="card" id="q-{{ q.id }}">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div>
+                        <span class="tag {% if q.question_type == '单选题' %}tag-single{% else %}tag-multi{% endif %}">{{ q.question_type }}</span>
+                        <span class="tag tag-wrong">❌ 错{{ q.wrong_count }}次</span>
+                        <span class="tag tag-mastered">✅ {{ q.correct_streak }}连击</span>
+                        {% if q.chapter %}<span class="tag tag-chapter">{{ q.chapter }}</span>{% endif %}
+                    </div>
+                    <div style="font-size: 13px; color: #718096; margin-top: 4px;">
+                        📅 {{ q.category }}年 · 第{{ q.tihao }}题
+                    </div>
+                </div>
+                <div class="question-text">{{ q.question|truncatechars:120 }}</div>
+                <div class="action-row">
+                    <select class="chapter-select" data-qid="{{ q.id }}">
+                        <option value="">— 选择章节 —</option>
+                        {% for ch in chapters %}
+                        <option value="{{ ch }}" {% if q.chapter == ch %}selected{% endif %}>{{ ch }}</option>
+                        {% endfor %}
+                        <option value="ch01">ch01 测量与地质</option>
+                        <option value="ch02">ch02 矿业工程材料</option>
+                        <option value="ch03">ch03 矿井系统与设计</option>
+                        <option value="ch04">ch04 矿区地面建筑</option>
+                        <option value="ch05">ch05 凿岩爆破</option>
+                        <option value="ch06">ch06 井巷工程</option>
+                        <option value="ch07">ch07 露天矿山</option>
+                        <option value="ch08">ch08 相关法规</option>
+                        <option value="ch09">ch09 相关标准</option>
+                        <option value="ch10">ch10 资质与施工组织</option>
+                        <option value="ch11">ch11 招标与合同</option>
+                        <option value="ch12">ch12 进度管理</option>
+                        <option value="ch13">ch13 质量管理</option>
+                        <option value="ch14">ch14 成本管理</option>
+                        <option value="ch15">ch15 安全管理</option>
+                        <option value="ch16">ch16 绿色建造</option>
+                        <option value="ch17">ch17 文档管理</option>
+                    </select>
+                    <button class="btn-small btn-save" onclick="saveChapter({{ q.id }})">保存章节</button>
+                    <button class="btn-small btn-reset" onclick="resetQuestion({{ q.id }})">重置连击</button>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty">📭 暂无题目记录</div>
+        {% endif %}
+    </div>
+
+    <script>
+        function getCSRF() {
+            const name = 'csrftoken';
+            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? match[2] : '';
+        }
+
+        async function saveChapter(qId) {
+            const select = document.querySelector(`select[data-qid="${qId}"]`);
+            if (!select) return;
+            const chapter = select.value;
+            try {
+                const resp = await fetch('/home/quiz/update-chapter/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCSRF()},
+                    body: JSON.stringify({id: qId, chapter: chapter})
+                });
+                const data = await resp.json();
+                if (data.ok) {
+                    alert('✅ 章节已保存');
+                    location.reload();
+                } else {
+                    alert('❌ 保存失败');
+                }
+            } catch(e) {
+                alert('❌ 保存失败: ' + e.message);
+            }
+        }
+
+        async function resetQuestion(qId) {
+            if (!confirm('确定重置这道题的正确连击？它将重新进入高频出题池。')) return;
+            try {
+                const resp = await fetch('/home/quiz/reset/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCSRF()},
+                    body: JSON.stringify({id: qId})
+                });
+                const data = await resp.json();
+                if (data.ok) {
+                    alert('✅ 已重置');
+                    location.reload();
+                } else {
+                    alert('❌ 重置失败');
+                }
+            } catch(e) {
+                alert('❌ ' + e.message);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -6,7 +6,8 @@ module.exports = {
     args: "lnjx2025.asgi:application --host 127.0.0.1 --port 8000 --workers 4",
     interpreter: "/root/django/venv/bin/python",
     env: {
-      PYTHONPATH: "/root/django"
+      PYTHONPATH: "/root/django",
+      SILICONFLOW_API_KEY: "sk-ijwplxjagzxbtmlugxhbdxtauueiqqwwadgtbdidkkmtfawe",
     },
     max_memory_restart: "500M",
     error_file: "/var/log/django-err.log",

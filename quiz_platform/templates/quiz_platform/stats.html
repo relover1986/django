@@ -1,0 +1,124 @@
+{% load quiz_filters %}
+<!DOCTYPE html>
+<html lang="zh-hans">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>统计 · 一建矿业</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #f0f4f8; color: #1a1a2e; }
+        .nav { background: #1a1a2e; padding: 12px 24px; display: flex; gap: 24px; align-items: center; }
+        .nav a { color: #a0aec0; text-decoration: none; font-size: 15px; padding: 4px 0; }
+        .nav a:hover, .nav a.active { color: #fff; border-bottom: 2px solid #48bb78; }
+        .nav .brand { color: #fff; font-size: 18px; font-weight: 600; margin-right: 16px; }
+        .container { max-width: 800px; margin: 0 auto; padding: 32px 16px; }
+        .card { background: #fff; border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
+        .stat-item { text-align: center; padding: 12px; }
+        .stat-item .num { font-size: 28px; font-weight: 700; }
+        .stat-item .label { font-size: 13px; color: #718096; margin-top: 4px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+        th { background: #f7fafc; font-weight: 600; color: #4a5568; }
+        .bar-cell { display: flex; align-items: center; gap: 8px; }
+        .bar { height: 20px; border-radius: 4px; min-width: 4px; }
+        .bar-green { background: #48bb78; }
+        .bar-red { background: #fc8181; }
+        .bar-orange { background: #ed8936; }
+        h2 { font-size: 18px; margin-bottom: 12px; }
+        .daily-bar { display: flex; gap: 8px; align-items: end; height: 80px; }
+        .daily-bar-item { display: flex; flex-direction: column; align-items: center; flex: 1; }
+        .daily-bar-item .bar { width: 100%; max-width: 40px; }
+        .daily-bar-item .label { font-size: 11px; color: #718096; margin-top: 4px; }
+        .daily-bar-item .val { font-size: 12px; font-weight: 600; }
+        @media (max-width: 600px) { .container { padding: 16px 8px; } }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <span class="brand">📚 一建矿业</span>
+        <a href="{% url 'quiz_platform:index' %}">首页</a>
+        <a href="{% url 'quiz_platform:start-round' %}">刷题</a>
+        <a href="{% url 'quiz_platform:wrong-book' %}">错题本</a>
+        <a href="{% url 'quiz_platform:stats' %}" class="active">统计</a>
+        <a href="{% url 'quiz_platform:qa-page' %}">AI 问答</a>
+    </nav>
+    <div class="container">
+        <h1>📊 统计看板</h1>
+
+        <div class="card">
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <div class="num" style="color:#2b6cb0">{{ total }}</div>
+                    <div class="label">总题数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="num" style="color:#e53e3e">{{ wrong_count }}</div>
+                    <div class="label">有错题记录</div>
+                </div>
+                <div class="stat-item">
+                    <div class="num" style="color:#38a169">{{ mastered_count }}</div>
+                    <div class="label">已掌握</div>
+                </div>
+                <div class="stat-item">
+                    <div class="num" style="color:#ed8936">{{ avg_streak }}</div>
+                    <div class="label">平均连击</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>按题型统计</h2>
+            <table>
+                <tr><th>题型</th><th>总题数</th><th>错题数</th><th>已掌握</th><th>错题率</th></tr>
+                {% for s in type_stats %}
+                <tr>
+                    <td><strong>{{ s.question_type }}</strong></td>
+                    <td>{{ s.total }}</td>
+                    <td>{{ s.wrong }}</td>
+                    <td>{{ s.mastered }}</td>
+                    <td>{% if s.total %}{{ s.wrong|div:s.total|floatformat:1 }}{% else %}0{% endif %}%</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        {% if chapter_stats %}
+        <div class="card">
+            <h2>按章节统计（已标注）</h2>
+            <table>
+                <tr><th>章节</th><th>总题数</th><th>错题数</th><th>错题率</th></tr>
+                {% for s in chapter_stats %}
+                <tr>
+                    <td><strong>{{ s.chapter }}</strong></td>
+                    <td>{{ s.total }}</td>
+                    <td>{{ s.wrong }}</td>
+                    <td>
+                        <div class="bar-cell">
+                            <div class="bar {% if s.wrong|div:s.total > 0.5 %}bar-red{% elif s.wrong|div:s.total > 0.2 %}bar-orange{% else %}bar-green{% endif %}" style="width: {{ s.wrong|div:s.total|mul:100 }}px; max-width: 100px;"></div>
+                            {{ s.wrong|div:s.total|floatformat:1 }}%
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <h2>近 7 天做题趋势</h2>
+            <div class="daily-bar">
+                {% for d in daily_stats %}
+                <div class="daily-bar-item">
+                    <div class="val" style="color: {% if d.rate >= 60 %}#38a169{% else %}#e53e3e{% endif %}">{{ d.rate }}%</div>
+                    <div class="bar {% if d.rate >= 60 %}bar-green{% else %}bar-red{% endif %}" style="height: {{ d.rate }}px;"></div>
+                    <div class="label">{{ d.date }}</div>
+                    <div style="font-size: 10px; color: #a0aec0;">{{ d.total }}题</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

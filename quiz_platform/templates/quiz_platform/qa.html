@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 问答 · 一建矿业</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #f0f4f8; color: #1a1a2e; }
+        .nav { background: #1a1a2e; padding: 12px 24px; display: flex; gap: 24px; align-items: center; }
+        .nav a { color: #a0aec0; text-decoration: none; font-size: 15px; padding: 4px 0; }
+        .nav a:hover, .nav a.active { color: #fff; border-bottom: 2px solid #48bb78; }
+        .nav .brand { color: #fff; font-size: 18px; font-weight: 600; margin-right: 16px; }
+        .container { max-width: 800px; margin: 0 auto; padding: 32px 16px; }
+        .card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        h1 { font-size: 24px; margin-bottom: 8px; }
+        .subtitle { color: #718096; font-size: 14px; margin-bottom: 20px; }
+        .input-area { display: flex; gap: 12px; }
+        .input-area input { flex: 1; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 15px; outline: none; }
+        .input-area input:focus { border-color: #4299e1; }
+        .btn { background: #4299e1; color: #fff; border: none; padding: 12px 28px; border-radius: 8px; font-size: 15px; cursor: pointer; white-space: nowrap; }
+        .btn:hover { background: #3182ce; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .thinking { display: none; text-align: center; padding: 40px; color: #718096; }
+        .thinking .spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid #e2e8f0; border-top-color: #4299e1; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .answer-area { display: none; }
+        .answer-text { font-size: 15px; line-height: 1.8; white-space: pre-wrap; }
+        .sources { margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0; }
+        .sources h3 { font-size: 14px; color: #718096; margin-bottom: 8px; }
+        .source-item { display: inline-block; padding: 4px 12px; margin: 3px 4px 3px 0; background: #ebf8ff; color: #2b6cb0; border-radius: 12px; font-size: 12px; }
+        .model-tag { font-size: 12px; color: #a0aec0; margin-top: 12px; }
+        .quick-questions { margin: 16px 0; display: flex; gap: 8px; flex-wrap: wrap; }
+        .quick-questions button { padding: 6px 16px; border: 1px solid #e2e8f0; border-radius: 20px; background: #fff; font-size: 13px; cursor: pointer; color: #4a5568; }
+        .quick-questions button:hover { border-color: #4299e1; color: #4299e1; }
+        .tag-source { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-right: 4px; }
+        .tag-lecture { background: #fefcbf; color: #975a16; }
+        .tag-textbook { background: #bee3f8; color: #2b6cb0; }
+        @media (max-width: 600px) { .container { padding: 16px 8px; } .input-area { flex-direction: column; } }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <span class="brand">📚 一建矿业</span>
+        <a href="{% url 'quiz_platform:index' %}">首页</a>
+        <a href="{% url 'quiz_platform:start-round' %}">刷题</a>
+        <a href="{% url 'quiz_platform:wrong-book' %}">错题本</a>
+        <a href="{% url 'quiz_platform:stats' %}">统计</a>
+        <a href="{% url 'quiz_platform:qa-page' %}" class="active">AI 问答</a>
+    </nav>
+    <div class="container">
+        <h1>🤖 AI 知识问答</h1>
+        <p class="subtitle">基于讲课-教辅 + 教材章节知识库，AI 回答一建矿业相关问题</p>
+
+        <div class="card">
+            <div class="input-area">
+                <input type="text" id="question-input" placeholder="输入你的问题，如：测量控制网的布设要求有哪些？" onkeydown="if(event.key==='Enter') askQuestion()">
+                <button class="btn" id="ask-btn" onclick="askQuestion()">提问</button>
+            </div>
+            <div class="quick-questions">
+                <button onclick="quickAsk('测量控制网的布设要求有哪些？')">测量控制网布设</button>
+                <button onclick="quickAsk('混凝土材料有哪些性能要求？')">混凝土材料</button>
+                <button onclick="quickAsk('矿井开拓方式有哪几种？')">矿井开拓方式</button>
+                <button onclick="quickAsk('立井井筒施工方法有哪些？')">立井井筒施工</button>
+            </div>
+        </div>
+
+        <div class="thinking card" id="thinking">
+            <div class="spinner"></div>
+            <p style="margin-top: 12px;">AI 正在思考中…</p>
+        </div>
+
+        <div class="answer-area card" id="answer-area">
+            <div class="answer-text" id="answer-text"></div>
+            <div class="sources" id="sources-area"></div>
+            <div class="model-tag" id="model-tag"></div>
+        </div>
+    </div>
+
+    <script>
+        function getCSRF() {
+            const name = 'csrftoken';
+            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? match[2] : '';
+        }
+
+        async function askQuestion() {
+            const input = document.getElementById('question-input');
+            const question = input.value.trim();
+            if (!question) return;
+
+            document.getElementById('thinking').style.display = 'block';
+            document.getElementById('answer-area').style.display = 'none';
+            document.getElementById('ask-btn').disabled = true;
+
+            try {
+                const resp = await fetch('/home/quiz/qa/ask/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCSRF()},
+                    body: JSON.stringify({question: question})
+                });
+                const data = await resp.json();
+
+                if (data.answer) {
+                    document.getElementById('answer-text').textContent = data.answer;
+                } else {
+                    document.getElementById('answer-text').textContent = '抱歉，暂时无法回答这个问题。';
+                }
+
+                // 来源
+                let sourcesHtml = '';
+                if (data.sources && data.sources.length > 0) {
+                    sourcesHtml = '<h3>📖 参考资料</h3>';
+                    data.sources.forEach(s => {
+                        const tag = s.name.includes('讲课') ? 'tag-lecture' : 'tag-textbook';
+                        const label = s.name.includes('讲课') ? '讲课' : '教材';
+                        sourcesHtml += `<span class="source-item"><span class="tag-source ${tag}">${label}</span> ${s.name}</span>`;
+                    });
+                }
+                document.getElementById('sources-area').innerHTML = sourcesHtml;
+
+                if (data.model) {
+                    document.getElementById('model-tag').textContent = `模型: ${data.model}`;
+                }
+
+                document.getElementById('thinking').style.display = 'none';
+                document.getElementById('answer-area').style.display = 'block';
+            } catch(e) {
+                document.getElementById('thinking').style.display = 'none';
+                document.getElementById('answer-text').textContent = '请求失败: ' + e.message;
+                document.getElementById('answer-area').style.display = 'block';
+            } finally {
+                document.getElementById('ask-btn').disabled = false;
+            }
+        }
+
+        function quickAsk(q) {
+            document.getElementById('question-input').value = q;
+            askQuestion();
+        }
+    </script>
+</body>
+</html>

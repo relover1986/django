@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一建矿业 · 刷题引擎</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #f0f4f8; color: #1a1a2e; }
+        .nav { background: #1a1a2e; padding: 12px 24px; display: flex; gap: 24px; align-items: center; }
+        .nav a { color: #a0aec0; text-decoration: none; font-size: 15px; padding: 4px 0; }
+        .nav a:hover, .nav a.active { color: #fff; border-bottom: 2px solid #48bb78; }
+        .nav .brand { color: #fff; font-size: 18px; font-weight: 600; margin-right: 16px; }
+        .container { max-width: 800px; margin: 0 auto; padding: 32px 16px; }
+        .card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        h1 { font-size: 24px; margin-bottom: 16px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 20px 0; }
+        .stat-item { background: #f7fafc; border-radius: 8px; padding: 16px; text-align: center; }
+        .stat-item .num { font-size: 28px; font-weight: 700; color: #2b6cb0; }
+        .stat-item .label { font-size: 13px; color: #718096; margin-top: 4px; }
+        .btn { display: inline-block; background: #48bb78; color: #fff; border: none; padding: 12px 32px; border-radius: 8px; font-size: 16px; cursor: pointer; text-decoration: none; }
+        .btn:hover { background: #38a169; }
+        .btn-secondary { background: #4299e1; }
+        .btn-secondary:hover { background: #3182ce; }
+        .btn-danger { background: #fc8181; }
+        .btn-danger:hover { background: #f56565; }
+        .btn-small { padding: 6px 16px; font-size: 13px; }
+        .tag { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .tag-single { background: #bee3f8; color: #2b6cb0; }
+        .tag-multi { background: #fefcbf; color: #975a16; }
+        .tag-chapter { background: #e2e8f0; color: #4a5568; }
+        .tag-wrong { background: #fed7d7; color: #c53030; }
+        .tag-mastered { background: #c6f6d5; color: #276749; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+        th { background: #f7fafc; font-weight: 600; color: #4a5568; }
+        select { padding: 4px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 13px; }
+        .option-item { padding: 10px 14px; margin: 6px 0; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+        .option-item:hover { border-color: #4299e1; background: #ebf8ff; }
+        .option-item.selected { border-color: #48bb78; background: #f0fff4; }
+        .option-item.wrong { border-color: #fc8181; background: #fff5f5; }
+        .option-item.correct { border-color: #48bb78; background: #f0fff4; }
+        .result-box { padding: 16px; border-radius: 8px; margin: 12px 0; }
+        .result-box.correct { background: #f0fff4; border: 1px solid #c6f6d5; }
+        .result-box.wrong { background: #fff5f5; border: 1px solid #fed7d7; }
+        .analysis-box { background: #fffbeb; border: 1px solid #fefcbf; padding: 14px; border-radius: 6px; margin-top: 8px; font-size: 14px; line-height: 1.6; color: #744210; }
+        .progress-bar { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin: 12px 0; }
+        .progress-bar .fill { height: 100%; background: #48bb78; border-radius: 4px; transition: width 0.3s; }
+        .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+        .filter-bar a { padding: 6px 14px; border-radius: 20px; font-size: 13px; text-decoration: none; color: #4a5568; background: #edf2f7; }
+        .filter-bar a.active { background: #4299e1; color: #fff; }
+        .correct-rate { font-size: 14px; color: #718096; }
+        @media (max-width: 600px) { .container { padding: 16px 8px; } .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <span class="brand">📚 一建矿业</span>
+        <a href="{% url 'quiz_platform:index' %}" class="{% if request.path == '/home/quiz/' %}active{% endif %}">首页</a>
+        <a href="{% url 'quiz_platform:start-round' %}" class="{% if '/round/' in request.path %}active{% endif %}">刷题</a>
+        <a href="{% url 'quiz_platform:wrong-book' %}" class="{% if '/wrong-book/' in request.path %}active{% endif %}">错题本</a>
+        <a href="{% url 'quiz_platform:stats' %}" class="{% if '/stats/' in request.path %}active{% endif %}">统计</a>
+        <a href="{% url 'quiz_platform:qa-page' %}" class="{% if '/qa/' in request.path %}active{% endif %}">AI 问答</a>
+    </nav>
+    <div class="container">
+        <h1>🏗️ 一建矿业 · 智能刷题</h1>
+        <p style="color: #718096; margin-bottom: 20px;">概率权重出题，正确连击越高出现概率越低</p>
+        <div class="stat-grid">
+            <div class="stat-item">
+                <div class="num">{{ total_questions }}</div>
+                <div class="label">总题数</div>
+            </div>
+            <div class="stat-item">
+                <div class="num">{{ single_count }}</div>
+                <div class="label">单选题</div>
+            </div>
+            <div class="stat-item">
+                <div class="num">{{ multi_count }}</div>
+                <div class="label">多选题</div>
+            </div>
+            <div class="stat-item">
+                <div class="num" style="color: #e53e3e;">{{ wrong_count }}</div>
+                <div class="label">有错题记录</div>
+            </div>
+            <div class="stat-item">
+                <div class="num" style="color: #38a169;">{{ mastered_count }}</div>
+                <div class="label">已掌握 (≥3连击)</div>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+            <a href="{% url 'quiz_platform:start-round' %}" class="btn">🎯 开始刷题（5单选+5多选）</a>
+            <a href="{% url 'quiz_platform:qa-page' %}" class="btn btn-secondary">🤖 AI 知识问答</a>
+        </div>
+    </div>
+</body>
+</html>
