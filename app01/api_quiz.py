@@ -121,8 +121,8 @@ def quiz_submit(request):
         user_ans = answers.get(题号, "")
         if isinstance(user_ans, list):
             user_ans = "".join(user_ans)
-        user_ans = str(user_ans).upper().strip()
-        correct = q["correct_answer"]
+        user_ans = str(user_ans).upper().strip().replace(",", "")
+        correct = str(q["correct_answer"]).upper().strip().replace(",", "")
         is_correct = user_ans == correct
         penalty = 0 if is_correct else (2 if q["question_type"] in ("多选题",) else 1)
         rows.append({

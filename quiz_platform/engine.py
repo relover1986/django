@@ -54,8 +54,8 @@ def check_answer(question_id: int, user_answer: str) -> Dict[str, Any]:
         q = Question.objects.get(pk=question_id)
     except Question.DoesNotExist:
         return {"error": "题目不存在"}
-    user_answer = user_answer.strip().upper()
-    correct_answer = q.correct_answer.strip().upper()
+    user_answer = user_answer.strip().upper().replace(",", "")
+    correct_answer = q.correct_answer.strip().upper().replace(",", "")
     is_correct = (user_answer == correct_answer)
     streak_before = q.correct_streak
     if is_correct:
