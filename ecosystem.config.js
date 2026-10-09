@@ -3,7 +3,7 @@ module.exports = {
     name: "django",
     cwd: "/root/django",
     script: "/root/django/venv/bin/uvicorn",
-    args: "lnjx2025.asgi:application --host 127.0.0.1 --port 8000 --workers 4",
+    args: "lnjx2025.asgi:application --host 127.0.0.1 --port 8000 --workers 2",
     interpreter: "/root/django/venv/bin/python",
     env: {
       PYTHONPATH: "/root/django",
