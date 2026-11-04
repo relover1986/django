@@ -1,5 +1,6 @@
 """身份证OCR服务 - 图片回正、OCR识别、双面合成"""
 import io
+import os
 import cv2
 import numpy as np
 from PIL import Image
