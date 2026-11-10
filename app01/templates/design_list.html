@@ -1,0 +1,51 @@
+{% extends "home.html" %}
+{% block content %}
+<br><br>
+<div class="container">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title"><span class="glyphicon glyphicon-th-list"></span> 设计批量处理</h3>
+    </div>
+  </div>
+  <div class="d-flex gap-2 mb-3">
+    <a class="btn btn-success btn-sm" href="/home/kztqhpup/">
+      <i class="bi bi-upload me-2"></i>上传
+    </a>
+    <a class="btn btn-primary btn-sm" href="/home/kztqhpexport/">
+      <i class="bi bi-file-zip me-2"></i>导出全部
+    </a>
+  </div>
+  <div class="container">
+    <div class="panel-body">
+      <div class="table-responsive">
+        <table class="table table-hover table-layout-fixed">
+          <thead>
+            <tr>
+              <th class="text-center" style="white-space: nowrap;">编号</th>
+              <th class="text-center" style="white-space: nowrap;">模板</th>
+              <th class="text-center" style="white-space: nowrap;">设计方案</th>
+              <th class="text-center" style="white-space: nowrap;">生成时间</th>
+              <th class="text-center" style="white-space: nowrap;">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for obj in data %}
+            <tr>
+              <td class="text-center">{{ obj.code }}</td>
+              <td class="text-center">{{ obj.template_name }}</td>
+              <td class="text-center"><a href="/media/{{ obj.file.name }}">{{ obj.file.name }}</a></td>
+              <td class="text-center">{{ obj.created_at|date:"Y-m-d" }}</td>
+              <td class="text-center">
+                <a class="btn btn-danger btn-xs" href="/home/kztqhpdel/?id={{ obj.id }}">删除</a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center">暂无记录 — 点左上「上传」生成</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

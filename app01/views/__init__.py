@@ -2,7 +2,7 @@
 # home
 from .home import home, department_quiz_stats, vue_app
 # contract_labor
-from .contract_labor import contractlabor_add, contractlabor_delete, contractlabor_list, contractlabor_export_zip
+from .contract_labor import contractlabor_add, contractlabor_delete, contractlabor_list, contractlabor_export_zip, design_list, design_upload, design_delete, design_export
 # photo
 from .photo import api_photo_add, PhotoListAPIView, PhotoDetailAPIView, PhotoDeleteAPIView, PhotoUploadAPIView
 from .photo import photo_add, photo_delete, photo_batch_delete, photo_list, generate_white_bg, photo_export_zip

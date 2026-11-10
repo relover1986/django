@@ -155,3 +155,96 @@ def contractlabor_export_zip(request):
     response['Content-Disposition'] = 'attachment; filename="labor_contracts.zip"'
     return response
 
+
+
+def design_list(request):
+    """设计批量处理 — 独立列表（不与合同共用）"""
+    data = models.DesignDoc.objects.order_by('-id')[:200]
+    return render(request, 'design_list.html', {'data': data})
+
+
+def design_upload(request):
+    """设计批量处理 — 上传：按行出，每行 x 每个模板各一份"""
+    import re as _re
+    if request.method == 'POST':
+        files = request.FILES.getlist('file')
+        xlsxs = [f for f in files if f.name.lower().endswith('.xlsx')]
+        tpls = [f for f in files if f.name.lower().endswith('.docx')]
+        if not xlsxs or not tpls:
+            return render(request, 'kztqhp.html',
+                          {'error': '请同时上传 1 个 Excel(.xlsx) 和至少 1 个 Word 模板(.docx)'})
+        wb = load_workbook(xlsxs[0])
+        ws = wb.worksheets[0]
+        # 编号列：表头含「编号」优先，否则第3列（合同姓名位；实测该列即 45m3/100m3）
+        code_col = 3
+        for c in range(1, ws.max_column + 1):
+            v = ws.cell(1, c).value
+            if v and '编号' in str(v):
+                code_col = c
+                break
+        tpl_data = []
+        for tf in tpls:
+            tpl_data.append((tf.name, tf.read()))
+        made = 0
+        for row in range(2, ws.max_row + 1):
+            raw = ws.cell(row, code_col).value
+            code = '' if raw is None else str(raw).strip()
+            if not code or code.lower() == 'none':
+                continue  # 空行跳过，不出 None.docx
+            for tname, tbytes in tpl_data:
+                document = Document(io.BytesIO(tbytes))
+                for col in range(1, ws.max_column + 1):
+                    h = ws.cell(1, col).value
+                    if h is None:
+                        continue
+                    val = ws.cell(row, col).value
+                    sval = '' if val is None else str(val)  # 空值不写成字面 None
+                    合同('{{%s}}' % str(h).strip(), sval, document)
+                # 未命中检测 -> pm2 日志
+                residual = set()
+                for p in document.paragraphs:
+                    residual.update(_re.findall(r'\{\{[^}]+\}\}', p.text))
+                for t in document.tables:
+                    for r in t.rows:
+                        for c in r.cells:
+                            residual.update(_re.findall(r'\{\{[^}]+\}\}', c.text))
+                if residual:
+                    print('=== 设计批量 未命中:', code, tname, sorted(residual), flush=True)
+                buf = io.BytesIO()
+                document.save(buf)
+                stem = tname.rsplit('.', 1)[0]
+                fname = '%s_%s.docx' % (code, stem)
+                models.DesignDoc.objects.create(
+                    code=code, template_name=stem,
+                    file=ContentFile(buf.getvalue(), name=fname))
+                made += 1
+        print('=== 设计批量 完成: %d 份 (编号列=%d)' % (made, code_col), flush=True)
+        return redirect('/home/kztqhp/')
+    return render(request, 'kztqhp.html', {'error': None})
+
+
+def design_delete(request):
+    rid = request.GET.get('id')
+    try:
+        obj = models.DesignDoc.objects.get(id=rid)
+        if obj.file:
+            obj.file.delete(save=False)
+        obj.delete()
+    except models.DesignDoc.DoesNotExist:
+        pass
+    return redirect('/home/kztqhp/')
+
+
+def design_export(request):
+    """导出全部设计方案为 ZIP（参照合同 contractlabor_export_zip）"""
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for obj in models.DesignDoc.objects.all():
+            f = obj.file
+            if f and f.storage.exists(f.name):
+                base = f.name.rsplit("/", 1)[-1]
+                zipf.writestr("%s/%s" % (obj.code, base), f.read())
+    zip_buffer.seek(0)
+    response = HttpResponse(zip_buffer, content_type="application/zip")
+    response["Content-Disposition"] = 'attachment; filename="design_docs.zip"'
+    return response

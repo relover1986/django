@@ -62,7 +62,7 @@ class Candidate(models.Model):
         return f"{self.name} - {self.get_gender_display()}"
 
 class ContractLabor(models.Model):
-    name = models.CharField(max_length=4, verbose_name='姓名')
+    name = models.CharField(max_length=32, verbose_name='姓名')
     id_number = models.CharField(max_length=18, verbose_name='身份证号')
 
     contract_file = models.FileField(
@@ -75,3 +75,13 @@ class ContractLabor(models.Model):
         verbose_name='创建时间'
     )
 
+
+
+class DesignDoc(models.Model):
+    code = models.CharField('编号', max_length=32)
+    template_name = models.CharField('模板', max_length=128, blank=True, default='')
+    file = models.FileField(upload_to='designdoc/', verbose_name='设计方案')
+    created_at = models.DateTimeField('创建时间', auto_now_add=True)
+
+    def __str__(self):
+        return self.code

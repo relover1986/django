@@ -6,4 +6,8 @@ urlpatterns = [
     path("home/contractlabor_delete/", views.contractlabor_delete),
     path("home/contractlabor_list/", views.contractlabor_list),
     path("home/contractlabor_export_zip/", views.contractlabor_export_zip, name="labor_export"),
+    path("home/kztqhp/", views.design_list),
+    path("home/kztqhpup/", views.design_upload),
+    path("home/kztqhpdel/", views.design_delete),
+    path("home/kztqhpexport/", views.design_export),
 ]
