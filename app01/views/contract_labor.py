@@ -97,7 +97,7 @@ def contractlabor_add(request):
                     document = Document(file)
 
             for table_col in range(1, col_No):
-                合同(str(ws.cell(1, table_col).value), str(
+                合同(str(ws.cell(1, table_col).value), cell_text(
                     ws.cell(table_row, table_col).value), document)
 
             姓名 = str(ws.cell(table_row, 3).value)
@@ -198,7 +198,7 @@ def design_upload(request):
                     if h is None:
                         continue
                     val = ws.cell(row, col).value
-                    sval = '' if val is None else str(val)  # 空值不写成字面 None
+                    sval = cell_text(val)  # 空值不写成字面 None；日期只留纯日期
                     合同('{{%s}}' % str(h).strip(), sval, document)
                 # 未命中检测 -> pm2 日志
                 residual = set()

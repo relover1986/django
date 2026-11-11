@@ -1,3 +1,4 @@
+from datetime import datetime, date
 #%%
 import pyecharts.options as opts
 from pyecharts.charts import Bar, Grid, Line
@@ -33,7 +34,19 @@ options = {}
 options["detect_direction"] = "true"  # 检测朝向
 options["detect_language"] = "true"  # 检测语言
 
-base_dir =settings.MEDIA_ROOT    
+base_dir =settings.MEDIA_ROOT
+
+
+def cell_text(v):
+    """Excel 单元格值 -> Word 文本；日期/时间一律只保留纯日期，不带时间"""
+    if v is None:
+        return ''
+    # 注意：本文件后面有 import datetime（模块），会遮蔽 from datetime import 的类名，
+    # 所以这里用模块限定写法；datetime.datetime 是 datetime.date 的子类，判一次即可。
+    if isinstance(v, datetime.date):
+        return v.strftime('%Y-%m-%d')
+    return str(v)
+    
 
 
 
