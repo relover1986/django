@@ -388,27 +388,27 @@ def idcard_export_zip(request):
         idcards = models.IDCard.objects.all()
 
         for card in idcards:
-            # 创建以身份证号命名的目录
-            dir_name = f"{card.id_number}_{card.name}"
+            # 平铺导出：不建文件夹，全部以文件形式
+            base = f"{card.id_number}_{card.name}"
 
             # 添加人像面
             if card.front_image and card.front_image.storage.exists(card.front_image.name):
                 zipf.writestr(
-                    f"{dir_name}/人像面.jpg",
+                    f"{base}_人像面.jpg",
                     card.front_image.read()
                 )
 
             # 添加国徽面
             if card.back_image and card.back_image.storage.exists(card.back_image.name):
                 zipf.writestr(
-                    f"{dir_name}/国徽面.jpg",
+                    f"{base}_国徽面.jpg",
                     card.back_image.read()
                 )
 
             # 添加合成图片
             if card.combined_image and card.combined_image.storage.exists(card.combined_image.name):
                 zipf.writestr(
-                    f"{dir_name}/合成双面.jpg",
+                    f"{base}_合成双面.jpg",
                     card.combined_image.read()
                 )
 

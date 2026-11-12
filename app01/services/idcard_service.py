@@ -33,9 +33,9 @@ def straighten_idcard(uploaded_file):
                 if pts[2][0] > pts[3][0]:
                     pts[2], pts[3] = pts[3], pts[2]
                 src = np.array([pts[0], pts[1], pts[3], pts[2]], dtype=np.float32)
-                dst = np.array([[0, 0], [856, 0], [856, 540], [0, 540]], dtype=np.float32)
+                dst = np.array([[0, 0], [1011, 0], [1011, 639], [0, 639]], dtype=np.float32)
                 M = cv2.getPerspectiveTransform(src, dst)
-                img_cv = cv2.warpPerspective(img_cv, M, (856, 540),
+                img_cv = cv2.warpPerspective(img_cv, M, (1011, 639),
                                               borderMode=cv2.BORDER_REPLICATE)
 
     # cls 方向判别（检测180°翻转）
@@ -156,8 +156,8 @@ def batch_process_idcard(image_bytes):
             if pts[0][0]>pts[1][0]: pts[0],pts[1]=pts[1],pts[0]
             if pts[2][0]>pts[3][0]: pts[2],pts[3]=pts[3],pts[2]
             src = np.array([pts[0],pts[1],pts[3],pts[2]], dtype=np.float32)
-            dst = np.array([[0,0],[856,0],[856,540],[0,540]], dtype=np.float32)
-            return cv2.warpPerspective(im, cv2.getPerspectiveTransform(src,dst),(856,540),
+            dst = np.array([[0,0],[1011,0],[1011,639],[0,639]], dtype=np.float32)
+            return cv2.warpPerspective(im, cv2.getPerspectiveTransform(src,dst),(1011,639),
                                        borderMode=cv2.BORDER_REPLICATE)
 
         # models
@@ -176,7 +176,7 @@ def batch_process_idcard(image_bytes):
         meta = rs.get_modelmeta().custom_metadata_map
         chs = ['blank'] + meta['character'].splitlines() + [' ']
 
-        def mcrop(im, tw=856, th=540):
+        def mcrop(im, tw=1011, th=639):
             cards = seg.apply(PILImage.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB)))
             if not cards:
                 return None
