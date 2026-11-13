@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>装药结构示意图</title>
+<style>
+  :root{--ink:#111;--muted:#666;--bg:#f5f6f7;--accent:#1f4e79}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Microsoft YaHei","PingFang SC",system-ui,-apple-system,sans-serif;
+       background:var(--bg);color:var(--ink);-webkit-text-size-adjust:100%}
+  .wrap{display:flex;gap:16px;padding:16px;align-items:flex-start;max-width:1180px;margin:0 auto}
+  .panel{width:292px;flex:0 0 292px;background:#fff;border-radius:12px;padding:16px;
+         box-shadow:0 1px 8px rgba(0,0,0,.08)}
+  .panel h1{font-size:16px;margin:0 0 6px}
+  .hint{font-size:11.5px;color:var(--muted);line-height:1.6;margin-bottom:10px}
+  .field{display:flex;align-items:center;justify-content:space-between;margin:9px 0;font-size:13px}
+  .field label{color:#333}
+  .field input{width:118px;padding:7px 9px;border:1px solid #cfd6df;border-radius:7px;
+       font-size:13px;font-family:inherit;text-align:right;background:#fff}
+  .calc{margin-top:12px;font-size:12.5px;color:#0b6b3a;line-height:1.8}
+  .row2{display:flex;gap:8px;margin-top:12px}
+  button{flex:1;padding:9px;border:0;border-radius:9px;background:var(--accent);color:#fff;
+         font-size:13px;cursor:pointer;font-family:inherit}
+  button.ghost{background:#eef1f5;color:#234}
+  button:active{transform:translateY(1px)}
+  .err{display:none;color:#c00;font-size:12.5px;margin-top:10px;line-height:1.6}
+  .stage{flex:0 1 auto;width:max-content;max-width:100%;background:#fff;border-radius:12px;
+         box-shadow:0 1px 8px rgba(0,0,0,.08);padding:8px;min-width:0;display:flex;
+         justify-content:center;align-items:flex-start}
+  svg{display:block;height:min(calc(100vh - 86px), 930px);width:auto;max-width:100%}
+  @media (max-width:860px){.wrap{flex-direction:column;padding:10px}.panel{width:100%;flex:auto}
+    .stage{display:block}
+    svg{width:100%;height:auto}}
+  @media print{
+    @page{size:A4 portrait;margin:12mm}
+    body{background:#fff}
+    .panel{display:none}
+    .wrap{padding:0;display:block;max-width:none}
+    .stage{box-shadow:none;border-radius:0;padding:0;display:block}
+    svg{width:100%;height:auto;max-width:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <h1>装药结构示意</h1>
+    <div class="hint">固定值直接填数字（如 6）；范围用波浪号（如 4~8）。装药长度自动计算。</div>
+
+    <div class="field"><label>孔径 (mm)</label><input id="dia" type="text" inputmode="decimal" value="90"></div>
+    <div class="field"><label>孔深 (m)</label><input id="depth" type="text" inputmode="decimal" value="4~8"></div>
+    <div class="field"><label>超深 (m)</label><input id="sub" type="text" inputmode="decimal" value="0.5"></div>
+    <div class="field"><label>填塞长度 (m)</label><input id="stem" type="text" inputmode="decimal" value="2.5"></div>
+    <div class="calc" id="calc"></div>
+
+    <div class="row2">
+      <button id="png">导出 PNG</button>
+      <button id="svg" class="ghost">导出 SVG</button>
+    </div>
+    <div class="row2">
+      <button id="print">打印 / 存 PDF</button>
+      <button class="ghost" id="reset">恢复默认</button>
+    </div>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div class="stage"><div id="canvas"></div></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const V = {W:620, H:780};
+  const TOP = 190, PLOT = 520;
+  const CX = 250;
+  const DEFAULTS = {dia:"90", depth:"4~8", sub:"0.5", stem:"2.5"};
+
+  const $ = id => document.getElementById(id);
+  const f1 = v => (Math.round(v*100)/100).toFixed(2).replace(/\.?0+$/, "");
+  const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+  // “4~8”“4-8”“4 至 8”“6” 都认
+  function parseSpec(v){
+    const s = String(v).trim().replace(/\s+/g,"").replace(/[mM米]+$/,"");
+    if (!s) return null;
+    const parts = s.split(/[~～\-–—至到]/).map(t => parseFloat(t)).filter(t => isFinite(t));
+    if (!parts.length) return null;
+    const a = Math.min.apply(null, parts), b = Math.max.apply(null, parts);
+    return {min:a, max:b, range: parts.length > 1 && a !== b};
+  }
+
+  function fmtSpec(sp, unit){
+    const t = sp.range ? f1(sp.min) + "~" + f1(sp.max) : f1(sp.min);
+    return unit ? t + " " + unit : t;
+  }
+
+  function readParams(){
+    return {dia:parseSpec($("dia").value), depth:parseSpec($("depth").value),
+            sub:parseSpec($("sub").value), stem:parseSpec($("stem").value)};
+  }
+
+  function lcSpec(p){
+    const lo = p.depth.min - p.stem.max, hi = p.depth.max - p.stem.min;
+    return {min:Math.max(0, lo), max:Math.max(0, hi), range: lo !== hi};
+  }
+
+  function validate(p){
+    if (!p.dia || !p.depth || !p.stem || !p.sub)
+      return "四个参数都要填数字；范围写成 4~8 这样。";
+    if (p.depth.min <= 0) return "孔深必须大于 0";
+    if (p.stem.min < 0) return "填塞长度不能为负";
+    if (p.stem.max >= p.depth.min)
+      return "填塞最大值（" + f1(p.stem.max) + " m）必须小于孔深最小值（" + f1(p.depth.min) + " m）";
+    if (p.dia.min < 20 || p.dia.max > 300) return "孔径请填 20~300 mm";
+    if (p.sub.max >= p.depth.min) return "超深不能大于等于孔深";
+    return "";
+  }
+
+  function buildSVG(p){
+    const Hmax = p.depth.max;                       // 图按最大孔深画
+    const F    = Math.min(p.stem.max, Hmax * 0.995);
+    const Lc   = Hmax - F;
+    const lc   = lcSpec(p);
+
+    const w  = Math.max(30, Math.min(96, p.dia.max * 0.62));
+    const xL = CX - w/2, xR = CX + w/2;
+    const yTop = TOP, yBot = TOP + PLOT;
+    const yStem = yTop + PLOT * (F / Hmax);
+    const yFloor = yTop + PLOT * ((Hmax - Math.min(p.sub.max, Hmax*0.9)) / Hmax);
+
+    const xd1 = xR + 70, xd2 = xR + 158;
+    const t = [];
+    t.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${V.W} ${V.H}" width="${V.W}" height="${V.H}">`);
+    t.push(`<defs>
+      <marker id="arw" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 Z" fill="#111"/>
+      </marker>
+      <pattern id="dots" width="11" height="11" patternUnits="userSpaceOnUse">
+        <circle cx="3" cy="3" r="1" fill="#9a9a9a"/><circle cx="8.5" cy="8.5" r="1" fill="#9a9a9a"/>
+      </pattern>
+      <pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="9" stroke="#4a4a4a" stroke-width="1.1"/>
+      </pattern>
+    </defs>`);
+
+    t.push(`<text x="${V.W/2}" y="42" text-anchor="middle" font-size="22" font-weight="700" fill="#111">主爆孔装药结构图</text>`);
+    t.push(`<text x="${V.W/2}" y="66" text-anchor="middle" font-size="12" fill="#555">` +
+      `孔径 φ${p.dia.range ? f1(p.dia.min) + "~" + f1(p.dia.max) : f1(p.dia.min)} mm ｜ 孔深 ${fmtSpec(p.depth,'m')} ｜ 超深 ${fmtSpec(p.sub,'m')} ｜ 填塞 ${fmtSpec(p.stem,'m')} ｜ 装药 ${fmtSpec(lc,'m')}</text>`);
+
+    t.push(`<rect x="${xL}" y="${yTop}" width="${w}" height="${PLOT}" fill="#fff" stroke="#111" stroke-width="1.6"/>`);
+    t.push(`<rect x="${xL}" y="${yTop}" width="${w}" height="${yStem-yTop}" fill="url(#dots)"/>`);
+    t.push(`<rect x="${xL}" y="${yStem}" width="${w}" height="${yBot-yStem}" fill="url(#hatch)"/>`);
+    t.push(`<line x1="${xL}" y1="${yStem}" x2="${xR}" y2="${yStem}" stroke="#111" stroke-width="2"/>`);
+
+    if (p.sub.max > 0){
+      t.push(`<line x1="${xL-14}" y1="${yFloor}" x2="${xR+14}" y2="${yFloor}" stroke="#777" stroke-width="1" stroke-dasharray="6 4"/>`);
+    }
+
+    const wireX = xL - 34;
+    t.push(`<path d="M ${CX} ${yBot-62} L ${CX} ${yTop+10} L ${xL+8} ${yTop+10} L ${xL+8} ${yTop-10} L ${wireX} ${yTop-10} L ${wireX} ${yTop-62}" fill="none" stroke="#111" stroke-width="1.4"/>`);
+    t.push(`<rect x="${CX-3.5}" y="${yBot-62}" width="7" height="24" rx="2" fill="#111"/>`);
+    t.push(`<rect x="${wireX-9}" y="${yTop-84}" width="18" height="22" fill="#fff" stroke="#111" stroke-width="1.4"/>`);
+
+    const lab = (y, text, tx, ty) => {
+      t.push(`<text x="140" y="${y+4}" font-size="13" fill="#111" text-anchor="end">${esc(text)}</text>`);
+      t.push(`<line x1="146" y1="${y}" x2="${tx}" y2="${ty}" stroke="#111" stroke-width="1"/>`);
+      t.push(`<circle cx="${tx}" cy="${ty}" r="2.2" fill="#111"/>`);
+    };
+    lab(yTop-73, "电子雷管导线", wireX+9, yTop-73);
+    lab((yTop+yStem)/2, "填塞料", xL+w*0.36, (yTop+yStem)/2);
+    lab(yBot-40, "电子雷管", CX-7, yBot-50);
+    lab(yStem+(yBot-yStem)*0.34, "炸药", xL+w*0.66, yStem+(yBot-yStem)*0.34);
+
+    const yDimTop = yTop-26;
+    t.push(`<line x1="${xL}" y1="${yTop}" x2="${xL}" y2="${yDimTop-6}" stroke="#111" stroke-width="0.8"/>`);
+    t.push(`<line x1="${xR}" y1="${yTop}" x2="${xR}" y2="${yDimTop-6}" stroke="#111" stroke-width="0.8"/>`);
+    t.push(`<line x1="${xL}" y1="${yDimTop}" x2="${xR}" y2="${yDimTop}" stroke="#111" stroke-width="1" marker-start="url(#arw)" marker-end="url(#arw)"/>`);
+    t.push(`<text x="${xR+12}" y="${yDimTop-2}" font-size="12.5" fill="#111">孔径 φ${p.dia.range ? f1(p.dia.min) + "~" + f1(p.dia.max) : f1(p.dia.min)} mm</text>`);
+
+    const vdim = (x, y1, y2, text) => {
+      t.push(`<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="#111" stroke-width="1" marker-start="url(#arw)" marker-end="url(#arw)"/>`);
+      t.push(`<text x="${x+9}" y="${(y1+y2)/2+4}" font-size="12.5" fill="#111">${esc(text)}</text>`);
+      t.push(`<line x1="${xR+4}" y1="${y1}" x2="${x+5}" y2="${y1}" stroke="#999" stroke-width="0.7"/>`);
+      t.push(`<line x1="${xR+4}" y1="${y2}" x2="${x+5}" y2="${y2}" stroke="#999" stroke-width="0.7"/>`);
+    };
+    vdim(xd1, yTop, yStem, `填塞 ${fmtSpec(p.stem,'m')}`);
+    vdim(xd1, yStem, yBot, `装药 ${fmtSpec(lc,'m')}`);
+    vdim(xd2, yTop, yBot, `孔深 ${fmtSpec(p.depth,'m')}`);
+
+    t.push(`</svg>`);
+    return t.join("");
+  }
+
+  function render(){
+    const p = readParams();
+    const err = validate(p);
+    const box = $("err"), cv = $("canvas"), calc = $("calc");
+    if (err){
+      box.style.display = "block";
+      box.textContent = "⚠ " + err;
+      cv.innerHTML = "";
+      calc.textContent = "";
+      return;
+    }
+    box.style.display = "none";
+    cv.innerHTML = buildSVG(p);
+    const lc = lcSpec(p);
+    calc.innerHTML = "装药长度（自动）：<b>" + fmtSpec(lc, "m") + "</b>" +
+      (lc.range ? "<br><span style='color:#666'>按 孔深 − 填塞 的最大/最小组合</span>" : "");
+  }
+
+  ["dia","depth","sub","stem"].forEach(id => {
+    $(id).addEventListener("input", render);
+    $(id).addEventListener("change", render);
+  });
+
+  $("print").addEventListener("click", () => window.print());
+
+  function currentSVG(){
+    const el = document.querySelector("#canvas svg");
+    if (!el) return null;
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(el);
+  }
+
+  function specText(sp, unit){
+    return (sp.range ? f1(sp.min) + "-" + f1(sp.max) : f1(sp.min)) + unit;
+  }
+
+  function fileName(ext){
+    const p = readParams();
+    const nm = "装药结构_φ" + (p.dia.range ? f1(p.dia.min) + "-" + f1(p.dia.max) : f1(p.dia.min)) +
+      "_孔深" + specText(p.depth, "m") + "_填塞" + specText(p.stem, "m") + "." + ext;
+    return nm.replace(/[\\/:*?"<>|]/g, "-");
+  }
+
+  function saveBlob(blob, name){
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  }
+
+  $("svg").addEventListener("click", () => {
+    const s = currentSVG();
+    if (!s) return;
+    saveBlob(new Blob([s], {type: "image/svg+xml;charset=utf-8"}), fileName("svg"));
+  });
+
+  $("png").addEventListener("click", () => {
+    const s = currentSVG();
+    if (!s) return;
+    const el = document.querySelector("#canvas svg");
+    const vb = el.viewBox.baseVal;
+    const W = vb.width || 620, H = vb.height || 780;
+    const scale = 3;
+    const url = URL.createObjectURL(new Blob([s], {type: "image/svg+xml;charset=utf-8"}));
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas");
+      c.width = Math.round(W*scale); c.height = Math.round(H*scale);
+      const ctx = c.getContext("2d");
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => saveBlob(b, fileName("png")), "image/png");
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      alert("PNG 导出失败，可改用「打印 / 存 PDF」。");
+    };
+    img.src = url;
+  });
+
+  $("reset").addEventListener("click", () => {
+    for (const k in DEFAULTS) $(k).value = DEFAULTS[k];
+    render();
+  });
+
+  try{
+    const q = new URLSearchParams(location.search);
+    ["dia","depth","sub","stem"].forEach(k => {
+      if (q.has(k)) $(k).value = q.get(k);
+    });
+  }catch(e){}
+
+  render();
+})();
+</script>
+</body>
+</html>
