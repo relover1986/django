@@ -1,0 +1,2243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>靖宇项目露天爆破土方</title>
+<style>
+  :root{
+    --bg:#edf3f9;
+    --panel:#f8fbfe;
+    --ink:#152538;
+    --muted:#72849a;
+    --line:#e0e9f3;
+    --line-strong:#cfddec;
+    --blue:#1d6fe0;
+    --blue-deep:#1558b4;
+    --cyan:#0ea5c6;
+    --green:#159a72;
+    --amber:#d98b22;
+    --red:#cf4b47;
+    --shadow:0 10px 28px rgba(34,72,112,.07);
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Microsoft YaHei","PingFang SC","Segoe UI",system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;overflow:hidden;
+  }
+  button,input{font:inherit}
+  button{cursor:pointer;border:0;background:none;color:inherit}
+  ::selection{background:#cfe6ff}
+  .app{display:flex;height:100vh;min-height:640px}
+
+  /* ============ left panel ============ */
+  .panel{
+    width:392px;flex:0 0 392px;min-height:0;display:flex;flex-direction:column;
+    background:linear-gradient(180deg,#fcfdff 0%,#f5f9fd 100%);
+    border-right:1px solid #dce6f1;
+  }
+  .brand{display:flex;align-items:center;gap:12px;padding:20px 22px 15px;flex:0 0 auto}
+  .brand-mark{
+    width:42px;height:42px;border-radius:13px;display:grid;place-items:center;color:#fff;
+    background:linear-gradient(145deg,#1e74e8 0%,#0e9fbd 100%);
+    box-shadow:0 9px 20px rgba(20,105,205,.24);flex:0 0 auto;
+  }
+  .brand-mark svg{width:23px;height:23px}
+  .brand h1{font-size:16px;line-height:1.2;margin:0;letter-spacing:.3px;font-weight:700}
+  .brand p{margin:4px 0 0;font-size:9.5px;color:#8798ac;letter-spacing:1.8px;font-weight:600}
+  .scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0 20px 18px;scrollbar-width:thin;scrollbar-color:#cbd9e8 transparent}
+  .scroll::-webkit-scrollbar{width:6px}
+  .scroll::-webkit-scrollbar-thumb{background:#cbd9e8;border-radius:6px}
+  .upload{
+    position:relative;border:1.5px dashed #b7cae1;border-radius:var(--radius);
+    background:linear-gradient(180deg,#f8fcff,#edf6ff);
+    padding:15px 14px;display:flex;align-items:center;gap:13px;cursor:pointer;
+    transition:border-color .18s,background .18s,box-shadow .18s;outline:none;
+  }
+  .upload:hover,.upload:focus-visible{border-color:#4d94eb;background:#f1f8ff;box-shadow:0 0 0 4px rgba(45,124,225,.08)}
+  .upload.drag{border-color:#1d6fe0;background:#eaf4ff;box-shadow:0 0 0 5px rgba(29,111,224,.1)}
+  .u-icon{
+    width:43px;height:43px;border-radius:12px;background:#e2efff;color:#1d6fe0;
+    display:grid;place-items:center;flex:0 0 auto;transition:transform .18s;
+  }
+  .upload:hover .u-icon{transform:translateY(-1px)}
+  .u-icon svg{width:21px;height:21px}
+  .upload-text{min-width:0;flex:1}
+  .upload-text b{display:block;font-size:13.5px;font-weight:700;letter-spacing:.1px}
+  .upload-text span{display:block;margin-top:3px;font-size:10.5px;color:#7d8fa5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .u-badge{
+    font-size:9px;font-weight:800;letter-spacing:.6px;color:#47739f;background:#e3effc;
+    border:1px solid #cfe3f8;border-radius:6px;padding:4px 5px;flex:0 0 auto;
+  }
+  .file-row{display:flex;align-items:center;gap:7px;padding:9px 3px 0;font-size:10.5px;color:#61748a;min-width:0}
+  .file-dot{width:6px;height:6px;border-radius:50%;background:#19aa79;box-shadow:0 0 0 3px rgba(25,170,121,.12);flex:0 0 auto}
+  .file-name{font-weight:700;color:#31465e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}
+  .file-meta{color:#8a9bae;white-space:nowrap}
+  .file-reset{margin-left:auto;color:#8ca0b5;font-size:14px;line-height:1;padding:3px 5px;border-radius:5px;flex:0 0 auto}
+  .file-reset:hover{background:#eaf2fb;color:#1d6fe0}
+
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:13px;padding:12px 13px;box-shadow:0 4px 14px rgba(35,72,110,.035)}
+  .stat>span{display:block;font-size:10px;color:#8294a8;letter-spacing:.4px}
+  .stat-row{display:flex;align-items:baseline;gap:4px;margin-top:5px}
+  .stat b{font-size:21px;line-height:1;font-weight:750;letter-spacing:-.6px;font-variant-numeric:tabular-nums;color:#1b3048}
+  .stat b.blue{color:#1768c6}
+  .stat i{font-style:normal;font-size:10px;color:#91a1b4;white-space:nowrap}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-top:11px}
+  .card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 15px 0}
+  .card-head h2{margin:0;font-size:12px;font-weight:750;letter-spacing:.3px;color:#2b4058}
+  .card-head .tag{font-size:9.5px;color:#5f87aa;background:#edf6fe;border:1px solid #d9eafa;border-radius:999px;padding:3px 7px;font-weight:600}
+  .card-body{padding:11px 15px 14px}
+  .field{margin-bottom:13px}
+  .field:last-child{margin-bottom:0}
+  .field label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:#4a5e75;margin-bottom:6px;font-weight:600}
+  .field label .tag{font-size:9px;color:#6d8298;font-weight:500;background:#f1f5fa;border-radius:4px;padding:2px 5px}
+  .input-wrap{
+    display:flex;align-items:center;border:1px solid #d5e1ee;border-radius:10px;background:#f9fbfd;
+    overflow:hidden;transition:border-color .15s,box-shadow .15s,background .15s;
+  }
+  .input-wrap:focus-within{border-color:#3f8be4;background:#fff;box-shadow:0 0 0 3px rgba(45,124,225,.1)}
+  .input-wrap input{border:0;outline:none;background:transparent;width:100%;padding:8px 10px;font-size:14px;font-weight:700;color:#18314d;font-variant-numeric:tabular-nums;letter-spacing:.2px}
+  .input-wrap .unit{padding:0 10px;font-size:10px;color:#8fa0b3;border-left:1px solid #e5edf5;line-height:28px}
+  .hint{margin:6px 0 0;font-size:9.5px;line-height:1.55;color:#8c9caf}
+  .chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+  .chip{border:1px solid #dce7f3;background:#f8fbfe;color:#536b84;border-radius:999px;padding:4px 8px;font-size:9.5px;font-weight:600;transition:.15s}
+  .chip:hover{border-color:#9ec5ee;background:#f1f8ff;color:#1b6bcf}
+  .chip.active{background:#e8f3ff;border-color:#9cc5f2;color:#155eb8}
+  .warn-box{display:none;margin-top:8px;padding:8px 9px;border-radius:9px;background:#fff8e9;border:1px solid #f1d9a8;color:#805616;font-size:9.5px;line-height:1.55}
+  .warn-box.show{display:block}
+  .warn-box b{color:#6b4309}
+  .warn-box button{color:#985f0c;text-decoration:underline;font-weight:700;font-size:9.5px;margin-top:4px;padding:0}
+
+  .vol-table{width:100%;border-collapse:collapse;font-size:10px;font-variant-numeric:tabular-nums}
+  .vol-table th{font-weight:600;color:#8b9cae;padding:0 3px 6px;text-align:right;font-size:9px;letter-spacing:.2px}
+  .vol-table th:first-child{text-align:left}
+  .vol-table td{padding:7px 3px;border-top:1px solid #edf2f7;text-align:right;color:#40566e}
+  .vol-table td:first-child{text-align:left;color:#5d728a}
+  .vol-table tr.total td{border-top:1.5px solid #dbe7f2;font-weight:750;color:#1e3b59;padding-top:8px}
+  .vol-table .cut{color:#1668c6}
+  .vol-table .fill{color:#b06c29}
+  .table-note{margin:9px 0 0;font-size:9px;line-height:1.55;color:#93a2b3}
+
+  .switch-list{margin-top:2px}
+  .switch-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;font-size:10.5px;color:#50657c}
+  .switch{position:relative;display:inline-block;width:30px;height:17px;flex:0 0 auto}
+  .switch input{opacity:0;width:0;height:0;position:absolute}
+  .switch span{position:absolute;inset:0;background:#d6e2ee;border-radius:999px;transition:.18s}
+  .switch span::before{content:"";position:absolute;width:13px;height:13px;left:2px;top:2px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(20,40,60,.2);transition:.18s}
+  .switch input:checked+span{background:#1d6fe0}
+  .switch input:checked+span::before{transform:translateX(13px)}
+
+  .notes{font-size:9.5px;line-height:1.7;color:#8b9aac;padding:2px 3px 0;margin:11px 0 0}
+  .notes b{color:#60758b}
+  .panel-footer{
+    flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:10px 20px;
+    border-top:1px solid #e2eaf3;color:#8b9cae;font-size:9px;background:#fbfdff;
+  }
+  .panel-footer svg{width:11px;height:11px;flex:0 0 auto}
+  .panel-footer .sep{margin-left:auto;color:#b0bdcb}
+
+  /* ============ stage ============ */
+  .stage{
+    position:relative;flex:1;min-width:0;margin:14px 14px 14px 0;border-radius:22px;overflow:hidden;
+    background:#071321;box-shadow:0 24px 60px rgba(18,48,80,.2);isolation:isolate;
+  }
+  #scene{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none;outline:none}
+  #scene.dragging{cursor:grabbing}
+  .stage-head{position:absolute;left:28px;top:23px;z-index:3;pointer-events:none;color:#fff;max-width:48%}
+  .eyebrow{font-size:9px;letter-spacing:2.6px;color:#58b3d8;font-weight:800}
+  .stage-head h1{margin:6px 0 4px;font-size:22px;line-height:1.2;font-weight:650;letter-spacing:.2px;text-shadow:0 2px 24px rgba(0,0,0,.35)}
+  .stage-head p{margin:0;font-size:10.5px;color:#8fa8bd;font-variant-numeric:tabular-nums;letter-spacing:.2px}
+  .tools{position:absolute;right:20px;top:19px;z-index:5;display:flex;gap:7px}
+  .tool{
+    height:35px;min-width:35px;padding:0 10px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    border:1px solid rgba(255,255,255,.12);background:rgba(14,34,55,.64);color:#c9ddee;
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-size:10.5px;transition:.15s;
+  }
+  .tool:hover{background:rgba(34,84,124,.76);border-color:rgba(120,190,240,.38);color:#fff}
+  .tool:active{transform:translateY(1px)}
+  .tool svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .tool .label{white-space:nowrap}
+
+  .hud{
+    position:absolute;right:20px;bottom:20px;z-index:3;width:230px;padding:13px 15px 12px;border-radius:15px;
+    background:linear-gradient(145deg,rgba(13,37,60,.9),rgba(9,25,42,.8));
+    border:1px solid rgba(92,174,220,.23);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    color:#eaf4ff;box-shadow:0 16px 38px rgba(0,0,0,.26);
+  }
+  .hud-label{font-size:9px;letter-spacing:1.6px;color:#7da8c6;font-weight:700}
+  .hud-value{display:flex;align-items:baseline;gap:5px;margin:5px 0 2px}
+  .hud-value b{font-size:30px;line-height:1.05;letter-spacing:-1px;font-variant-numeric:tabular-nums;color:#7fe0ff;font-weight:750}
+  .hud-value b.fill{color:#ffc477}
+  .hud-value span{font-size:10px;color:#8db2c9}
+  .hud-sub{font-size:9.5px;color:#9db8cb;line-height:1.5}
+  .hud-sub b{color:#e6f3ff;font-weight:650}
+  .hud-line{height:1px;background:rgba(255,255,255,.1);margin:9px 0 7px}
+  .hud-meta{display:flex;justify-content:space-between;gap:8px;font-size:9.5px;color:#91aec2}
+  .hud-meta b{color:#d8e9f7;font-weight:650;font-variant-numeric:tabular-nums}
+
+  .legend{
+    position:absolute;left:23px;bottom:20px;z-index:3;width:206px;padding:10px 12px 9px;border-radius:12px;
+    background:rgba(9,26,43,.68);border:1px solid rgba(255,255,255,.09);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#c6dcee;
+  }
+  .legend-head{display:flex;justify-content:space-between;gap:8px;font-size:9px;color:#89a8bf;margin-bottom:6px;letter-spacing:.2px}
+  .legend-head b{color:#c3dced;font-weight:600;font-variant-numeric:tabular-nums}
+  .legend-bar{height:8px;border-radius:4px;background:linear-gradient(90deg,#2b6f8e 0%,#4f9f8b 34%,#9dbf6a 61%,#e3c56b 82%,#d97b5a 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+  .legend-ticks{display:flex;justify-content:space-between;font-size:8.5px;color:#8ba9be;margin-top:4px;font-variant-numeric:tabular-nums}
+
+  .exag{
+    position:absolute;left:23px;bottom:109px;z-index:3;width:206px;padding:8px 11px;border-radius:10px;
+    background:rgba(9,26,43,.62);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(8px);
+    display:flex;align-items:center;gap:8px;color:#a8c1d4;font-size:9px;letter-spacing:.2px;
+  }
+  .exag label{white-space:nowrap}
+  .exag input{flex:1;min-width:0;accent-color:#54c8e9;height:2px;cursor:pointer}
+  .exag b{min-width:31px;text-align:right;color:#d5e9f8;font-size:9.5px;font-variant-numeric:tabular-nums;font-weight:650}
+
+  .hintbar{
+    position:absolute;left:50%;bottom:19px;transform:translateX(-50%);z-index:3;
+    font-size:9.5px;color:#6e8ba2;white-space:nowrap;letter-spacing:.4px;pointer-events:none;
+  }
+  .tooltip{
+    position:absolute;z-index:9;pointer-events:none;padding:7px 9px;border-radius:8px;
+    background:rgba(5,17,30,.95);border:1px solid rgba(110,200,240,.26);
+    box-shadow:0 10px 26px rgba(0,0,0,.35);color:#eaf6ff;font-size:9.5px;line-height:1.55;
+    opacity:0;transform:translateY(3px);transition:opacity .12s,transform .12s;white-space:nowrap;
+  }
+  .tooltip.show{opacity:1;transform:translateY(0)}
+  .tooltip b{display:block;font-size:10.5px;color:#fff;margin-bottom:1px}
+  .tooltip span{display:block;color:#94b9cf}
+  .tooltip i{font-style:normal;color:#e8f4ff;font-variant-numeric:tabular-nums}
+
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(10px);z-index:60;
+    padding:9px 15px;border-radius:9px;background:#12283d;border:1px solid rgba(110,200,240,.3);
+    color:#dcefff;font-size:10.5px;box-shadow:0 14px 34px rgba(0,0,0,.3);opacity:0;pointer-events:none;
+    transition:opacity .22s,transform .22s;max-width:70vw;text-align:center;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.err{background:#4a1719;border-color:#9d3b3e;color:#ffe4e3}
+  .loading{position:absolute;inset:0;z-index:12;display:grid;place-items:center;background:rgba(4,13,23,.55);backdrop-filter:blur(3px);color:#cfe7f7;font-size:11px}
+  .loading[hidden]{display:none}
+  .spinner{width:26px;height:26px;margin:0 auto 10px;border:2px solid rgba(100,200,240,.22);border-top-color:#63d6ff;border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .debug{display:none}
+
+  @media (max-width:1180px){
+    .panel{width:358px;flex-basis:358px}
+    .stage-head h1{font-size:20px}
+    .hud{width:208px}
+  }
+  @media (max-width:980px){
+    body{overflow:auto}
+    .app{height:auto;min-height:100vh;flex-direction:column}
+    .panel{width:100%;flex:0 0 auto;border-right:0;border-bottom:1px solid #dce6f1}
+    .scroll{overflow:visible;max-height:none}
+    .stage{height:72vh;min-height:520px;margin:0 10px 10px}
+    .panel-footer{position:static}
+  }
+  @media (max-width:640px){
+    .brand{padding:16px 16px 12px}
+    .scroll{padding:0 14px 14px}
+    .stage{height:66vh;min-height:440px;margin:0 8px 8px;border-radius:16px}
+    .stage-head{left:18px;top:16px;max-width:62%}
+    .stage-head h1{font-size:17px}
+    .stage-head p{font-size:9px}
+    .tools{right:12px;top:12px;gap:5px}
+    .tool{height:32px;min-width:32px;padding:0 8px}
+    .tool .label{display:none}
+    .hud{right:12px;bottom:12px;width:172px;padding:11px 12px}
+    .hud-value b{font-size:24px}
+    .legend,.exag{display:none}
+    .hintbar{display:none}
+  }
+  @media (max-width:400px){
+    .hud{width:154px;padding:10px 11px}
+    .hud-value b{font-size:20px}
+    .hud-sub{font-size:8.5px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2.6 20.4 7v10L12 21.4 3.6 17V7L12 2.6Z"/>
+          <path d="m3.9 7.2 8.1 4.6 8.1-4.6M12 11.8v9.3"/>
+          <path d="m7.8 5.1 8.3 4.7v5.1"/>
+        </svg>
+      </div>
+      <div>
+        <h1>靖宇项目露天爆破土方</h1>
+        <p>BLAST EARTHWORK · 3D</p>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <div class="upload" id="drop" role="button" tabindex="0" aria-label="上传 SCR 文件">
+        <input type="file" id="fileInput" accept=".scr,.dat,.txt,.csv" hidden>
+        <div class="u-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 16V4m0 0L7.2 8.8M12 4l4.8 4.8"/>
+            <path d="M4.5 15.5v3.2a1.8 1.8 0 0 0 1.8 1.8h11.4a1.8 1.8 0 0 0 1.8-1.8v-3.2"/>
+          </svg>
+        </div>
+        <div class="upload-text">
+          <b>上传 SCR 文件</b>
+          <span>拖拽到这里，或点击选择文件</span>
+        </div>
+        <span class="u-badge">.SCR</span>
+      </div>
+
+      <div class="file-row">
+        <span class="file-dot"></span>
+        <span class="file-name" id="fileName">变电站_机房东炮_100孔.scr</span>
+        <span class="file-meta" id="fileMeta">100 孔 · 示例</span>
+        <button class="file-reset" id="resetSample" title="恢复内置示例数据" aria-label="恢复内置示例数据">↺</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <span>孔位数量</span>
+          <div class="stat-row"><b id="statHoles">100</b><i>孔</i></div>
+        </div>
+        <div class="stat">
+          <span>计算投影面积</span>
+          <div class="stat-row"><b id="statArea">457.5</b><i>m²</i></div>
+        </div>
+        <div class="stat">
+          <span id="statVolLabel">土方量</span>
+          <div class="stat-row"><b class="blue" id="statVol">26,200</b><i>m³</i></div>
+        </div>
+        <div class="stat">
+          <span id="statDepthLabel">平均填厚</span>
+          <div class="stat-row"><b id="statDepth">57.2</b><i>m</i></div>
+        </div>
+      </div>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>计算参数</h2>
+          <span class="tag">实时重算</span>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label for="refInput">参考高程 <span class="tag">可任意输入</span></label>
+            <div class="input-wrap">
+              <input id="refInput" type="number" value="781.000" step="0.001" inputmode="decimal" aria-label="参考高程，单位米">
+              <span class="unit">m</span>
+            </div>
+            <p class="hint" id="refHint">默认按 781.000 m 计算，可直接修改；本工程设计底板为 718.000 m。</p>
+            <div class="chips">
+              <button class="chip" data-ref="781">781 基准</button>
+              <button class="chip" data-ref="718">718 设计底板</button>
+              <button class="chip" data-ref="722">722 孔口附近</button>
+            </div>
+            <div class="warn-box" id="refWarn"></div>
+          </div>
+          <div class="field">
+            <label for="offsetInput">周边孔外延 <span class="tag">凸包圆角缓冲</span></label>
+            <div class="input-wrap">
+              <input id="offsetInput" type="number" value="1.000" step="0.1" min="0" max="5" inputmode="decimal" aria-label="周边孔外延距离，单位米">
+              <span class="unit">m</span>
+            </div>
+            <p class="hint">按孔位包络线向外水平偏移，外延带高程取相邻边界孔口高程。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>土方量明细</h2>
+          <span class="tag" id="calcRefTag">参考 781.000 m</span>
+        </div>
+        <div class="card-body">
+          <table class="vol-table">
+            <thead>
+              <tr><th>计算范围</th><th>面积 m²</th><th>挖方 m³</th><th>填方 m³</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>孔位包络</td><td id="tCoreArea">360.3</td><td class="cut" id="tCoreCut">0.0</td><td class="fill" id="tCoreFill">20,600</td></tr>
+              <tr><td id="tRingName">外延 1.00 m</td><td id="tRingArea">97.2</td><td class="cut" id="tRingCut">0.0</td><td class="fill" id="tRingFill">5,600</td></tr>
+              <tr class="total"><td>合计</td><td id="tTotalArea">457.5</td><td id="tTotalCut">0.0</td><td id="tTotalFill">26,200</td></tr>
+            </tbody>
+          </table>
+          <p class="table-note">曲面与参考高程面之间按三角棱柱积分；挖方、填方分别统计。参数修改后立即重算。</p>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>显示图层</h2>
+          <span class="tag">右侧视图</span>
+        </div>
+        <div class="card-body">
+          <div class="switch-list">
+            <div class="switch-row"><span>地形曲面</span><label class="switch"><input type="checkbox" id="tgSurface" checked><span></span></label></div>
+            <div class="switch-row"><span>三角网线</span><label class="switch"><input type="checkbox" id="tgMesh" checked><span></span></label></div>
+            <div class="switch-row"><span>孔位标记</span><label class="switch"><input type="checkbox" id="tgCollars" checked><span></span></label></div>
+            <div class="switch-row"><span>钻孔（至参考面）</span><label class="switch"><input type="checkbox" id="tgHoles"><span></span></label></div>
+            <div class="switch-row"><span>参考面 / 网格</span><label class="switch"><input type="checkbox" id="tgPlane" checked><span></span></label></div>
+          </div>
+        </div>
+      </section>
+
+      <p class="notes">
+        <b>计算方法：</b>孔位点构建狄洛尼三角网曲面，孔位包络凸包向外作圆角缓冲得到计算范围，曲面与参考高程面之间逐三角形积分。<br>
+        <b>说明：</b>三维视图中的垂向比例仅用于显示，不参与土方量计算；土方量按真实高程计算。
+      </p>
+    </div>
+
+    <div class="panel-footer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      本地计算 · 文件不会上传
+      <span class="sep">HTML · Canvas 3D</span>
+    </div>
+  </aside>
+
+  <main class="stage" id="stage">
+    <canvas id="scene" aria-label="爆破土方三维视图"></canvas>
+
+    <div class="stage-head">
+      <div class="eyebrow">BLAST EARTHWORK · 3D</div>
+      <h1 id="stageTitle">机房东炮 · 三维土方</h1>
+      <p id="stageSub">100 孔 · 外延 1.00 m · 参考面 781.000 m</p>
+    </div>
+
+    <div class="tools">
+      <button class="tool" id="btnReset" title="复位视角（双击视图也可复位）">
+        <svg viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.7-6.2"/><path d="M3.5 4.6v5.2h5.2"/></svg>
+        <span class="label">复位</span>
+      </button>
+      <button class="tool" id="btnTop" title="俯视视角">
+        <svg viewBox="0 0 24 24"><path d="M12 3.5 20 8v8l-8 4.5L4 16V8l8-4.5Z"/><path d="M12 12.5v8M12 12.5 4.4 8.3M12 12.5l7.6-4.2"/></svg>
+        <span class="label">俯视</span>
+      </button>
+      <button class="tool" id="btnExport" title="导出当前三维视图 PNG">
+        <svg viewBox="0 0 24 24"><path d="M12 3.5v11m0 0 4-4m-4 4-4-4"/><path d="M4.5 15v3.2a1.8 1.8 0 0 0 1.8 1.8h11.4a1.8 1.8 0 0 0 1.8-1.8V15"/></svg>
+        <span class="label">导出</span>
+      </button>
+    </div>
+
+    <div class="hud">
+      <div class="hud-label" id="hudLabel">填方量</div>
+      <div class="hud-value"><b id="hudValue">26,200</b><span>m³</span></div>
+      <div class="hud-sub">挖方 <b id="hudCut">0</b> · 填方 <b id="hudFill">26,200</b> m³</div>
+      <div class="hud-line"></div>
+      <div class="hud-meta"><span>投影面积</span><b id="hudArea">457.5 m²</b></div>
+    </div>
+
+    <div class="exag">
+      <label for="exagRange" title="仅影响三维显示比例，不影响土方量">垂向比例</label>
+      <input type="range" id="exagRange" min="0.01" max="4" step="0.01" value="0.45">
+      <b id="exagVal">0.41×</b>
+    </div>
+
+    <div class="legend">
+      <div class="legend-head"><span>孔口高程</span><b id="legendRange">721.12 – 726.46 m</b></div>
+      <div class="legend-bar"></div>
+      <div class="legend-ticks"><span id="legendMin">721.1</span><span id="legendMid">723.8</span><span id="legendMax">726.5</span></div>
+    </div>
+
+    <div class="hintbar">拖拽旋转 · 滚轮缩放 · 右键平移</div>
+    <div class="tooltip" id="tooltip"></div>
+    <div class="loading" id="loading" hidden><div><div class="spinner"></div>正在解析孔位数据…</div></div>
+    <div class="debug" id="debug"></div>
+    <div class="toast" id="toast"></div>
+  </main>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   数据与状态
+   ============================================================ */
+const SAMPLE_NAME = "变电站_机房东炮_100孔.scr";
+const SAMPLE_POINTS = [[569562.354,4714827.781,721.303,"机房东炮1"],[569561.812,4714825.994,721.445,"机房东炮2"],[569563.267,4714825.782,721.201,"机房东炮3"],[569563.761,4714824.003,721.121,"机房东炮4"],[569561.994,4714824.191,721.627,"机房东炮5"],[569560.529,4714824.21,721.397,"机房东炮6"],[569563.621,4714821.636,722.128,"机房东炮7"],[569561.857,4714822.187,721.954,"机房东炮8"],[569559.754,4714822.207,721.563,"机房东炮9"],[569559.041,4714820.411,721.763,"机房东炮10"],[569561.117,4714820.523,721.907,"机房东炮11"],[569562.828,4714819.717,722.107,"机房东炮12"],[569564.444,4714818.426,722.208,"机房东炮13"],[569562.447,4714817.752,722.28,"机房东炮14"],[569560.528,4714818.407,722.128,"机房东炮15"],[569558.744,4714818.281,721.918,"机房东炮16"],[569558.139,4714816.343,722.012,"机房东炮17"],[569560.278,4714816.3,722.268,"机房东炮18"],[569564.294,4714816.569,722.626,"机房东炮19"],[569562.449,4714815.267,722.485,"机房东炮20"],[569564.046,4714814.388,722.581,"机房东炮21"],[569565.959,4714815.427,722.707,"机房东炮22"],[569565.543,4714813.115,722.765,"机房东炮23"],[569567.354,4714813.769,722.697,"机房东炮24"],[569566.629,4714811.61,722.964,"机房东炮25"],[569568.36,4714811.846,722.871,"机房东炮26"],[569567.646,4714809.982,723.283,"机房东炮27"],[569569.516,4714810.19,723.116,"机房东炮28"],[569568.871,4714808.365,723.411,"机房东炮29"],[569567.719,4714806.516,723.508,"机房东炮30"],[569566.503,4714808.086,723.395,"机房东炮31"],[569565.361,4714809.762,723.12,"机房东炮32"],[569564.017,4714811.59,722.737,"机房东炮33"],[569562.789,4714812.973,722.586,"机房东炮34"],[569560.856,4714813.708,722.433,"机房东炮35"],[569558.863,4714814.02,722.267,"机房东炮36"],[569557.217,4714812.225,722.295,"机房东炮37"],[569559.254,4714811.896,722.476,"机房东炮38"],[569561.252,4714811.449,722.64,"机房东炮39"],[569562.735,4714809.995,722.894,"机房东炮40"],[569563.914,4714808.183,723.168,"机房东炮41"],[569565.211,4714806.444,723.364,"机房东炮42"],[569566.685,4714804.814,723.46,"机房东炮43"],[569565.391,4714803.596,723.575,"机房东炮44"],[569564.053,4714804.909,723.339,"机房东炮45"],[569562.798,4714806.692,723.127,"机房东炮46"],[569561.515,4714808.369,722.947,"机房东炮47"],[569559.805,4714809.684,722.719,"机房东炮48"],[569557.784,4714810.133,722.535,"机房东炮49"],[569556.457,4714808.452,722.715,"机房东炮50"],[569558.21,4714808.031,722.738,"机房东炮51"],[569559.897,4714807.101,722.902,"机房东炮52"],[569561.289,4714805.476,723.185,"机房东炮53"],[569562.312,4714803.654,723.324,"机房东炮54"],[569563.875,4714802.396,723.666,"机房东炮55"],[569564.33,4714800.236,723.817,"机房东炮56"],[569562.773,4714800.721,723.608,"机房东炮57"],[569561.332,4714801.987,723.363,"机房东炮58"],[569560.09,4714803.675,723.216,"机房东炮59"],[569558.759,4714805.234,723.098,"机房东炮60"],[569556.969,4714806.242,723.016,"机房东炮61"],[569555.806,4714804.751,723.206,"机房东炮62"],[569557.39,4714803.805,723.291,"机房东炮63"],[569558.672,4714802.136,723.486,"机房东炮64"],[569559.66,4714800.342,723.66,"机房东炮65"],[569561.581,4714799.156,723.768,"机房东炮66"],[569563.262,4714798.321,723.886,"机房东炮67"],[569562.417,4714795.415,724.428,"机房东炮68"],[569561.563,4714796.729,724.225,"机房东炮69"],[569559.783,4714797.715,723.978,"机房东炮70"],[569558.215,4714799.124,723.876,"机房东炮71"],[569557.146,4714800.756,723.692,"机房东炮72"],[569555.671,4714802.374,723.527,"机房东炮73"],[569555.199,4714800.504,723.743,"机房东炮74"],[569556.111,4714798.782,723.94,"机房东炮75"],[569557.328,4714796.937,724.162,"机房东炮76"],[569558.907,4714795.864,724.351,"机房东炮77"],[569560.516,4714794.846,724.523,"机房东炮78"],[569560.39,4714792.873,724.71,"机房东炮79"],[569558.604,4714793.762,724.671,"机房东炮80"],[569556.928,4714794.869,724.469,"机房东炮81"],[569555.541,4714796.494,724.317,"机房东炮82"],[569554.501,4714798.176,724.046,"机房东炮83"],[569553.968,4714795.236,724.583,"机房东炮84"],[569555.364,4714793.859,724.691,"机房东炮85"],[569556.776,4714792.41,724.834,"机房东炮86"],[569558.569,4714791.382,724.971,"机房东炮87"],[569560.397,4714790.839,725.233,"机房东炮88"],[569558.672,4714789.195,725.669,"机房东炮89"],[569557.066,4714789.808,725.253,"机房东炮90"],[569555.424,4714790.954,725.104,"机房东炮91"],[569554.002,4714792.331,725.007,"机房东炮92"],[569553.807,4714789.536,725.448,"机房东炮93"],[569555.383,4714788.489,725.493,"机房东炮94"],[569557.15,4714787.601,725.834,"机房东炮95"],[569559.103,4714786.887,726.117,"机房东炮96"],[569559.037,4714784.94,726.455,"机房东炮97"],[569557.248,4714785.533,726.076,"机房东炮98"],[569555.391,4714786.53,725.845,"机房东炮99"],[569553.409,4714787.419,725.776,"机房东炮100"]];
+
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const fmt = (v, d = 1) => {
+  if (!Number.isFinite(v)) return "—";
+  return v.toLocaleString("zh-CN", { minimumFractionDigits: d, maximumFractionDigits: d });
+};
+const fmt0 = (v) => fmt(v, 0);
+
+const APP = {
+  points: [],
+  geom: null,
+  stats: null,
+  ref: 781,
+  offset: 1,
+  vScale: 0.45,
+  fileName: SAMPLE_NAME,
+  site: "机房东炮",
+  isSample: true,
+  show: { surface: true, mesh: true, collars: true, holes: false, plane: true }
+};
+
+const CAM = {
+  yaw: -0.62,
+  pitch: 0.43,
+  dist: 90,
+  panX: 0,
+  panY: 0,
+  target: [0, 0, 0],
+  fov: 36 * Math.PI / 180,
+  ortho: true,
+  viewSize: 60,
+  home: null,
+  minDist: 4,
+  maxDist: 800,
+  minView: 8,
+  maxView: 500
+};
+
+let stage, canvas, ctx, W = 0, H = 0, DPR = 1;
+let screenHoles = [];
+let rafId = 0;
+let toastTimer = 0;
+let animId = 0;
+let drag = null;
+let pinch = null;
+const pointers = new Map();
+let lastHover = 0;
+
+const el = {};
+
+function cacheDom() {
+  stage = $("#stage");
+  canvas = $("#scene");
+  ctx = canvas.getContext("2d");
+  const ids = [
+    "drop", "fileInput", "fileName", "fileMeta", "resetSample", "loading", "toast", "debug",
+    "statHoles", "statArea", "statVol", "statDepth", "statVolLabel", "statDepthLabel",
+    "refInput", "offsetInput", "refHint", "refWarn", "calcRefTag",
+    "tCoreArea", "tCoreCut", "tCoreFill", "tRingName", "tRingArea", "tRingCut", "tRingFill",
+    "tTotalArea", "tTotalCut", "tTotalFill", "tgSurface", "tgMesh", "tgCollars", "tgHoles", "tgPlane",
+    "stageTitle", "stageSub", "btnReset", "btnTop", "btnExport",
+    "hudLabel", "hudValue", "hudCut", "hudFill", "hudArea",
+    "exagRange", "exagVal", "legendRange", "legendMin", "legendMid", "legendMax", "tooltip"
+  ];
+  ids.forEach((id) => { el[id] = document.getElementById(id); });
+}
+
+/* ============================================================
+   文本解析：AutoCAD SCR / CASS DAT / 简易 CSV
+   ============================================================ */
+function decodeText(buffer) {
+  let utf8 = null;
+  try {
+    utf8 = new TextDecoder("utf-8", { fatal: true }).decode(buffer);
+  } catch (e) { /* 不是标准 UTF-8 */ }
+  if (utf8 && /[\u3400-\u9fff]/.test(utf8)) return utf8;
+  try {
+    return new TextDecoder("gbk").decode(buffer);
+  } catch (e) {
+    return utf8 || new TextDecoder("utf-8").decode(buffer);
+  }
+}
+
+function parsePointsFromText(text) {
+  const num = "[-+]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][-+]?\\d+)?";
+  const pointRe = new RegExp(
+    '\\(cons\\s+0\\s+"POINT"\\)[\\s\\S]{0,500}?\\(cons\\s+10\\s+\\(list\\s+(' + num + ')\\s+(' + num + ')\\s+(' + num + ')\\)\\)',
+    "g"
+  );
+  let pts = [];
+  let m;
+  while ((m = pointRe.exec(text)) !== null) {
+    const x = Number(m[1]), y = Number(m[2]), z = Number(m[3]);
+    if ([x, y, z].every(Number.isFinite)) pts.push({ x, y, z, label: "" });
+  }
+
+  if (pts.length < 3) {
+    pts = parseGenericText(text);
+  }
+
+  if (pts.length < 3) {
+    throw new Error("未识别到足够的 POINT 孔位，请确认 SCR 中包含 POINT 实体。");
+  }
+
+  // 孔号/注记：TEXT 实体，取与孔位最近的文本
+  const textRe = new RegExp(
+    '\\(cons\\s+0\\s+"TEXT"\\)[\\s\\S]{0,700}?\\(cons\\s+10\\s+\\(list\\s+(' + num + ')\\s+(' + num + ')\\s+(' + num + ')\\)\\)[\\s\\S]{0,400}?\\(cons\\s+1\\s+"([^"]*)"\\)',
+    "g"
+  );
+  const labels = [];
+  while ((m = textRe.exec(text)) !== null) {
+    const lx = Number(m[1]), ly = Number(m[2]);
+    const label = (m[4] || "").trim();
+    if (!Number.isFinite(lx) || !Number.isFinite(ly) || !label) continue;
+    if (/^[-+]?\d+(?:\.\d+)?$/.test(label)) continue; // 跳过纯高程注记
+    if (/^probe$/i.test(label)) continue;
+    labels.push({ x: lx, y: ly, label });
+  }
+  if (labels.length) {
+    for (const p of pts) {
+      let best = null, bd = 0.45 * 0.45;
+      for (const l of labels) {
+        const d = (l.x - p.x) ** 2 + (l.y - p.y) ** 2;
+        if (d < bd) { bd = d; best = l; }
+      }
+      if (best) p.label = best.label;
+    }
+  }
+
+  // 去重（同一点重复展点）
+  const out = [];
+  const seen = new Set();
+  for (const p of pts) {
+    const key = p.x.toFixed(4) + "," + p.y.toFixed(4);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(p);
+  }
+  out.forEach((p, i) => { if (!p.label) p.label = "孔" + (i + 1); });
+  return out;
+}
+
+function parseGenericText(text) {
+  const out = [];
+  const lines = text.split(/\r?\n/);
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line || line.startsWith(";") || line.startsWith("#")) continue;
+    const parts = line.split(/[,\s]+/).filter(Boolean);
+    if (parts.length < 3) continue;
+    let x, y, z, label = "";
+    if (parts.length >= 5 && !Number.isFinite(Number(parts[0]))) {
+      // CASS: 孔号, 编码, Y[东], X[北], Z
+      label = parts[0];
+      x = Number(parts[2]); y = Number(parts[3]); z = Number(parts[4]);
+    } else if (parts.length === 3) {
+      x = Number(parts[0]); y = Number(parts[1]); z = Number(parts[2]);
+    } else {
+      continue;
+    }
+    if (![x, y, z].every(Number.isFinite)) continue;
+    if (Math.abs(x) < 1e-6 && Math.abs(y) < 1e-6) continue;
+    out.push({ x, y, z, label });
+  }
+  return out;
+}
+
+/* ============================================================
+   几何算法
+   ============================================================ */
+function polyArea(poly) {
+  let s = 0;
+  for (let i = 0, n = poly.length; i < n; i++) {
+    const a = poly[i], b = poly[(i + 1) % n];
+    s += a.x * b.y - b.x * a.y;
+  }
+  return s / 2;
+}
+
+function convexHull(P) {
+  const idx = P.map((_, i) => i).sort((i, j) =>
+    (P[i].x - P[j].x) || (P[i].y - P[j].y)
+  );
+  const cross = (o, a, b) =>
+    (P[a].x - P[o].x) * (P[b].y - P[o].y) - (P[a].y - P[o].y) * (P[b].x - P[o].x);
+
+  const lower = [];
+  for (const i of idx) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], i) <= 1e-10) lower.pop();
+    lower.push(i);
+  }
+  const upper = [];
+  for (let k = idx.length - 1; k >= 0; k--) {
+    const i = idx[k];
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], i) <= 1e-10) upper.pop();
+    upper.push(i);
+  }
+  lower.pop();
+  upper.pop();
+  const hull = lower.concat(upper);
+  if (hull.length >= 3 && polyArea(hull.map(i => P[i])) < 0) hull.reverse();
+  return hull;
+}
+
+function outwardNormal(a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  return { x: dy / len, y: -dx / len }; // CCW 多边形的外法线
+}
+
+// 圆角外偏移：边界由每条边的平行线和每个凸角处的圆弧组成
+function roundedOffsetPolygon(poly, d) {
+  const n = poly.length;
+  const points = [], owner = [], arcs = [];
+  if (Math.abs(d) < 1e-9) {
+    for (let i = 0; i < n; i++) {
+      arcs.push([points.length]);
+      points.push({ x: poly[i].x, y: poly[i].y });
+      owner.push(i);
+    }
+    return { points, owner, arcs };
+  }
+
+  for (let i = 0; i < n; i++) {
+    const prev = poly[(i - 1 + n) % n];
+    const cur = poly[i];
+    const next = poly[(i + 1) % n];
+    const n1 = outwardNormal(prev, cur);
+    const n2 = outwardNormal(cur, next);
+    const A = { x: cur.x + n1.x * d, y: cur.y + n1.y * d };
+    const B = { x: cur.x + n2.x * d, y: cur.y + n2.y * d };
+
+    const e1 = { x: cur.x - prev.x, y: cur.y - prev.y };
+    const e2 = { x: next.x - cur.x, y: next.y - cur.y };
+    let turn = Math.atan2(e1.x * e2.y - e1.y * e2.x, e1.x * e2.x + e1.y * e2.y);
+    if (turn < 0) turn += Math.PI * 2;
+
+    if (turn < 1e-7) {
+      arcs.push([points.length]);
+      points.push(A);
+      owner.push(i);
+      continue;
+    }
+
+    const seg = Math.max(2, Math.ceil(turn / (Math.PI / 18)));
+    const a1 = Math.atan2(A.y - cur.y, A.x - cur.x);
+    const start = points.length;
+    const idx = [];
+    for (let k = 0; k <= seg; k++) {
+      let px, py;
+      if (k === 0) { px = A.x; py = A.y; }
+      else if (k === seg) { px = B.x; py = B.y; }
+      else {
+        const a = a1 + turn * k / seg;
+        px = cur.x + Math.cos(a) * d;
+        py = cur.y + Math.sin(a) * d;
+      }
+      idx.push(points.length);
+      points.push({ x: px, y: py });
+      owner.push(i);
+    }
+    arcs.push(idx);
+  }
+  return { points, owner, arcs };
+}
+
+function delaunayXY(P) {
+  const n = P.length;
+  if (n < 3) return [];
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const p of P) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  }
+  const span = Math.max(maxX - minX, maxY - minY) || 1;
+  const mx = (minX + maxX) / 2, my = (minY + maxY) / 2;
+  const verts = P.map(p => ({ x: p.x, y: p.y }));
+  verts.push({ x: mx - 20 * span, y: my - span });
+  verts.push({ x: mx + 20 * span, y: my - span });
+  verts.push({ x: mx, y: my + 20 * span });
+
+  function makeTri(a, b, c) {
+    let A = verts[a], B = verts[b], C = verts[c];
+    let cr = (B.x - A.x) * (C.y - A.y) - (B.y - A.y) * (C.x - A.x);
+    if (Math.abs(cr) < 1e-11) return null;
+    if (cr < 0) {
+      const tb = b; b = c; c = tb;
+      const tB = B; B = C; C = tB;
+    }
+    const d = 2 * (A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y));
+    if (Math.abs(d) < 1e-12) return null;
+    const a2 = A.x * A.x + A.y * A.y;
+    const b2 = B.x * B.x + B.y * B.y;
+    const c2 = C.x * C.x + C.y * C.y;
+    const ux = (a2 * (B.y - C.y) + b2 * (C.y - A.y) + c2 * (A.y - B.y)) / d;
+    const uy = (a2 * (C.x - B.x) + b2 * (A.x - C.x) + c2 * (B.x - A.x)) / d;
+    return {
+      a, b, c, ux, uy,
+      r2: (A.x - ux) * (A.x - ux) + (A.y - uy) * (A.y - uy)
+    };
+  }
+
+  let tris = [makeTri(n, n + 1, n + 2)].filter(Boolean);
+  for (let i = 0; i < n; i++) {
+    const p = verts[i];
+    const bad = [];
+    for (const t of tris) {
+      const dx = p.x - t.ux, dy = p.y - t.uy;
+      if (dx * dx + dy * dy <= t.r2 + 1e-7) bad.push(t);
+    }
+    if (!bad.length) continue;
+    const badSet = new Set(bad);
+    const edges = new Map();
+    const addEdge = (a, b) => {
+      const key = a < b ? a + "_" + b : b + "_" + a;
+      if (edges.has(key)) edges.delete(key);
+      else edges.set(key, [a, b]);
+    };
+    for (const t of bad) {
+      addEdge(t.a, t.b);
+      addEdge(t.b, t.c);
+      addEdge(t.c, t.a);
+    }
+    tris = tris.filter(t => !badSet.has(t));
+    for (const [a, b] of edges.values()) {
+      const t = makeTri(a, b, i);
+      if (t) tris.push(t);
+    }
+  }
+  return tris
+    .filter(t => t.a < n && t.b < n && t.c < n)
+    .map(t => [t.a, t.b, t.c]);
+}
+
+function buildGeometry(source, offset) {
+  const clean = [];
+  for (const p of source) {
+    if (![p.x, p.y, p.z].every(Number.isFinite)) continue;
+    clean.push({ x: Number(p.x), y: Number(p.y), z: Number(p.z), label: p.label || "" });
+  }
+  if (clean.length < 3) throw new Error("有效孔位少于 3 个，无法建立三角网。");
+
+  let ox = 0, oy = 0;
+  for (const p of clean) { ox += p.x; oy += p.y; }
+  ox /= clean.length; oy /= clean.length;
+  const P = clean.map((p, i) => ({
+    x: p.x - ox, y: p.y - oy, z: p.z,
+    label: p.label || ("孔" + (i + 1))
+  }));
+
+  let zMin = Infinity, zMax = -Infinity;
+  for (const p of P) {
+    if (p.z < zMin) zMin = p.z;
+    if (p.z > zMax) zMax = p.z;
+  }
+
+  const coreRaw = delaunayXY(P);
+  if (!coreRaw.length) throw new Error("孔位点近似共线，无法建立有效三角网。");
+  const core = coreRaw.map(t => ({ a: t[0], b: t[1], c: t[2] }));
+  const hull = convexHull(P);
+  if (hull.length < 3) throw new Error("孔位包络不足 3 个点，无法生成计算边界。");
+
+  const hullPts = hull.map(i => P[i]);
+  const dOff = Math.max(0, Math.min(5, Number(offset) || 0));
+  const round = roundedOffsetPolygon(hullPts, dOff);
+  const Q = round.points;
+  const V = P.slice();
+  const qStart = V.length;
+  const qz = [];
+  for (let k = 0; k < Q.length; k++) {
+    const z = P[hull[round.owner[k]]].z;
+    qz.push(z);
+    V.push({ x: Q[k].x, y: Q[k].y, z });
+  }
+
+  const ring = [];
+  const addRing = (a, b, c) => {
+    const A = V[a], B = V[b], C = V[c];
+    const cr = (B.x - A.x) * (C.y - A.y) - (B.y - A.y) * (C.x - A.x);
+    if (Math.abs(cr) < 1e-9) return;
+    if (cr < 0) ring.push({ a, b: c, c: b });
+    else ring.push({ a, b, c });
+  };
+  for (let i = 0; i < hull.length; i++) {
+    const j = (i + 1) % hull.length;
+    const arcI = round.arcs[i];
+    const arcJ = round.arcs[j];
+    const bi = qStart + arcI[arcI.length - 1]; // 本角圆弧终点（下一条边的起点）
+    const aj = qStart + arcJ[0];               // 下一个角的圆弧起点
+    addRing(hull[i], hull[j], aj);
+    addRing(hull[i], aj, bi);
+    for (let k = 0; k < arcI.length - 1; k++) {
+      addRing(hull[i], qStart + arcI[k], qStart + arcI[k + 1]);
+    }
+  }
+
+  const hullArea = Math.abs(polyArea(hullPts));
+  const extArea = Math.abs(polyArea(Q));
+  const all = core.concat(ring);
+
+  return {
+    P, V, core, ring, all, hull, hullPts, Q, qz, arcs: round.arcs,
+    zMin, zMax, zPivot: (zMin + zMax) / 2,
+    originX: ox, originY: oy,
+    hullArea, extArea
+  };
+}
+
+function clipPolyToPlane(poly, ref, above) {
+  if (!poly.length) return [];
+  const out = [];
+  const inside = (p) => above ? p.z >= ref : p.z <= ref;
+  for (let i = 0; i < poly.length; i++) {
+    const A = poly[i], B = poly[(i + 1) % poly.length];
+    const ia = inside(A), ib = inside(B);
+    if (ia) out.push(A);
+    if (ia !== ib) {
+      const t = (ref - A.z) / (B.z - A.z);
+      out.push({
+        x: A.x + (B.x - A.x) * t,
+        y: A.y + (B.y - A.y) * t,
+        z: ref
+      });
+    }
+  }
+  return out;
+}
+
+function polyVolume(poly, ref, above) {
+  if (poly.length < 3) return 0;
+  let vol = 0;
+  for (let i = 1; i < poly.length - 1; i++) {
+    const A = poly[0], B = poly[i], C = poly[i + 1];
+    const area = Math.abs((B.x - A.x) * (C.y - A.y) - (B.y - A.y) * (C.x - A.x)) / 2;
+    if (area < 1e-12) continue;
+    const mean = (A.z + B.z + C.z) / 3;
+    vol += area * (above ? (mean - ref) : (ref - mean));
+  }
+  return Math.max(0, vol);
+}
+
+function triStats(V, tris, ref) {
+  let cut = 0, fill = 0, area = 0, surface = 0;
+  for (const t of tris) {
+    const A = V[t.a], B = V[t.b], C = V[t.c];
+    const ar = Math.abs((B.x - A.x) * (C.y - A.y) - (B.y - A.y) * (C.x - A.x)) / 2;
+    if (ar < 1e-10) continue;
+    area += ar;
+    // 三维面积
+    const ux = B.x - A.x, uy = B.y - A.y, uz = B.z - A.z;
+    const vx = C.x - A.x, vy = C.y - A.y, vz = C.z - A.z;
+    const nx = uy * vz - uz * vy;
+    const ny = uz * vx - ux * vz;
+    const nz = ux * vy - uy * vx;
+    surface += 0.5 * Math.hypot(nx, ny, nz);
+
+    const zA = A.z, zB = B.z, zC = C.z;
+    const mean = (zA + zB + zC) / 3;
+    if (zA >= ref - 1e-9 && zB >= ref - 1e-9 && zC >= ref - 1e-9) {
+      cut += ar * (mean - ref);
+    } else if (zA <= ref + 1e-9 && zB <= ref + 1e-9 && zC <= ref + 1e-9) {
+      fill += ar * (ref - mean);
+    } else {
+      const above = clipPolyToPlane([A, B, C], ref, true);
+      const below = clipPolyToPlane([A, B, C], ref, false);
+      cut += polyVolume(above, ref, true);
+      fill += polyVolume(below, ref, false);
+    }
+  }
+  return { cut: Math.max(0, cut), fill: Math.max(0, fill), area, surface };
+}
+
+function computeStats(g, ref) {
+  const core = triStats(g.V, g.core, ref);
+  const ring = triStats(g.V, g.ring, ref);
+  const extArea = Math.max(g.extArea, 0.0001);
+  const cut = core.cut + ring.cut;
+  const fill = core.fill + ring.fill;
+  return {
+    holes: g.P.length,
+    coreArea: g.hullArea,
+    ringArea: Math.max(0, extArea - g.hullArea),
+    extArea,
+    coreCut: core.cut, coreFill: core.fill,
+    ringCut: ring.cut, ringFill: ring.fill,
+    cut, fill,
+    net: cut - fill,
+    avgDepth: (cut - fill) / extArea,
+    minDepth: g.zMin - ref,
+    maxDepth: g.zMax - ref,
+    surfaceArea: core.surface + ring.surface,
+    zMin: g.zMin, zMax: g.zMax
+  };
+}
+
+/* ============================================================
+   UI 更新
+   ============================================================ */
+function inferSite(points, filename) {
+  const withLabel = points.find(p => p.label);
+  if (withLabel) {
+    const m = String(withLabel.label).match(/^([^\d]+)/);
+    if (m && m[1].trim()) return m[1].trim();
+  }
+  return String(filename).replace(/\.[^.]+$/, "").split("_").slice(-2).join(" ");
+}
+
+function updateUI() {
+  const s = APP.stats;
+  const g = APP.geom;
+  if (!s || !g) return;
+
+  const isFill = s.fill > s.cut + 1e-6;
+  const main = Math.max(s.cut, s.fill);
+
+  el.statHoles.textContent = s.holes;
+  el.statArea.textContent = fmt(s.extArea, 1);
+  el.statVol.textContent = fmt0(main);
+  el.statVol.style.color = isFill ? "#b06c29" : "#1768c6";
+  el.statVolLabel.textContent = isFill ? "填方量" : "挖方量";
+  el.statDepth.textContent = fmt(Math.abs(s.avgDepth), 2);
+  el.statDepthLabel.textContent = isFill ? "平均填厚" : "平均挖深";
+
+  el.hudLabel.textContent = isFill ? "填方量" : "挖方量";
+  el.hudValue.textContent = fmt0(main);
+  el.hudValue.classList.toggle("fill", isFill);
+  el.hudCut.textContent = fmt0(s.cut);
+  el.hudFill.textContent = fmt0(s.fill);
+  el.hudArea.textContent = fmt(s.extArea, 1) + " m²";
+
+  el.tCoreArea.textContent = fmt(s.coreArea, 1);
+  el.tCoreCut.textContent = fmt(s.coreCut, 1);
+  el.tCoreFill.textContent = fmt(s.coreFill, 1);
+  el.tRingName.textContent = "外延 " + APP.offset.toFixed(2) + " m";
+  el.tRingArea.textContent = fmt(s.ringArea, 1);
+  el.tRingCut.textContent = fmt(s.ringCut, 1);
+  el.tRingFill.textContent = fmt(s.ringFill, 1);
+  el.tTotalArea.textContent = fmt(s.extArea, 1);
+  el.tTotalCut.textContent = fmt(s.cut, 1);
+  el.tTotalFill.textContent = fmt(s.fill, 1);
+
+  el.calcRefTag.textContent = "参考 " + APP.ref.toFixed(3) + " m";
+  el.stageTitle.textContent = APP.site + " · 三维土方";
+  el.stageSub.textContent = s.holes + " 孔 · 外延 " + APP.offset.toFixed(2) + " m · 参考面 " + APP.ref.toFixed(3) + " m";
+  el.fileName.textContent = APP.fileName;
+  el.fileMeta.textContent = s.holes + " 孔 · " + (APP.isSample ? "示例数据" : "已解析");
+
+  el.legendRange.textContent = s.zMin.toFixed(2) + " – " + s.zMax.toFixed(2) + " m";
+  el.legendMin.textContent = s.zMin.toFixed(1);
+  el.legendMid.textContent = ((s.zMin + s.zMax) / 2).toFixed(1);
+  el.legendMax.textContent = s.zMax.toFixed(1);
+
+  if (Math.abs(APP.ref - 781) < 1e-9) {
+    el.refHint.textContent = "默认按 781.000 m 计算，可直接修改；本工程设计底板为 718.000 m。";
+  } else if (Math.abs(APP.ref - 718) < 1e-9) {
+    el.refHint.textContent = "当前为设计底板 718.000 m（标高1.xlsx），结果为挖方。";
+  } else {
+    el.refHint.textContent = "当前参考面 " + APP.ref.toFixed(3) + " m；本工程设计底板为 718.000 m。";
+  }
+
+  $$(".chip[data-ref]").forEach(btn => {
+    btn.classList.toggle("active", Math.abs(Number(btn.dataset.ref) - APP.ref) < 1e-9);
+  });
+
+  const warn = el.refWarn;
+  if (APP.ref > s.zMax + 1e-6) {
+    warn.innerHTML =
+      "参考面 <b>" + APP.ref.toFixed(3) + " m</b> 高于全部孔口（最高 " + s.zMax.toFixed(3) +
+      " m），当前结果为<b>填方</b>。若参考面输入有误（如 781 应为 718），可改回 718.000 m。" +
+      '<br><button type="button" data-ref-reset="718">改为 718.000 m</button>';
+    warn.classList.add("show");
+    const b = warn.querySelector("[data-ref-reset]");
+    if (b) b.addEventListener("click", () => setRef(718, true));
+  } else if (APP.ref >= s.zMin - 1e-6) {
+    warn.innerHTML = "参考面穿过孔口高程范围，结果同时包含<b>挖方</b>与<b>填方</b>。";
+    warn.classList.add("show");
+  } else {
+    warn.classList.remove("show");
+    warn.innerHTML = "";
+  }
+
+  el.debug.textContent = JSON.stringify({
+    holes: s.holes, triangles: g.all.length, hull: g.hull.length,
+    coreArea: +s.coreArea.toFixed(3), extArea: +s.extArea.toFixed(3),
+    ref: APP.ref, cut: +s.cut.toFixed(3), fill: +s.fill.toFixed(3),
+    minDepth: +s.minDepth.toFixed(3), maxDepth: +s.maxDepth.toFixed(3)
+  });
+  stage.dataset.holes = String(s.holes);
+  stage.dataset.tris = String(g.all.length);
+  stage.dataset.area = s.extArea.toFixed(2);
+  stage.dataset.cut = s.cut.toFixed(2);
+  stage.dataset.fill = s.fill.toFixed(2);
+  stage.dataset.ref = APP.ref.toFixed(3);
+}
+
+function toast(message, isError) {
+  const box = el.toast;
+  box.textContent = message;
+  box.classList.toggle("err", !!isError);
+  box.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => box.classList.remove("show"), 3200);
+}
+
+/* ============================================================
+   模型刷新 / 比例
+   ============================================================ */
+function autoScale() {
+  const g = APP.geom;
+  let hr = 1;
+  for (const p of g.P) hr = Math.max(hr, Math.hypot(p.x, p.y));
+  for (const q of g.Q) hr = Math.max(hr, Math.hypot(q.x, q.y));
+  const zTop = Math.max(g.zMax, APP.ref);
+  const zBot = Math.min(g.zMin, APP.ref);
+  const vspan = Math.max(1e-3, zTop - zBot);
+  const sc = clamp((hr * 1.18) / vspan, 0.01, 3.0);
+  APP.vScale = Math.round(sc * 100) / 100;
+  el.exagRange.value = String(APP.vScale);
+  el.exagVal.textContent = APP.vScale.toFixed(2) + "×";
+}
+
+function cameraBasis(yaw, pitch) {
+  const cp = Math.cos(pitch), sp = Math.sin(pitch);
+  const fwd = norm3([-cp * Math.cos(yaw), -cp * Math.sin(yaw), -sp]);
+  let right = cross3(fwd, [0, 0, 1]);
+  if (len3(right) < 1e-6) right = [1, 0, 0];
+  else right = norm3(right);
+  const up = cross3(right, fwd);
+  return { right, up };
+}
+
+function fitHome() {
+  const g = APP.geom;
+  const ex = APP.vScale;
+  const zTop = Math.max(g.zMax, APP.ref);
+  const zBot = Math.min(g.zMin, APP.ref);
+  const tz = ((zTop + zBot) / 2 - g.zPivot) * ex;
+  CAM.target = [0, 0, tz];
+
+  const basis = cameraBasis(-0.62, 0.43);
+  let minSX = Infinity, maxSX = -Infinity, minSY = Infinity, maxSY = -Infinity;
+  const addPoint = (x, y, z) => {
+    const rel = [x, y, z - tz];
+    const sx = dot3(rel, basis.right);
+    const sy = dot3(rel, basis.up);
+    if (sx < minSX) minSX = sx;
+    if (sx > maxSX) maxSX = sx;
+    if (sy < minSY) minSY = sy;
+    if (sy > maxSY) maxSY = sy;
+  };
+  for (const p of g.P) addPoint(p.x, p.y, (p.z - g.zPivot) * ex);
+  for (let i = 0; i < g.Q.length; i++) {
+    addPoint(g.Q[i].x, g.Q[i].y, (g.qz[i] - g.zPivot) * ex);
+    addPoint(g.Q[i].x, g.Q[i].y, (APP.ref - g.zPivot) * ex);
+  }
+
+  const hExtent = Math.max(1, maxSX - minSX);
+  const vExtent = Math.max(1, maxSY - minSY);
+  const aspect = H > 0 ? W / H : 1;
+  const fitSize = Math.max(vExtent, hExtent / Math.max(0.4, aspect)) * 1.7;
+  const r = Math.max(1, 0.5 * Math.hypot(hExtent, vExtent));
+  const dist = r / Math.sin(CAM.fov / 2) * 1.15;
+
+  // 把模型投影包围盒的中心移到屏幕中心
+  const cx = (minSX + maxSX) / 2;
+  const cy = (minSY + maxSY) / 2;
+  const target = [
+    basis.right[0] * cx + basis.up[0] * cy,
+    basis.right[1] * cx + basis.up[1] * cy,
+    tz + basis.right[2] * cx + basis.up[2] * cy
+  ];
+  CAM.target = target;
+
+  CAM.home = {
+    yaw: -0.62,
+    pitch: 0.43,
+    dist,
+    panX: 0,
+    panY: 0,
+    target: target.slice(),
+    viewSize: fitSize
+  };
+  CAM.viewSize = fitSize;
+  CAM.minView = Math.max(1, fitSize * 0.32);
+  CAM.maxView = Math.max(20, fitSize * 10);
+  CAM.minDist = Math.max(2, r * 0.25);
+  CAM.maxDist = Math.max(50, r * 14);
+}
+
+function rebuild(keepView) {
+  try {
+    const g = buildGeometry(APP.points, APP.offset);
+    APP.geom = g;
+    APP.stats = computeStats(g, APP.ref);
+    if (!keepView) {
+      autoScale();
+      fitHome();
+      updateUI();
+      resetView(false);
+    } else {
+      fitHome();
+      updateUI();
+      requestRender();
+    }
+    return true;
+  } catch (e) {
+    console.error(e);
+    toast(e.message || "计算失败，请检查孔位数据。", true);
+    return false;
+  }
+}
+
+function setRef(value, resetCamera) {
+  const v = Number(value);
+  if (!Number.isFinite(v)) return;
+  APP.ref = v;
+  el.refInput.value = v.toFixed(3);
+  APP.stats = computeStats(APP.geom, APP.ref);
+  updateUI();
+  autoScale();
+  fitHome();
+  if (resetCamera) resetView(true);
+  else requestRender();
+}
+
+function setData(points, name, sample) {
+  // 先校验新数据，失败时不破坏当前模型
+  let g;
+  try {
+    g = buildGeometry(points, APP.offset);
+  } catch (e) {
+    console.error(e);
+    toast(e.message || "孔位数据无法建立三角网。", true);
+    return;
+  }
+  APP.points = points;
+  APP.fileName = name;
+  APP.isSample = !!sample;
+  APP.site = inferSite(points, name);
+  APP.geom = g;
+  APP.stats = computeStats(g, APP.ref);
+  autoScale();
+  fitHome();
+  updateUI();
+  resetView(false);
+  el.stageTitle.textContent = APP.site + " · 三维土方";
+  toast("已载入 " + points.length + " 个孔位");
+}
+
+/* ============================================================
+   相机 / 渲染
+   ============================================================ */
+function requestRender() {
+  if (rafId) return;
+  rafId = requestAnimationFrame(() => {
+    rafId = 0;
+    render();
+  });
+}
+
+function resizeCanvas() {
+  const rect = stage.getBoundingClientRect();
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const w = Math.max(1, Math.round(rect.width));
+  const h = Math.max(1, Math.round(rect.height));
+  if (w === W && h === H && canvas.width === Math.round(w * DPR)) return;
+  W = w; H = h;
+  canvas.width = Math.round(w * DPR);
+  canvas.height = Math.round(h * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  render();
+}
+
+function makeProjector() {
+  const t = CAM.target;
+  const cp = Math.cos(CAM.pitch), sp = Math.sin(CAM.pitch);
+  const eye = [
+    t[0] + CAM.dist * cp * Math.cos(CAM.yaw),
+    t[1] + CAM.dist * cp * Math.sin(CAM.yaw),
+    t[2] + CAM.dist * sp
+  ];
+  const fwd = norm3([t[0] - eye[0], t[1] - eye[1], t[2] - eye[2]]);
+  let right = cross3(fwd, [0, 0, 1]);
+  if (len3(right) < 1e-6) right = [1, 0, 0];
+  else right = norm3(right);
+  const up = cross3(right, fwd);
+  const focal = (H * 0.5) / Math.tan(CAM.fov / 2);
+  const orthoScale = H / Math.max(1e-6, CAM.viewSize);
+  const cx = W / 2 + CAM.panX;
+  const cy = H / 2 + CAM.panY;
+
+  return {
+    eye, fwd, right, up, focal, cx, cy,
+    project(p) {
+      const vx = p[0] - eye[0], vy = p[1] - eye[1], vz = p[2] - eye[2];
+      const zc = vx * fwd[0] + vy * fwd[1] + vz * fwd[2];
+      if (zc < 0.2) return null;
+      const s = CAM.ortho ? orthoScale : focal / zc;
+      return {
+        x: cx + (vx * right[0] + vy * right[1] + vz * right[2]) * s,
+        y: cy - (vx * up[0] + vy * up[1] + vz * up[2]) * s,
+        z: zc
+      };
+    }
+  };
+}
+
+function vsub(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+function cross3(a, b) {
+  return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+}
+function len3(v) { return Math.hypot(v[0], v[1], v[2]); }
+function norm3(v) {
+  const l = len3(v) || 1;
+  return [v[0] / l, v[1] / l, v[2] / l];
+}
+function dot3(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+
+const RAMP = [
+  [0.00, [43, 111, 142]],
+  [0.33, [79, 159, 139]],
+  [0.62, [157, 191, 106]],
+  [0.82, [227, 197, 107]],
+  [1.00, [217, 123, 90]]
+];
+function rampColor(t) {
+  t = clamp(t, 0, 1);
+  for (let i = 1; i < RAMP.length; i++) {
+    if (t <= RAMP[i][0]) {
+      const a = RAMP[i - 1], b = RAMP[i];
+      const k = (t - a[0]) / (b[0] - a[0] || 1);
+      return [
+        a[1][0] + (b[1][0] - a[1][0]) * k,
+        a[1][1] + (b[1][1] - a[1][1]) * k,
+        a[1][2] + (b[1][2] - a[1][2]) * k
+      ];
+    }
+  }
+  return RAMP[RAMP.length - 1][1].slice();
+}
+function shade(rgb, k) {
+  return "rgb(" +
+    Math.round(clamp(rgb[0] * k, 0, 255)) + "," +
+    Math.round(clamp(rgb[1] * k, 0, 255)) + "," +
+    Math.round(clamp(rgb[2] * k, 0, 255)) + ")";
+}
+
+function drawBg() {
+  const grd = ctx.createLinearGradient(0, 0, 0, H);
+  grd.addColorStop(0, "#0b1d30");
+  grd.addColorStop(0.55, "#081625");
+  grd.addColorStop(1, "#040b14");
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, W, H);
+
+  const rgl = ctx.createRadialGradient(W * 0.52, H * 0.06, 0, W * 0.52, H * 0.06, Math.max(W, H) * 0.8);
+  rgl.addColorStop(0, "rgba(46,137,181,.17)");
+  rgl.addColorStop(0.55, "rgba(20,70,105,.06)");
+  rgl.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = rgl;
+  ctx.fillRect(0, 0, W, H);
+
+  // 极淡的点阵，增加空间感
+  ctx.fillStyle = "rgba(120,190,225,.055)";
+  const gap = 34;
+  for (let y = 26; y < H; y += gap) {
+    for (let x = (Math.round(y / gap) % 2) * gap / 2 + 14; x < W; x += gap) {
+      ctx.fillRect(x, y, 1.2, 1.2);
+    }
+  }
+}
+
+function drawPlane(cam, refZ, roof) {
+  const g = APP.geom;
+  const qp = g.Q.map(q => cam.project([q.x, q.y, refZ]));
+  if (qp.some(p => !p)) return;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(qp[0].x, qp[0].y);
+  for (let i = 1; i < qp.length; i++) ctx.lineTo(qp[i].x, qp[i].y);
+  ctx.closePath();
+
+  ctx.fillStyle = roof ? "rgba(218,158,98,.018)" : "rgba(17,72,100,.44)";
+  ctx.fill();
+
+  // 网格裁剪在参考面轮廓内
+  ctx.clip();
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const q of g.Q) {
+    if (q.x < minX) minX = q.x;
+    if (q.x > maxX) maxX = q.x;
+    if (q.y < minY) minY = q.y;
+    if (q.y > maxY) maxY = q.y;
+  }
+  const width = Math.max(maxX - minX, maxY - minY);
+  const step = width > 70 ? 10 : width > 42 ? 5 : width > 22 ? 2 : 1;
+  ctx.strokeStyle = roof ? "rgba(240,190,140,.16)" : "rgba(100,200,230,.14)";
+  ctx.lineWidth = 0.7;
+  ctx.beginPath();
+  for (let x = Math.ceil(minX / step) * step; x <= maxX; x += step) {
+    const a = cam.project([x, minY - 2, refZ]);
+    const b = cam.project([x, maxY + 2, refZ]);
+    if (a && b) { ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); }
+  }
+  for (let y = Math.ceil(minY / step) * step; y <= maxY; y += step) {
+    const a = cam.project([minX - 2, y, refZ]);
+    const b = cam.project([maxX + 2, y, refZ]);
+    if (a && b) { ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); }
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // 轮廓
+  ctx.save();
+  ctx.setLineDash([5, 4]);
+  ctx.strokeStyle = roof ? "rgba(242,185,123,.78)" : "rgba(96,211,242,.78)";
+  ctx.lineWidth = 1.1;
+  ctx.beginPath();
+  ctx.moveTo(qp[0].x, qp[0].y);
+  for (let i = 1; i < qp.length; i++) ctx.lineTo(qp[i].x, qp[i].y);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawPolyline(cam, pts3, color, width, dash, glow) {
+  ctx.save();
+  ctx.beginPath();
+  let started = false;
+  for (const p of pts3) {
+    const s = cam.project(p);
+    if (!s) { started = false; continue; }
+    if (!started) { ctx.moveTo(s.x, s.y); started = true; }
+    else ctx.lineTo(s.x, s.y);
+  }
+  if (dash) ctx.setLineDash(dash);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  if (glow) { ctx.shadowColor = color; ctx.shadowBlur = glow; }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function render() {
+  if (!ctx || !W || !H) return;
+  if (!APP.geom || !APP.stats) {
+    drawBg();
+    return;
+  }
+
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  drawBg();
+
+  const g = APP.geom;
+  const ex = APP.vScale;
+  const pivot = g.zPivot;
+  const refZ = (APP.ref - pivot) * ex;
+  const cam = makeProjector();
+
+  const D = g.V.map(v => [v.x, v.y, (v.z - pivot) * ex]);
+  const proj = D.map(p => cam.project(p));
+  const allFill = APP.ref >= g.zMax - 1e-6;
+
+  if (APP.show.plane && !allFill) drawPlane(cam, refZ, false);
+
+  // 顶点法线（用于孔位可见性判断）
+  const vn = g.P.map(() => [0, 0, 0]);
+  const L = norm3([-0.45, -0.62, 0.78]);
+  const faceList = [];
+
+  for (const t of g.all) {
+    const a = D[t.a], b = D[t.b], c = D[t.c];
+    const p0 = proj[t.a], p1 = proj[t.b], p2 = proj[t.c];
+    if (!p0 || !p1 || !p2) continue;
+
+    const n = norm3(cross3(vsub(b, a), vsub(c, a)));
+    if (n[2] < 0) { n[0] = -n[0]; n[1] = -n[1]; n[2] = -n[2]; }
+    // 累计顶点法线
+    if (t.a < g.P.length) { vn[t.a][0] += n[0]; vn[t.a][1] += n[1]; vn[t.a][2] += n[2]; }
+    if (t.b < g.P.length) { vn[t.b][0] += n[0]; vn[t.b][1] += n[1]; vn[t.b][2] += n[2]; }
+    if (t.c < g.P.length) { vn[t.c][0] += n[0]; vn[t.c][1] += n[1]; vn[t.c][2] += n[2]; }
+
+    const cen = [(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3];
+    const viewDir = norm3(vsub(cam.eye, cen));
+    if (dot3(n, viewDir) <= 0.015) continue;
+
+    const zTrue = (g.V[t.a].z + g.V[t.b].z + g.V[t.c].z) / 3;
+    const base = rampColor((zTrue - g.zMin) / (g.zMax - g.zMin || 1));
+    const k = 0.58 + 0.42 * Math.max(0, dot3(n, L)) + 0.09 * Math.max(0, dot3(n, viewDir));
+    faceList.push({
+      kind: "tri",
+      pts: [p0, p1, p2],
+      depth: (p0.z + p1.z + p2.z) / 3,
+      fill: shade(base, k),
+      alpha: 1
+    });
+  }
+
+  // 侧面（曲面边界到参考面）。所有侧面共用一条屏幕竖向渐变，避免圆弧分段出现条纹。
+  // 填方（参考面高于曲面）只画基准面与竖向虚线，避免遮住地形。
+  if (APP.show.plane && !allFill) {
+    const wallBase = allFill ? [174, 113, 72] : [47, 118, 151];
+    let minY = Infinity, maxY = -Infinity;
+    for (let i = 0; i < g.Q.length; i++) {
+      const za = (g.qz[i] - pivot) * ex;
+      const a = cam.project([g.Q[i].x, g.Q[i].y, za]);
+      const b = cam.project([g.Q[i].x, g.Q[i].y, refZ]);
+      if (a) { minY = Math.min(minY, a.y); maxY = Math.max(maxY, a.y); }
+      if (b) { minY = Math.min(minY, b.y); maxY = Math.max(maxY, b.y); }
+    }
+    let wallGrad = null;
+    if (Number.isFinite(minY) && maxY - minY > 1) {
+      wallGrad = ctx.createLinearGradient(0, minY, 0, maxY);
+      const rgb = wallBase.join(",");
+      if (allFill) {
+        wallGrad.addColorStop(0, "rgba(" + rgb + ",.30)");
+        wallGrad.addColorStop(0.55, "rgba(" + rgb + ",.15)");
+        wallGrad.addColorStop(1, "rgba(" + rgb + ",.035)");
+      } else {
+        wallGrad.addColorStop(0, "rgba(" + rgb + ",.055)");
+        wallGrad.addColorStop(0.45, "rgba(" + rgb + ",.18)");
+        wallGrad.addColorStop(1, "rgba(" + rgb + ",.40)");
+      }
+    }
+    if (wallGrad) {
+      for (let i = 0; i < g.Q.length; i++) {
+        const j = (i + 1) % g.Q.length;
+        const qa = g.Q[i], qb = g.Q[j];
+        const za = (g.qz[i] - pivot) * ex;
+        const zb = (g.qz[j] - pivot) * ex;
+        if (Math.abs(za - refZ) < 1e-7 && Math.abs(zb - refZ) < 1e-7) continue;
+        const a = cam.project([qa.x, qa.y, za]);
+        const b = cam.project([qb.x, qb.y, zb]);
+        const c = cam.project([qb.x, qb.y, refZ]);
+        const d = cam.project([qa.x, qa.y, refZ]);
+        if (!a || !b || !c || !d) continue;
+        faceList.push({
+          kind: "quad",
+          pts: [a, b, c, d],
+          depth: (a.z + b.z + c.z + d.z) / 4,
+          fill: wallGrad,
+          alpha: 1
+        });
+      }
+    }
+  }
+
+  faceList.sort((a, b) => b.depth - a.depth);
+
+  const showSurface = APP.show.surface;
+  const showMesh = APP.show.mesh;
+
+  for (const f of faceList) {
+    const pts = f.pts;
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.closePath();
+    ctx.globalAlpha = f.alpha;
+    if (showSurface || f.kind !== "tri") {
+      ctx.fillStyle = f.fill;
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    if (f.kind === "tri") {
+      if (showMesh) {
+        ctx.strokeStyle = showSurface ? "rgba(210,240,255,.15)" : "rgba(120,215,245,.38)";
+        ctx.lineWidth = 0.6;
+      } else if (showSurface) {
+        ctx.strokeStyle = f.fill;
+        ctx.lineWidth = 0.6;
+      } else {
+        ctx.strokeStyle = "rgba(120,215,245,.28)";
+        ctx.lineWidth = 0.7;
+      }
+      ctx.stroke();
+    } else {
+      // 侧面不描边，避免圆弧分段产生竖条纹
+    }
+  }
+
+  if (APP.show.plane && allFill) {
+    drawPlane(cam, refZ, true);
+    drawPlaneBadge(cam, refZ);
+  }
+
+  // 边界线
+  drawPolyline(cam, g.hull.map(i => [g.P[i].x, g.P[i].y, (g.P[i].z - pivot) * ex]),
+    "rgba(255,255,255,.52)", 1, null, 0);
+  drawPolyline(cam, g.Q.map((q, i) => [q.x, q.y, (g.qz[i] - pivot) * ex]),
+    "rgba(87,216,250,.95)", 1.5, [6, 4], 8);
+
+  // 填方棱柱：用竖向虚线表示曲面到参考面的厚度，不遮挡地形
+  if (APP.show.plane && allFill) {
+    ctx.save();
+    ctx.setLineDash([3, 4]);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(242,185,123,.42)";
+    for (let i = 0; i < g.arcs.length; i++) {
+      const arc = g.arcs[i];
+      const k = arc[Math.floor(arc.length / 2)];
+      const top = cam.project([g.Q[k].x, g.Q[k].y, (g.qz[k] - pivot) * ex]);
+      const bot = cam.project([g.Q[k].x, g.Q[k].y, refZ]);
+      if (!top || !bot) continue;
+      ctx.beginPath();
+      ctx.moveTo(top.x, top.y);
+      ctx.lineTo(bot.x, bot.y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // 孔位与钻孔
+  screenHoles = [];
+  const normals = vn.map(v => norm3(v));
+  const eye = cam.eye;
+
+  if (APP.show.holes && !allFill) {
+    for (let i = 0; i < g.P.length; i++) {
+      if (dot3(normals[i], vsub(eye, D[i])) <= 0.02) continue;
+      const top = proj[i];
+      const bot = cam.project([D[i][0], D[i][1], refZ]);
+      if (!top || !bot) continue;
+      ctx.save();
+      ctx.setLineDash([2, 3]);
+      ctx.strokeStyle = "rgba(255,152,92,.55)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(top.x, top.y);
+      ctx.lineTo(bot.x, bot.y);
+      ctx.stroke();
+      ctx.restore();
+      ctx.fillStyle = "rgba(255,152,92,.8)";
+      ctx.beginPath();
+      ctx.arc(bot.x, bot.y, 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  if (APP.show.collars) {
+    for (let i = 0; i < g.P.length; i++) {
+      const s = proj[i];
+      if (!s) continue;
+      if (dot3(normals[i], vsub(eye, D[i])) <= 0.02) continue;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, 2.4, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffd166";
+      ctx.fill();
+      ctx.lineWidth = 0.8;
+      ctx.strokeStyle = "rgba(4,16,28,.78)";
+      ctx.stroke();
+      screenHoles.push({
+        x: s.x, y: s.y, label: g.P[i].label, z: g.P[i].z,
+        depth: g.P[i].z - APP.ref
+      });
+    }
+  }
+
+  drawAxes(cam);
+  drawCompass(cam);
+  drawScaleBar();
+}
+
+function drawPlaneBadge(cam, refZ) {
+  const g = APP.geom;
+  let cx = 0, cy = 0;
+  for (const q of g.Q) { cx += q.x; cy += q.y; }
+  cx /= g.Q.length; cy /= g.Q.length;
+  const p = cam.project([cx, cy, refZ]);
+  if (!p) return;
+  const text = "参考面 " + APP.ref.toFixed(3) + " m";
+  ctx.save();
+  ctx.font = "600 9px 'Microsoft YaHei',sans-serif";
+  const tw = ctx.measureText(text).width;
+  const w = tw + 18, h = 22;
+  let x = p.x - w / 2, y = p.y - h - 6;
+  if (y < 10) y = p.y + 8;
+  x = clamp(x, 8, W - w - 8);
+  ctx.fillStyle = "rgba(10,28,45,.78)";
+  ctx.strokeStyle = "rgba(240,185,123,.42)";
+  ctx.lineWidth = 1;
+  roundRectPath(ctx, x, y, w, h, 6);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#f0c08c";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, x + 9, y + h / 2 + 0.5);
+  ctx.restore();
+}
+
+function drawAxes(cam) {
+  ctx.save();
+  ctx.translate(54, 132);
+  ctx.fillStyle = "rgba(8,24,40,.55)";
+  ctx.strokeStyle = "rgba(120,190,225,.16)";
+  ctx.lineWidth = 1;
+  roundRectPath(ctx, -24, -24, 48, 48, 8);
+  ctx.fill();
+  ctx.stroke();
+
+  const o = cam.project(CAM.target);
+  if (o) {
+    const dirs = [
+      [3, 0, 0, "X", "#ff8a80"],
+      [0, 3, 0, "Y", "#8be9a4"],
+      [0, 0, 3, "Z", "#82c8ff"]
+    ];
+    for (const [dx, dy, dz, label, color] of dirs) {
+      const q = cam.project([CAM.target[0] + dx, CAM.target[1] + dy, CAM.target[2] + dz]);
+      if (!q) continue;
+      let vx = q.x - o.x, vy = q.y - o.y;
+      const l = Math.hypot(vx, vy);
+      if (l < 1.2) continue;
+      vx /= l; vy /= l;
+      const sx = vx * 15, sy = vy * 15;
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(sx, sy);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx - vx * 3.5 - vy * 2.2, sy - vy * 3.5 + vx * 2.2);
+      ctx.lineTo(sx - vx * 3.5 + vy * 2.2, sy - vy * 3.5 - vx * 2.2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.font = "600 7.5px 'Microsoft YaHei',sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(label, sx * 1.32, sy * 1.32);
+    }
+  }
+  ctx.restore();
+}
+
+function drawCompass(cam) {
+  const x = W - 49, y = 84, r = 18;
+  const o = cam.project(CAM.target);
+  const n = cam.project([CAM.target[0], CAM.target[1] + 10, CAM.target[2]]);
+  let ang = 0;
+  if (o && n) {
+    const dx = n.x - o.x, dy = n.y - o.y;
+    if (Math.hypot(dx, dy) > 0.3) ang = Math.atan2(dx, -dy);
+  }
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(8,24,40,.55)";
+  ctx.fill();
+  ctx.strokeStyle = "rgba(140,205,235,.2)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  for (let i = 0; i < 4; i++) {
+    const a = i * Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a) * (r - 3), Math.sin(a) * (r - 3));
+    ctx.lineTo(Math.cos(a) * (r - 1), Math.sin(a) * (r - 1));
+    ctx.strokeStyle = "rgba(150,205,235,.35)";
+    ctx.stroke();
+  }
+
+  ctx.rotate(ang);
+  ctx.beginPath();
+  ctx.moveTo(0, -12);
+  ctx.lineTo(4.2, 4);
+  ctx.lineTo(0, 1.6);
+  ctx.lineTo(-4.2, 4);
+  ctx.closePath();
+  ctx.fillStyle = "#ff8a75";
+  ctx.fill();
+  ctx.font = "700 7px 'Microsoft YaHei',sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#ffd0c4";
+  ctx.fillText("N", 0, -14.2);
+  ctx.restore();
+}
+
+function drawScaleBar() {
+  const mpp = CAM.ortho ? (CAM.viewSize / H) : (2 * CAM.dist * Math.tan(CAM.fov / 2)) / H;
+  const raw = 70 * mpp;
+  const pow = Math.pow(10, Math.floor(Math.log10(Math.max(raw, 1e-6))));
+  const nn = raw / pow;
+  const nice = nn < 1.5 ? 1 : nn < 3.5 ? 2 : nn < 7.5 ? 5 : 10;
+  const meters = nice * pow;
+  const px = clamp(meters / mpp, 34, 150);
+  const x0 = W / 2 - px / 2;
+  const y0 = H - 45;
+
+  ctx.save();
+  ctx.strokeStyle = "rgba(190,220,238,.65)";
+  ctx.fillStyle = "rgba(190,220,238,.78)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.lineTo(x0 + px, y0);
+  ctx.moveTo(x0, y0 - 3);
+  ctx.lineTo(x0, y0 + 3);
+  ctx.moveTo(x0 + px, y0 - 3);
+  ctx.lineTo(x0 + px, y0 + 3);
+  ctx.stroke();
+  ctx.font = "9px 'Microsoft YaHei',sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+  ctx.fillText((meters >= 1 ? meters.toLocaleString("zh-CN") : meters.toFixed(1)) + " m", x0 + px / 2, y0 - 5);
+  ctx.restore();
+}
+
+/* ============================================================
+   交互
+   ============================================================ */
+function resetView(animate) {
+  if (!CAM.home) return;
+  if (!animate) {
+    CAM.yaw = CAM.home.yaw;
+    CAM.pitch = CAM.home.pitch;
+    CAM.dist = CAM.home.dist;
+    CAM.viewSize = CAM.home.viewSize;
+    CAM.panX = CAM.home.panX;
+    CAM.panY = CAM.home.panY;
+    CAM.target = CAM.home.target.slice();
+    requestRender();
+    return;
+  }
+  animateCamera(CAM.home, 460);
+}
+
+function animateCamera(to, duration) {
+  if (animId) cancelAnimationFrame(animId);
+  const from = {
+    yaw: CAM.yaw,
+    pitch: CAM.pitch,
+    dist: CAM.dist,
+    viewSize: CAM.viewSize,
+    panX: CAM.panX,
+    panY: CAM.panY,
+    target: CAM.target.slice()
+  };
+  const toView = Number.isFinite(to.viewSize) ? to.viewSize : CAM.viewSize;
+  let dy = ((to.yaw - from.yaw + Math.PI) % (Math.PI * 2)) - Math.PI;
+  if (dy < -Math.PI) dy += Math.PI * 2;
+  const t0 = performance.now();
+
+  const step = (now) => {
+    const k = clamp((now - t0) / duration, 0, 1);
+    const e = 1 - Math.pow(1 - k, 3);
+    CAM.yaw = from.yaw + dy * e;
+    CAM.pitch = from.pitch + (to.pitch - from.pitch) * e;
+    CAM.dist = from.dist + (to.dist - from.dist) * e;
+    CAM.viewSize = from.viewSize + (toView - from.viewSize) * e;
+    CAM.panX = from.panX + (to.panX - from.panX) * e;
+    CAM.panY = from.panY + (to.panY - from.panY) * e;
+    CAM.target = [
+      from.target[0] + (to.target[0] - from.target[0]) * e,
+      from.target[1] + (to.target[1] - from.target[1]) * e,
+      from.target[2] + (to.target[2] - from.target[2]) * e
+    ];
+    render();
+    if (k < 1) animId = requestAnimationFrame(step);
+    else animId = 0;
+  };
+  animId = requestAnimationFrame(step);
+}
+
+function hideTooltip() {
+  el.tooltip.classList.remove("show");
+}
+
+function showTooltip(hole, px, py) {
+  const tip = el.tooltip;
+  tip.innerHTML = "<b>" + escapeHtml(hole.label) + "</b>" +
+    "<span>孔口高程 <i>" + hole.z.toFixed(3) + " m</i></span>" +
+    "<span>相对参考面 <i>" + (hole.depth >= 0 ? "挖深 " : "填高 ") + Math.abs(hole.depth).toFixed(3) + " m</i></span>";
+  tip.classList.add("show");
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  let left = px + 14, top = py - th - 6;
+  if (left + tw > W - 10) left = px - tw - 14;
+  if (top < 8) top = py + 14;
+  tip.style.left = left + "px";
+  tip.style.top = top + "px";
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+function onHover(e) {
+  if (drag || pinch || pointers.size > 0) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  let best = null, bd = 12;
+  for (const h of screenHoles) {
+    const d = Math.hypot(h.x - mx, h.y - my);
+    if (d < bd) { bd = d; best = h; }
+  }
+  if (best) showTooltip(best, mx, my);
+  else hideTooltip();
+}
+
+function bindPointer() {
+  canvas.addEventListener("pointerdown", (e) => {
+    if (animId) { cancelAnimationFrame(animId); animId = 0; }
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    canvas.setPointerCapture(e.pointerId);
+    hideTooltip();
+
+    if (pointers.size === 1) {
+      drag = {
+        id: e.pointerId,
+        x: e.clientX,
+        y: e.clientY,
+        mode: (e.button === 2 || e.button === 1 || e.shiftKey) ? "pan" : "rotate"
+      };
+      canvas.classList.add("dragging");
+    } else if (pointers.size === 2) {
+      const arr = Array.from(pointers.values());
+      pinch = {
+        d: Math.hypot(arr[0].x - arr[1].x, arr[0].y - arr[1].y),
+        mx: (arr[0].x + arr[1].x) / 2,
+        my: (arr[0].y + arr[1].y) / 2
+      };
+      drag = null;
+    }
+  });
+
+  canvas.addEventListener("pointermove", (e) => {
+    if (!pointers.has(e.pointerId)) { onHover(e); return; }
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointers.size === 2 && pinch) {
+      const arr = Array.from(pointers.values());
+      const d = Math.hypot(arr[0].x - arr[1].x, arr[0].y - arr[1].y);
+      const mx = (arr[0].x + arr[1].x) / 2;
+      const my = (arr[0].y + arr[1].y) / 2;
+      if (d > 2 && pinch.d > 2) {
+        if (CAM.ortho) CAM.viewSize = clamp(CAM.viewSize * pinch.d / d, CAM.minView, CAM.maxView);
+        else CAM.dist = clamp(CAM.dist * pinch.d / d, CAM.minDist, CAM.maxDist);
+      }
+      CAM.panX += mx - pinch.mx;
+      CAM.panY += my - pinch.my;
+      pinch = { d, mx, my };
+      requestRender();
+      return;
+    }
+
+    if (drag && drag.id === e.pointerId) {
+      const dx = e.clientX - drag.x;
+      const dy = e.clientY - drag.y;
+      drag.x = e.clientX;
+      drag.y = e.clientY;
+      if (drag.mode === "pan") {
+        CAM.panX += dx;
+        CAM.panY += dy;
+      } else {
+        CAM.yaw -= dx * 0.0075;
+        CAM.pitch = clamp(CAM.pitch + dy * 0.0055, 0.08, 1.56);
+      }
+      requestRender();
+    }
+  });
+
+  const endPointer = (e) => {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinch = null;
+    if (pointers.size === 1) {
+      const rest = Array.from(pointers.entries())[0];
+      drag = {
+        id: rest[0], x: rest[1].x, y: rest[1].y,
+        mode: "rotate"
+      };
+    } else if (pointers.size === 0) {
+      drag = null;
+      canvas.classList.remove("dragging");
+    }
+  };
+  canvas.addEventListener("pointerup", endPointer);
+  canvas.addEventListener("pointercancel", endPointer);
+  canvas.addEventListener("pointerleave", (e) => {
+    if (!drag && pointers.size === 0) hideTooltip();
+  });
+  canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  canvas.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    if (animId) { cancelAnimationFrame(animId); animId = 0; }
+    const delta = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+    if (CAM.ortho) CAM.viewSize = clamp(CAM.viewSize * Math.exp(delta * 0.0011), CAM.minView, CAM.maxView);
+    else CAM.dist = clamp(CAM.dist * Math.exp(delta * 0.0011), CAM.minDist, CAM.maxDist);
+    requestRender();
+  }, { passive: false });
+
+  canvas.addEventListener("dblclick", () => resetView(true));
+}
+
+/* ============================================================
+   文件上传 / 导出
+   ============================================================ */
+async function handleFile(file) {
+  if (!file) return;
+  if (file.size > 24 * 1024 * 1024) {
+    toast("文件超过 24 MB，请检查是否选错文件。", true);
+    return;
+  }
+  el.loading.hidden = false;
+  hideTooltip();
+  await new Promise(r => setTimeout(r, 40));
+  try {
+    const buffer = await file.arrayBuffer();
+    const text = decodeText(buffer);
+    const pts = parsePointsFromText(text);
+    setData(pts, file.name, false);
+  } catch (e) {
+    console.error(e);
+    toast(e.message || "文件解析失败，请检查 SCR 内容。", true);
+  } finally {
+    el.loading.hidden = true;
+  }
+}
+
+function bindUI() {
+  const drop = el.drop;
+  const input = el.fileInput;
+  drop.addEventListener("click", () => input.click());
+  drop.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); }
+  });
+  input.addEventListener("change", () => {
+    if (input.files && input.files[0]) handleFile(input.files[0]);
+    input.value = "";
+  });
+
+  ["dragenter", "dragover"].forEach(type => {
+    drop.addEventListener(type, (e) => {
+      e.preventDefault(); e.stopPropagation();
+      drop.classList.add("drag");
+    });
+  });
+  ["dragleave", "drop"].forEach(type => {
+    drop.addEventListener(type, (e) => {
+      e.preventDefault(); e.stopPropagation();
+      drop.classList.remove("drag");
+    });
+  });
+  drop.addEventListener("drop", (e) => {
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  });
+
+  el.resetSample.addEventListener("click", () => {
+    APP.ref = 781;
+    APP.offset = 1;
+    el.refInput.value = "781.000";
+    el.offsetInput.value = "1.000";
+    setData(SAMPLE_POINTS.map(a => ({ x: a[0], y: a[1], z: a[2], label: a[3] })), SAMPLE_NAME, true);
+  });
+
+  let refTimer = 0;
+  el.refInput.addEventListener("input", () => {
+    const v = Number(el.refInput.value);
+    if (!Number.isFinite(v) || el.refInput.value === "") return;
+    APP.ref = v;
+    APP.stats = computeStats(APP.geom, APP.ref);
+    updateUI();
+    requestRender();
+    clearTimeout(refTimer);
+    refTimer = setTimeout(() => {
+      autoScale();
+      fitHome();
+      resetView(true);
+    }, 360);
+  });
+  el.refInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      clearTimeout(refTimer);
+      setRef(el.refInput.value, true);
+      el.refInput.blur();
+    }
+  });
+  el.refInput.addEventListener("change", () => {
+    const v = Number(el.refInput.value);
+    if (Number.isFinite(v)) {
+      clearTimeout(refTimer);
+      setRef(v, true);
+    }
+  });
+
+  $$(".chip[data-ref]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      setRef(Number(btn.dataset.ref), true);
+    });
+  });
+
+  el.offsetInput.addEventListener("input", () => {
+    if (el.offsetInput.value === "") return;
+    const raw = Number(el.offsetInput.value);
+    if (!Number.isFinite(raw)) return;
+    const v = clamp(raw, 0, 5);
+    if (raw !== v) el.offsetInput.value = v.toFixed(2);
+    APP.offset = v;
+    rebuild(true);
+  });
+
+  el.tgSurface.addEventListener("change", () => { APP.show.surface = el.tgSurface.checked; requestRender(); });
+  el.tgMesh.addEventListener("change", () => { APP.show.mesh = el.tgMesh.checked; requestRender(); });
+  el.tgCollars.addEventListener("change", () => { APP.show.collars = el.tgCollars.checked; requestRender(); });
+  el.tgHoles.addEventListener("change", () => { APP.show.holes = el.tgHoles.checked; requestRender(); });
+  el.tgPlane.addEventListener("change", () => { APP.show.plane = el.tgPlane.checked; requestRender(); });
+
+  el.exagRange.addEventListener("input", () => {
+    const oldHome = CAM.home ? CAM.home.dist : null;
+    const oldHomeView = CAM.home ? CAM.home.viewSize : null;
+    const oldView = CAM.viewSize;
+    APP.vScale = Number(el.exagRange.value);
+    el.exagVal.textContent = APP.vScale.toFixed(2) + "×";
+    fitHome();
+    if (oldHome && CAM.home && oldHome > 0) {
+      CAM.dist = clamp(CAM.dist * CAM.home.dist / oldHome, CAM.minDist, CAM.maxDist);
+    }
+    if (oldHomeView && CAM.home && oldHomeView > 0) {
+      CAM.viewSize = clamp(oldView * CAM.home.viewSize / oldHomeView, CAM.minView, CAM.maxView);
+    }
+    requestRender();
+  });
+
+  el.btnReset.addEventListener("click", () => resetView(true));
+  el.btnTop.addEventListener("click", () => {
+    if (!CAM.home) return;
+    animateCamera({
+      yaw: -Math.PI / 2,
+      pitch: 1.555,
+      dist: CAM.home.dist * 0.98,
+      viewSize: CAM.home.viewSize,
+      panX: 0,
+      panY: 0,
+      target: CAM.home.target.slice()
+    }, 460);
+  });
+  el.btnExport.addEventListener("click", exportImage);
+
+  window.addEventListener("resize", () => {
+    resizeCanvas();
+    requestRender();
+  });
+  if (window.ResizeObserver) {
+    new ResizeObserver(() => {
+      resizeCanvas();
+      requestRender();
+    }).observe(stage);
+  }
+}
+
+function roundRectPath(c, x, y, w, h, r) {
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r);
+  c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r);
+  c.arcTo(x, y, x + w, y, r);
+  c.closePath();
+}
+
+function exportImage() {
+  render();
+  const out = document.createElement("canvas");
+  out.width = canvas.width;
+  out.height = canvas.height;
+  const c = out.getContext("2d");
+  c.drawImage(canvas, 0, 0);
+  c.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+  const s = APP.stats;
+
+  // 标题
+  c.fillStyle = "rgba(5,16,28,.62)";
+  roundRectPath(c, 22, 18, Math.min(330, W * 0.52), 64, 12);
+  c.fill();
+  c.fillStyle = "#5fc4e6";
+  c.font = "700 8px 'Microsoft YaHei',sans-serif";
+  c.fillText("BLAST EARTHWORK · 3D", 38, 38);
+  c.fillStyle = "#ffffff";
+  c.font = "600 16px 'Microsoft YaHei',sans-serif";
+  c.fillText(APP.site + " · 三维土方", 38, 58);
+  c.fillStyle = "#91aec3";
+  c.font = "9px 'Microsoft YaHei',sans-serif";
+  c.fillText(s.holes + " 孔 · 外延 " + APP.offset.toFixed(2) + " m · 参考面 " + APP.ref.toFixed(3) + " m", 38, 73);
+
+  // 土方量卡片
+  const isFill = s.fill > s.cut + 1e-6;
+  const main = Math.max(s.cut, s.fill);
+  const cw = 220, ch = 92, cx0 = W - cw - 22, cy0 = H - ch - 22;
+  c.fillStyle = "rgba(8,26,44,.88)";
+  c.strokeStyle = "rgba(92,174,220,.25)";
+  c.lineWidth = 1;
+  roundRectPath(c, cx0, cy0, cw, ch, 14);
+  c.fill();
+  c.stroke();
+  c.fillStyle = "#7da8c6";
+  c.font = "700 8px 'Microsoft YaHei',sans-serif";
+  c.fillText(isFill ? "填 方 量" : "挖 方 量", cx0 + 14, cy0 + 20);
+  c.fillStyle = isFill ? "#ffc477" : "#7fe0ff";
+  c.font = "700 26px 'Microsoft YaHei',sans-serif";
+  c.fillText(fmt0(main), cx0 + 14, cy0 + 50);
+  c.fillStyle = "#8db2c9";
+  c.font = "9px 'Microsoft YaHei',sans-serif";
+  c.fillText("m³   挖方 " + fmt0(s.cut) + " · 填方 " + fmt0(s.fill), cx0 + 14, cy0 + 68);
+  c.fillStyle = "#91aec2";
+  c.fillText("投影面积 " + fmt(s.extArea, 1) + " m²", cx0 + 14, cy0 + 82);
+
+  // 图例
+  const gx = 22, gy = H - 50;
+  c.fillStyle = "rgba(9,26,43,.7)";
+  roundRectPath(c, gx, gy - 19, 206, 42, 9);
+  c.fill();
+  const grd = c.createLinearGradient(gx + 10, 0, gx + 196, 0);
+  grd.addColorStop(0, "#2b6f8e");
+  grd.addColorStop(0.34, "#4f9f8b");
+  grd.addColorStop(0.61, "#9dbf6a");
+  grd.addColorStop(0.82, "#e3c56b");
+  grd.addColorStop(1, "#d97b5a");
+  c.fillStyle = grd;
+  c.fillRect(gx + 10, gy - 8, 186, 6);
+  c.fillStyle = "#9dbccf";
+  c.font = "8px 'Microsoft YaHei',sans-serif";
+  c.fillText("孔口高程  " + s.zMin.toFixed(1) + " – " + s.zMax.toFixed(1) + " m", gx + 10, gy + 13);
+
+  const a = document.createElement("a");
+  const base = (APP.site || "土方三维").replace(/[\\/:*?"<>|]/g, "_");
+  a.download = base + "_三维土方_" + APP.ref.toFixed(0) + "m.png";
+  a.href = out.toDataURL("image/png");
+  a.click();
+}
+
+/* ============================================================
+   启动
+   ============================================================ */
+function boot() {
+  cacheDom();
+  resizeCanvas();
+  bindPointer();
+  bindUI();
+
+  APP.ref = 781;
+  el.refInput.value = "781.000";
+  APP.offset = 1;
+  el.offsetInput.value = "1.000";
+
+  APP.points = SAMPLE_POINTS.map(a => ({ x: a[0], y: a[1], z: a[2], label: a[3] }));
+  APP.fileName = SAMPLE_NAME;
+  APP.site = inferSite(APP.points, SAMPLE_NAME);
+  APP.isSample = true;
+
+  if (rebuild(false)) {
+    el.stageTitle.textContent = APP.site + " · 三维土方";
+  }
+
+  window.addEventListener("error", (e) => {
+    console.error(e.error || e.message);
+    toast("页面脚本错误：" + (e.message || "未知错误"), true);
+  });
+}
+
+boot();
+</script>
+</body>
+</html>

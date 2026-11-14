@@ -18,3 +18,8 @@ def mine_safety_checklist_view(request):
 def zhuangyao_structure_view(request):
     path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "装药结构图工具.html")
     return FileResponse(open(path, "rb"), content_type="text/html")
+
+# 变电站机房东炮 · 爆破土方三维分析
+def tufang3d_view(request):
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "变电站_机房东炮_土方三维.html")
+    return FileResponse(open(path, "rb"), content_type="text/html")

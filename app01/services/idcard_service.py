@@ -87,6 +87,10 @@ def straighten_idcard(uploaded_file):
         import traceback; traceback.print_exc()
         pass
 
+    # 尺寸兜底：分割检出失败时原图直通，这里统一强制到 1011×639（与检出成功路径一致）
+    if img_cv.shape[1] != 1011 or img_cv.shape[0] != 639:
+        img_cv = cv2.resize(img_cv, (1011, 639))
+
     img_pil = Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
     buf = io.BytesIO()
     img_pil.save(buf, format='JPEG', quality=90)
