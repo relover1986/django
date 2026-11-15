@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>隧道布孔图</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; font-family: "PingFang SC", system-ui, sans-serif; }
+  body { display: flex; background: #f4f5f7; color: #222; }
+  .panel {
+    width: 300px; flex: none; background: #fff; border-right: 1px solid #ddd;
+    padding: 14px 16px; overflow-y: auto; font-size: 13px;
+  }
+  .panel h1 { font-size: 15px; margin: 0 0 4px; }
+  .hint { color: #888; font-size: 12px; line-height: 1.6; margin-bottom: 12px; }
+  .grp { border-top: 1px solid #eee; padding-top: 10px; margin-top: 10px; }
+  .grp h2 { font-size: 12px; color: #666; margin: 0 0 8px; font-weight: 600; }
+  .row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+  .row label { flex: 1; color: #444; }
+  .row input[type=number] { width: 84px; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+  .row input[type=text] { flex: 1; padding: 4px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  button {
+    padding: 6px 10px; border: 1px solid #ccc; background: #fff; border-radius: 4px;
+    font-size: 13px; cursor: pointer;
+  }
+  button:hover { background: #f0f0f0; }
+  button.primary { background: #1a73e8; border-color: #1a73e8; color: #fff; }
+  button.primary:hover { background: #1557b0; }
+  .modes { display: flex; gap: 6px; }
+  .modes button { flex: 1; }
+  .modes button.on { background: #1a73e8; border-color: #1a73e8; color: #fff; }
+  .stat { background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px; line-height: 1.7; font-size: 13px; }
+  .stat b { font-size: 15px; }
+  .stage { flex: 1; min-width: 0; display: flex; }
+  svg { width: 100%; height: 100vh; display: block; background: #fff; touch-action: none; }
+  .hole { cursor: grab; }
+  .hole:active { cursor: grabbing; }
+  svg.add-mode .hole { cursor: crosshair; }
+  @media print {
+    .panel { display: none; }
+    svg { height: 100vh; }
+  }
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <h1>隧道炮孔布置</h1>
+  <div class="hint">
+    坐标原点 = 断面左下角，单位 cm，y 向上。<br>
+    移动：拖动炮孔 · 添加：点空白处 · 删除：点炮孔<br>
+    Delete 删除选中 · 方向键微调（Shift ×10）
+  </div>
+
+  <div class="modes">
+    <button id="mMove" class="on">移动</button>
+    <button id="mAdd">添加</button>
+    <button id="mDel">删除</button>
+  </div>
+
+  <div class="grp">
+    <h2>断面参数</h2>
+    <div class="row"><label>总宽 W</label><input type="number" id="fW" step="1"></div>
+    <div class="row"><label>总高 H</label><input type="number" id="fH" step="1"></div>
+    <div class="row"><label>拱高（矢高）</label><input type="number" id="fRise" step="1"></div>
+  </div>
+
+  <div class="grp">
+    <h2>布孔参数</h2>
+    <div class="row"><label>目标孔数</label><input type="number" id="fN" step="1" min="1"></div>
+    <div class="row"><label>周边孔间距</label><input type="number" id="fPer" step="1" min="10"></div>
+    <div class="row"><label>内部孔起始间距</label><input type="number" id="fInt" step="1" min="10"></div>
+    <div class="row"><label>底板孔间距</label><input type="number" id="fFloor" step="1" min="10"></div>
+    <div class="row"><label>底板孔离帮</label><input type="number" id="fInset" step="1" min="0"></div>
+    <div class="btns">
+      <button id="btnGen" class="primary">自动布孔</button>
+      <button id="btnClear">清空孔位</button>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h2>选中孔坐标</h2>
+    <div class="row"><label>X</label><input type="number" id="fX" step="1" disabled></div>
+    <div class="row"><label>Y</label><input type="number" id="fY" step="1" disabled></div>
+    <div class="btns">
+      <button id="btnDel">删除选中</button>
+      <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" id="fNum">显示编号</label>
+    </div>
+  </div>
+
+  <div class="grp">
+    <h2>标题 / 导出</h2>
+    <div class="row"><input type="text" id="fTitle"></div>
+    <div class="btns">
+      <button id="btnCsv">导出坐标 CSV</button>
+      <button id="btnSvg">导出 SVG</button>
+      <button id="btnReset">恢复默认</button>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="stat" id="stat"></div>
+  </div>
+</div>
+
+<div class="stage">
+  <svg id="cv" xmlns="http://www.w3.org/2000/svg"></svg>
+</div>
+
+<script>
+'use strict';
+
+var DEF = { W:780, H:660, rise:258, per:80, int:80, floor:100, floorInset:60,
+            N:110, title:'#1 施工支洞III类围岩布孔示意图' };
+var S = Object.assign({}, DEF);
+var holes = [];        // [[x,y], ...] 工程坐标
+var selected = -1;
+var mode = 'move';
+var showNum = false;
+var dragIdx = -1;
+
+/* ---------- 几何 ---------- */
+function geom() {
+  var wall = S.H - S.rise;
+  var R = (Math.pow(S.W/2, 2) + S.rise*S.rise) / (2*S.rise);
+  var cy = wall + S.rise - R;
+  return { wall: wall, R: R, cy: cy };
+}
+function archAngles(g) {
+  return [ Math.atan2(g.wall - g.cy, -S.W/2),
+           Math.atan2(g.wall - g.cy,  S.W/2) ];
+}
+function archPoints(g, n) {
+  var a = archAngles(g), p = [];
+  for (var i = 0; i <= n; i++) {
+    var t = a[0] + (a[1]-a[0]) * i / n;
+    p.push([ S.W/2 + g.R*Math.cos(t), g.cy + g.R*Math.sin(t) ]);
+  }
+  return p;
+}
+function outline(g) {            // 闭合多边形：左墙→拱→右墙→底板闭合
+  var a = archAngles(g);
+  var arcLen = g.R * Math.abs(a[1]-a[0]);
+  var n = Math.max(8, Math.round(arcLen/6));
+  var p = [[0,0],[0,g.wall]];
+  archPoints(g, n).forEach(function(q){ p.push(q); });
+  p.push([S.W, g.wall], [S.W, 0]);
+  return p;
+}
+function segDist(pt, a, b) {
+  var vx=b[0]-a[0], vy=b[1]-a[1], wx=pt[0]-a[0], wy=pt[1]-a[1];
+  var L = vx*vx + vy*vy;
+  var t = L > 0 ? (wx*vx + wy*vy)/L : 0;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(pt[0]-(a[0]+t*vx), pt[1]-(a[1]+t*vy));
+}
+function distOutline(pt, poly) {
+  var d = 1e9;
+  for (var i = 0; i < poly.length; i++) {
+    d = Math.min(d, segDist(pt, poly[i], poly[(i+1) % poly.length]));
+  }
+  return d;
+}
+
+/* ---------- 布孔生成 ---------- */
+function perimeter(g) {
+  var hs = [], y, x, i;
+  for (y = S.per; y <= g.wall + 1e-6; y += S.per) hs.push([0, y]);      // 左墙
+  var a = archAngles(g);
+  var arcLen = g.R * Math.abs(a[1]-a[0]);
+  var n = Math.max(2, Math.round(arcLen / S.per));
+  for (i = 1; i < n; i++) {                                             // 拱圈
+    var t = a[0] + (a[1]-a[0]) * i / n;
+    hs.push([ S.W/2 + g.R*Math.cos(t), g.cy + g.R*Math.sin(t) ]);
+  }
+  for (y = S.per; y <= g.wall + 1e-6; y += S.per) hs.push([S.W, y]);    // 右墙
+  for (x = S.floorInset; x <= S.W - S.floorInset + 1e-6; x += S.floor)  // 底板
+    hs.push([x, 0]);
+  return hs;
+}
+function candidates(step) {
+  var g = geom(), poly = outline(g);
+  var marginOut = 50, marginBot = 50;
+  var nx = Math.floor((S.W - 2*marginOut) / step) + 1;
+  var x0 = (S.W - (nx-1)*step) / 2;
+  var ny = Math.floor((S.H - marginOut - marginBot) / step) + 1;
+  var pts = [];
+  for (var j = 0; j < ny; j++) {
+    for (var i = 0; i < nx; i++) {
+      var p = [ x0 + i*step, marginBot + j*step ];
+      if (distOutline(p, poly) >= marginOut) pts.push(p);
+    }
+  }
+  return pts;
+}
+function autoLayout() {
+  var per = perimeter(geom());
+  var needed = S.N - per.length;
+  if (needed <= 0) { holes = per; return; }
+  var step = S.int, cand = candidates(step);
+  while (cand.length < needed && step > 24) { step -= 2; cand = candidates(step); }
+  var interior;
+  if (cand.length <= needed) interior = cand;
+  else {                                                        // 均匀抽稀到目标数
+    interior = [];
+    for (var i = 0; i < needed; i++)
+      interior.push(cand[Math.floor(i * cand.length / needed)]);
+  }
+  holes = per.concat(interior);
+}
+
+/* ---------- 渲染 ---------- */
+function render() {
+  var g = geom();
+  var PAD_L = 60, PAD_R = 90, PAD_T = 60, PAD_B = 170;
+  var VW = S.W + PAD_L + PAD_R, VH = S.H + PAD_T + PAD_B;
+  var svg = document.getElementById('cv');
+  svg.setAttribute('viewBox', (-PAD_L) + ' ' + (-PAD_T) + ' ' + VW + ' ' + VH);
+  svg.classList.toggle('add-mode', mode === 'add');
+
+  function X(x){ return x; }
+  function Y(y){ return S.H - y; }
+
+  var s = '';
+  // 断面轮廓
+  var ap = archPoints(g, Math.max(8, Math.round(g.R*Math.abs(archAngles(g)[1]-archAngles(g)[0])/6)));
+  var d = 'M' + X(0) + ',' + Y(0) + ' L' + X(0) + ',' + Y(g.wall);
+  for (var i = 1; i < ap.length-1; i++) d += ' L' + X(ap[i][0]).toFixed(1) + ',' + Y(ap[i][1]).toFixed(1);
+  d += ' L' + X(S.W) + ',' + Y(g.wall) + ' L' + X(S.W) + ',' + Y(0);
+  s += '<path d="' + d + '" fill="none" stroke="#111" stroke-width="2"/>';
+  // 底板线（略伸出）
+  s += '<line x1="-25" y1="' + Y(0) + '" x2="' + (S.W+25) + '" y2="' + Y(0) + '" stroke="#111" stroke-width="2"/>';
+
+  // 尺寸标注
+  function dimH(x1, x2, y, txt) {
+    var o = '<line x1="' + x1 + '" y1="' + y + '" x2="' + x2 + '" y2="' + y + '" stroke="#333" stroke-width="1"/>';
+    o += '<line x1="' + x1 + '" y1="' + (y-6) + '" x2="' + x1 + '" y2="' + (y+6) + '" stroke="#333" stroke-width="1"/>';
+    o += '<line x1="' + x2 + '" y1="' + (y-6) + '" x2="' + x2 + '" y2="' + (y+6) + '" stroke="#333" stroke-width="1"/>';
+    o += '<text x="' + ((x1+x2)/2) + '" y="' + (y-8) + '" font-size="22" text-anchor="middle" fill="#111">' + txt + '</text>';
+    return o;
+  }
+  function dimV(y1, y2, x, txt) {
+    var o = '<line x1="' + x + '" y1="' + y1 + '" x2="' + x + '" y2="' + y2 + '" stroke="#333" stroke-width="1"/>';
+    o += '<line x1="' + (x-6) + '" y1="' + y1 + '" x2="' + (x+6) + '" y2="' + y1 + '" stroke="#333" stroke-width="1"/>';
+    o += '<line x1="' + (x-6) + '" y1="' + y2 + '" x2="' + (x+6) + '" y2="' + y2 + '" stroke="#333" stroke-width="1"/>';
+    var my = (y1+y2)/2;
+    o += '<text x="' + x + '" y="' + my + '" font-size="22" text-anchor="middle" fill="#111" ' +
+         'transform="rotate(-90 ' + x + ' ' + my + ')">' + txt + '</text>';
+    return o;
+  }
+  s += dimH(0, S.W, Y(0) + 45, String(S.W));
+  s += dimV(Y(S.H), Y(0), S.W + 45, String(S.H));
+  s += dimV(Y(S.H), Y(g.wall), S.W + 75, String(S.rise));
+  s += dimV(Y(g.wall), Y(0), S.W + 75, String(g.wall));
+
+  // 炮孔
+  for (var k = 0; k < holes.length; k++) {
+    var hx = X(holes[k][0]), hy = Y(holes[k][1]);
+    var sel = (k === selected);
+    var col = sel ? '#d00' : '#111';
+    var r = 7;
+    s += '<g class="hole" data-i="' + k + '">';
+    s += '<line x1="' + (hx-r) + '" y1="' + (hy-r) + '" x2="' + (hx+r) + '" y2="' + (hy+r) + '" stroke="' + col + '" stroke-width="2"/>';
+    s += '<line x1="' + (hx-r) + '" y1="' + (hy+r) + '" x2="' + (hx+r) + '" y2="' + (hy-r) + '" stroke="' + col + '" stroke-width="2"/>';
+    if (sel) s += '<circle cx="' + hx + '" cy="' + hy + '" r="13" fill="none" stroke="#d00" stroke-width="1.5"/>';
+    s += '<circle cx="' + hx + '" cy="' + hy + '" r="16" fill="transparent"/>';
+    if (showNum) s += '<text x="' + (hx+11) + '" y="' + (hy-9) + '" font-size="15" fill="#1a73e8">' + (k+1) + '</text>';
+    s += '</g>';
+  }
+
+  // 标题
+  s += '<text x="' + (S.W/2) + '" y="' + (Y(0) + 130) + '" font-size="26" text-anchor="middle" fill="#111">' +
+       escapeXml(S.title) + '（共 ' + holes.length + ' 孔）</text>';
+
+  svg.innerHTML = s;
+  updateStat();
+}
+function escapeXml(t) {
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function updateStat() {
+  var st = document.getElementById('stat');
+  var txt = '当前孔数：<b>' + holes.length + '</b> / 目标 ' + S.N;
+  if (holes.length !== S.N) txt += '　<span style="color:#c60">≠目标</span>';
+  txt += '<br>边墙高 ' + (S.H - S.rise) + ' · 拱半径 ' + geom().R.toFixed(1);
+  if (selected >= 0 && holes[selected])
+    txt += '<br>选中 #' + (selected+1) + '：(' + holes[selected][0].toFixed(1) + ', ' + holes[selected][1].toFixed(1) + ')';
+  st.innerHTML = txt;
+  var fx = document.getElementById('fX'), fy = document.getElementById('fY');
+  if (selected >= 0 && holes[selected]) {
+    fx.disabled = fy.disabled = false;
+    fx.value = holes[selected][0].toFixed(1);
+    fy.value = holes[selected][1].toFixed(1);
+  } else {
+    fx.disabled = fy.disabled = true;
+    fx.value = fy.value = '';
+  }
+}
+
+/* ---------- 交互 ---------- */
+function svgPt(evt) {
+  var svg = document.getElementById('cv');
+  var r = svg.getBoundingClientRect();
+  var vb = svg.viewBox.baseVal;
+  var s = Math.min(r.width / vb.width, r.height / vb.height);
+  var ox = r.left + (r.width - vb.width * s) / 2;
+  var oy = r.top + (r.height - vb.height * s) / 2;
+  var sx = (evt.clientX - ox) / s + vb.x;
+  var sy = (evt.clientY - oy) / s + vb.y;
+  return [sx, S.H - sy];                      // 工程坐标
+}
+function hitTest(evt) {
+  var p = svgPt(evt), best = -1, bd = 18;
+  for (var i = 0; i < holes.length; i++) {
+    var d = Math.hypot(holes[i][0]-p[0], holes[i][1]-p[1]);
+    if (d < bd) { bd = d; best = i; }
+  }
+  return best;
+}
+function save() {
+  try {
+    localStorage.setItem('buKong.v1', JSON.stringify({ S:S, holes:holes, showNum:showNum }));
+  } catch (e) {}
+}
+function load() {
+  try {
+    var raw = localStorage.getItem('buKong.v1');
+    if (!raw) return false;
+    var o = JSON.parse(raw);
+    if (o && o.S && Array.isArray(o.holes)) {
+      S = Object.assign({}, DEF, o.S);
+      holes = o.holes;
+      showNum = !!o.showNum;
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
+function setMode(m) {
+  mode = m;
+  document.getElementById('mMove').classList.toggle('on', m==='move');
+  document.getElementById('mAdd').classList.toggle('on', m==='add');
+  document.getElementById('mDel').classList.toggle('on', m==='del');
+  render();
+}
+
+function init() {
+  var svg = document.getElementById('cv');
+
+  svg.addEventListener('pointerdown', function(e) {
+    if (e.button !== 0) return;
+    var i = hitTest(e);
+    if (mode === 'move') {
+      if (i >= 0) { selected = i; dragIdx = i; svg.setPointerCapture(e.pointerId); render(); }
+      else { selected = -1; render(); }
+    } else if (mode === 'add') {
+      if (i >= 0) { selected = i; }
+      else {
+        var p = svgPt(e);
+        holes.push([ Math.max(0, Math.min(S.W, p[0])), Math.max(0, Math.min(S.H, p[1])) ]);
+        selected = holes.length - 1;
+      }
+      render(); save();
+    } else if (mode === 'del') {
+      if (i >= 0) { holes.splice(i, 1); selected = -1; render(); save(); }
+    }
+  });
+  svg.addEventListener('pointermove', function(e) {
+    if (dragIdx < 0) return;
+    var p = svgPt(e);
+    holes[dragIdx] = [ Math.max(-50, Math.min(S.W+50, p[0])), Math.max(-50, Math.min(S.H+50, p[1])) ];
+    render();
+  });
+  svg.addEventListener('pointerup', function() { if (dragIdx >= 0) { dragIdx = -1; save(); } });
+  svg.addEventListener('pointercancel', function() { dragIdx = -1; });
+  svg.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    var i = hitTest(e);
+    if (i >= 0) { holes.splice(i, 1); selected = -1; render(); save(); }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT') return;
+    if ((e.key === 'Delete' || e.key === 'Backspace') && selected >= 0) {
+      e.preventDefault(); holes.splice(selected,1); selected = -1; render(); save(); return;
+    }
+    var step = e.shiftKey ? 10 : 1, dx = 0, dy = 0;
+    if (e.key === 'ArrowLeft') dx = -step;
+    else if (e.key === 'ArrowRight') dx = step;
+    else if (e.key === 'ArrowUp') dy = step;
+    else if (e.key === 'ArrowDown') dy = -step;
+    else return;
+    if (selected >= 0) {
+      e.preventDefault();
+      holes[selected][0] += dx; holes[selected][1] += dy;
+      render(); save();
+    }
+  });
+
+  // 表单
+  function bindNum(id, key, after) {
+    document.getElementById(id).addEventListener('change', function() {
+      var v = parseFloat(this.value);
+      if (!isNaN(v) && v > 0) { S[key] = v; if (after) after(); render(); save(); }
+      else this.value = S[key];
+    });
+  }
+  bindNum('fW','W'); bindNum('fH','H'); bindNum('fRise','rise');
+  bindNum('fN','N'); bindNum('fPer','per'); bindNum('fInt','int');
+  bindNum('fFloor','floor'); bindNum('fInset','floorInset');
+
+  document.getElementById('fX').addEventListener('change', function(){
+    if (selected>=0){ var v=parseFloat(this.value); if(!isNaN(v)){ holes[selected][0]=v; render(); save(); } }
+  });
+  document.getElementById('fY').addEventListener('change', function(){
+    if (selected>=0){ var v=parseFloat(this.value); if(!isNaN(v)){ holes[selected][1]=v; render(); save(); } }
+  });
+  document.getElementById('fTitle').addEventListener('input', function(){ S.title = this.value; render(); save(); });
+  document.getElementById('fNum').addEventListener('change', function(){ showNum = this.checked; render(); save(); });
+
+  document.getElementById('mMove').addEventListener('click', function(){ setMode('move'); });
+  document.getElementById('mAdd').addEventListener('click', function(){ setMode('add'); });
+  document.getElementById('mDel').addEventListener('click', function(){ setMode('del'); });
+  document.getElementById('btnGen').addEventListener('click', function(){ autoLayout(); selected=-1; render(); save(); });
+  document.getElementById('btnClear').addEventListener('click', function(){ holes=[]; selected=-1; render(); save(); });
+  document.getElementById('btnDel').addEventListener('click', function(){
+    if (selected>=0){ holes.splice(selected,1); selected=-1; render(); save(); }
+  });
+  document.getElementById('btnReset').addEventListener('click', function(){
+    S = Object.assign({}, DEF); holes = []; selected = -1; showNum = false;
+    try { localStorage.removeItem('buKong.v1'); } catch(e){}
+    syncForm(); autoLayout(); render(); save();
+  });
+  document.getElementById('btnCsv').addEventListener('click', function(){
+    var rows = ['序号,x_cm,y_cm'];
+    holes.forEach(function(h,i){ rows.push((i+1)+','+h[0].toFixed(1)+','+h[1].toFixed(1)); });
+    download(S.title + '_坐标.csv', '\ufeff' + rows.join('\n'), 'text/csv;charset=utf-8');
+  });
+  document.getElementById('btnSvg').addEventListener('click', function(){
+    var svg = document.getElementById('cv').cloneNode(true);
+    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    download(S.title + '.svg', new XMLSerializer().serializeToString(svg), 'image/svg+xml');
+  });
+
+  function syncForm() {
+    document.getElementById('fW').value = S.W;
+    document.getElementById('fH').value = S.H;
+    document.getElementById('fRise').value = S.rise;
+    document.getElementById('fN').value = S.N;
+    document.getElementById('fPer').value = S.per;
+    document.getElementById('fInt').value = S.int;
+    document.getElementById('fFloor').value = S.floor;
+    document.getElementById('fInset').value = S.floorInset;
+    document.getElementById('fTitle').value = S.title;
+    document.getElementById('fNum').checked = showNum;
+  }
+  function download(name, text, type) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type: type }));
+    a.download = name;
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+  }
+
+  var restored = load();
+  syncForm();
+  if (!restored || holes.length === 0) autoLayout();
+  render();
+}
+
+if (typeof document !== 'undefined') init();
+</script>
+</body>
+</html>

@@ -9,7 +9,7 @@ from django.shortcuts import redirect
 from django.urls import re_path
 from django.views.static import serve
 from schema_graph.views import Schema
-from lnjx2025.urls_tail import architecture_diagram_view, kanban_view, mine_safety_checklist_view, zhuangyao_structure_view, tufang3d_view, zhuangyao_horizontal_view, drill_layout_view
+from lnjx2025.urls_tail import architecture_diagram_view, kanban_view, mine_safety_checklist_view, zhuangyao_structure_view, tufang3d_view, zhuangyao_horizontal_view, drill_layout_view, bukong_tunnel_view, bukong_3d_view
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -85,6 +85,8 @@ urlpatterns = [
     path('tufang-3d/', tufang3d_view),
     path('zhuangyao-horizontal/', zhuangyao_horizontal_view),
     path('drill-layout/', drill_layout_view),
+    path('bukong-tunnel/', bukong_tunnel_view),
+    path('bukong-3d/', bukong_3d_view),
     path('schema/', Schema.as_view()),
 ]
 
