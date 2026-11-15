@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>水平孔装药结构示意图</title>
+<style>
+  :root{--ink:#111;--muted:#666;--bg:#f5f6f7;--accent:#1f4e79}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Microsoft YaHei","PingFang SC",system-ui,-apple-system,sans-serif;
+       background:var(--bg);color:var(--ink);-webkit-text-size-adjust:100%}
+  .wrap{display:flex;gap:16px;padding:16px;align-items:flex-start;max-width:1380px;margin:0 auto}
+  .panel{width:300px;flex:0 0 300px;background:#fff;border-radius:12px;padding:16px;
+         box-shadow:0 1px 8px rgba(0,0,0,.08)}
+  .panel h1{font-size:16px;margin:0 0 6px}
+  .hint{font-size:11.5px;color:var(--muted);line-height:1.6;margin:0 0 12px}
+  .tabs{display:flex;gap:6px;background:#eef1f5;border-radius:9px;padding:3px;margin-bottom:14px}
+  .tab{flex:1;padding:7px 0;border:0;border-radius:7px;background:transparent;color:#334;
+       font-size:12.5px;cursor:pointer;font-family:inherit}
+  .tab.on{background:#fff;color:var(--accent);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .sect{font-size:12px;color:var(--accent);font-weight:600;margin:2px 0 8px;padding-bottom:5px;
+        border-bottom:1px solid #eef1f5}
+  #pane-inter .sect{margin-top:16px;border-top:1px solid #eef1f5;padding-top:14px}
+  .field{display:flex;align-items:center;justify-content:space-between;margin:8px 0;font-size:13px}
+  .field label{color:#333}
+  .field input{width:112px;padding:7px 9px;border:1px solid #cfd6df;border-radius:7px;
+       font-size:13px;font-family:inherit;text-align:right;background:#fff}
+  .field input:focus{outline:2px solid #d7e6f5;border-color:#7aa7d0}
+  .field select{width:112px;padding:7px 6px;border:1px solid #cfd6df;border-radius:7px;
+       font-size:13px;font-family:inherit;background:#fff;color:#111}
+  .calc{margin-top:10px;font-size:12.5px;color:#0b6b3a;line-height:1.75}
+  .calc .dim{color:#777}
+  .fsbox{display:flex;align-items:center;gap:6px}
+  .mini{flex:none;width:36px;height:28px;padding:0;border-radius:7px;background:#eef1f5;color:#234;
+        font-size:13px;line-height:1;border:1px solid #dde3ea;cursor:pointer}
+  #fsVal{width:46px;text-align:center;font-size:12.5px;color:#234}
+  .row2{display:flex;gap:8px;margin-top:10px}
+  button{flex:1;padding:9px;border:0;border-radius:9px;background:var(--accent);color:#fff;
+         font-size:13px;cursor:pointer;font-family:inherit}
+  button.ghost{background:#eef1f5;color:#234}
+  button:active{transform:translateY(1px)}
+  .err{display:none;color:#c00;font-size:12.5px;margin-top:10px;line-height:1.6}
+  .stage-empty{color:#9aa4b0;font-size:13px;padding:48px 24px}
+  .stage{flex:1 1 auto;min-width:0;background:#fff;border-radius:12px;
+         box-shadow:0 1px 8px rgba(0,0,0,.08);padding:10px;display:flex;
+         justify-content:center;align-items:flex-start}
+  .stage svg{display:block;width:100%;height:auto;max-height:calc(100vh - 96px)}
+  @media (max-width:960px){
+    .wrap{flex-direction:column;padding:10px}
+    .panel{width:100%;flex:auto}
+    .stage{display:block;width:100%}
+  }
+  @media print{
+    @page{size:A4 landscape;margin:10mm}
+    body{background:#fff}
+    .panel{display:none}
+    .wrap{padding:0;display:block;max-width:none}
+    .stage{box-shadow:none;border-radius:0;padding:0;display:block}
+    .stage svg{width:100%;height:auto;max-height:none}
+  }
+  /* 只出图（供截图/打印）：?export=cont|inter|both&px=像素宽 */
+  body.export{background:#fff}
+  body.export .panel{display:none}
+  body.export .wrap{padding:0;margin:0;max-width:none;display:block}
+  body.export .stage{padding:0;margin:0;box-shadow:none;border-radius:0;display:block;background:#fff}
+  body.export .stage svg{width:auto;height:auto;max-height:none;display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside class="panel">
+    <h1>水平孔装药结构</h1>
+    <p class="hint">连续装药 / 间隔装药两种图式，改数字即时重绘；可导出 PNG、SVG 或打印存 PDF 插入设计文件。</p>
+
+    <div class="tabs">
+      <button class="tab on" data-tab="cont">连续装药</button>
+      <button class="tab" data-tab="inter">间隔装药</button>
+      <button class="tab" data-tab="both">两图</button>
+    </div>
+
+    <div class="pane" id="pane-cont">
+      <div class="sect">图一 · 连续装药</div>
+      <div class="field"><label>炮孔长 (m)</label><input id="c_L" type="text" inputmode="decimal" value="4"></div>
+      <div class="field"><label>填塞长度 (m)</label><input id="c_stem" type="text" inputmode="decimal" value="1.7"></div>
+      <div class="field"><label>药卷直径 (mm)</label><input id="c_dia" type="text" inputmode="decimal" value="32"></div>
+      <div class="field"><label>单节药卷长 (m)</label><input id="c_cl" type="text" inputmode="decimal" value="0.3"></div>
+      <div class="calc" id="c_calc"></div>
+    </div>
+
+    <div class="pane" id="pane-inter" hidden>
+      <div class="sect">图二 · 间隔装药</div>
+      <div class="field"><label>炮孔长 (m)</label><input id="i_L" type="text" inputmode="decimal" value="3.5"></div>
+      <div class="field"><label>装药段数</label><input id="i_n" type="text" inputmode="numeric" value="3"></div>
+      <div class="field"><label>每段装药长 (m)</label><input id="i_ls" type="text" inputmode="decimal" value="0.3"></div>
+      <div class="field"><label>每段药量 (kg)</label><input id="i_q" type="text" inputmode="decimal" value="0.3"></div>
+      <div class="field"><label>填塞长度 (m)</label><input id="i_stem" type="text" inputmode="decimal" value="0.5"></div>
+      <div class="calc" id="i_calc"></div>
+    </div>
+
+    <div class="field" style="margin-top:14px"><label>出图宽度 (mm)</label><input id="outw" type="text" inputmode="decimal" value="160"></div>
+    <div class="field"><label>图中字体</label>
+      <select id="font">
+        <option value="simsun">宋体</option>
+        <option value="yahei">微软雅黑</option>
+      </select>
+    </div>
+    <div class="field"><label>图中字号</label>
+      <div class="fsbox">
+        <button class="mini" id="fsDown">A−</button>
+        <span id="fsVal">100%</span>
+        <button class="mini" id="fsUp">A+</button>
+      </div>
+    </div>
+
+    <div class="row2">
+      <button id="png">导出 PNG</button>
+      <button id="svg" class="ghost">导出 SVG</button>
+    </div>
+    <div class="row2">
+      <button id="print">打印 / 存 PDF</button>
+      <button class="ghost" id="reset">恢复默认</button>
+    </div>
+    <div class="err" id="err"></div>
+  </aside>
+
+  <main class="stage"><div id="canvas"></div></main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const $ = id => document.getElementById(id);
+  const FONTS = {
+    simsun:"SimSun, 宋体, serif",
+    yahei:"'Microsoft YaHei', 'PingFang SC', sans-serif"
+  };
+  let FONTKEY = "simsun";
+  const fontFamily = () => FONTS[FONTKEY] || FONTS.simsun;
+  const DEFS = '<defs><marker id="arw" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="5.2" markerHeight="5.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#111"/></marker></defs>';
+  const CUR = {w:1000, h:300};
+
+  let FS = 1;
+  let TAB = "cont";
+
+  const DEFAULTS = {
+    c_L:"4", c_stem:"1.7", c_dia:"32", c_cl:"0.3",
+    i_L:"3.5", i_n:"3", i_ls:"0.3", i_q:"0.3", i_stem:"0.5",
+    outw:"160"
+  };
+
+  /* ---------- 基础工具 ---------- */
+  const T = n => n * FS;                       // 字号随倍率缩放
+  const f1 = v => { const r = Math.round(v*1000)/1000; return String(r); };
+  const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const units = s => { let u = 0; for (const ch of s) u += /[\u4e00-\u9fa5\uff00-\uffef]/.test(ch) ? 1 : 0.58; return Math.max(u, 0.6); };
+  const fitT = (text, size, avail) => Math.max(7, Math.min(size, avail / units(text)));
+
+  const txt = (x, y, text, size, anchor, weight) =>
+    `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${size.toFixed(1)}"` +
+    ` text-anchor="${anchor || 'middle'}"${weight ? ` font-weight="${weight}"` : ''} fill="#111">${esc(text)}</text>`;
+
+  const vln = (x, y1, y2, w, color) =>
+    `<line x1="${x.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x.toFixed(1)}" y2="${y2.toFixed(1)}"` +
+    ` stroke="${color || '#111'}" stroke-width="${w || 0.75}"/>`;
+
+  function dimH(o, x1, x2, y, text, size, above, arrows, availExtra){
+    const mk = arrows === false ? '' : ' marker-start="url(#arw)" marker-end="url(#arw)"';
+    o.push(`<line x1="${x1.toFixed(1)}" y1="${y}" x2="${x2.toFixed(1)}" y2="${y}" stroke="#111" stroke-width="0.9"${mk}/>`);
+    if (arrows === false){
+      o.push(`<line x1="${x1.toFixed(1)}" y1="${y - 3.2}" x2="${x1.toFixed(1)}" y2="${y + 3.2}" stroke="#111" stroke-width="1.1"/>`);
+      o.push(`<line x1="${x2.toFixed(1)}" y1="${y - 3.2}" x2="${x2.toFixed(1)}" y2="${y + 3.2}" stroke="#111" stroke-width="1.1"/>`);
+    }
+    const w = Math.abs(x2 - x1) - 2 + (availExtra || 0);
+    o.push(txt((x1 + x2) / 2, above ? y - 10 : y + size + 5, text, fitT(text, size, w), 'middle'));
+  }
+
+  function callout(o, text, x, y, anchor, pts, sizeIn){
+    const size = sizeIn;
+    o.push(txt(x, y, text, size, anchor));
+    const w = units(text) * size;
+    const sx = (anchor === 'end') ? x + 4 : x + w + 4;
+    const sy = y - size * 0.32;
+    const path = pts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+    o.push(`<polyline points="${sx.toFixed(1)},${sy.toFixed(1)} ${path}" fill="none" stroke="#111" stroke-width="0.9" marker-end="url(#arw)"/>`);
+  }
+
+  /* ---------- 参数读取与校验 ---------- */
+  const num = id => { const v = parseFloat(String($(id).value).replace(/[,\s]/g, '')); return isFinite(v) ? v : NaN; };
+
+  function readCont(){
+    return { L:num('c_L'), stem:num('c_stem'), dia:num('c_dia'), cl:num('c_cl') };
+  }
+  function validateCont(p){
+    if (!isFinite(p.L) || p.L <= 0) return "炮孔长要填大于 0 的数字";
+    if (!isFinite(p.stem) || p.stem < 0) return "填塞长度不能为负";
+    if (p.stem >= p.L) return "填塞长度必须小于炮孔长";
+    if (!isFinite(p.dia) || p.dia < 20 || p.dia > 300) return "药卷直径请填 20~300 mm";
+    if (!isFinite(p.cl) || p.cl <= 0 || p.cl > 1) return "单节药卷长请填 0~1 m";
+    return "";
+  }
+
+  function readInter(){
+    const L = num('i_L'), nRaw = num('i_n'), ls = num('i_ls'), q = num('i_q'), stem = num('i_stem');
+    const n = Math.round(nRaw);
+    const gap = (isFinite(L) && isFinite(ls) && isFinite(stem) && n > 1) ? (L - n*ls - stem) / (n - 1) : 0;
+    return {L, n, ls, q, stem, gap, qty: (isFinite(q) ? n*q : NaN)};
+  }
+  function validateInter(p){
+    if (!isFinite(p.L) || p.L <= 0) return "炮孔长要填大于 0 的数字";
+    if (!isFinite(p.n) || p.n < 2 || p.n > 10) return "装药段数请填 2~10 的整数（单段请用连续装药）";
+    if (!isFinite(p.ls) || p.ls <= 0) return "每段装药长要大于 0";
+    if (!isFinite(p.q) || p.q <= 0) return "每段药量要大于 0";
+    if (!isFinite(p.stem) || p.stem < 0) return "填塞长度不能为负";
+    if (p.n * p.ls + p.stem >= p.L) return "装药段 + 填塞已超过炮孔长，请减小装药或填塞";
+    if (p.n > 1 && p.gap < 0.02) return "间隔长度太小（＜0.02 m），请调整参数";
+    return "";
+  }
+
+  /* ---------- 图一：连续装药 ---------- */
+  function contFigure(p, uid){
+    const X0 = 96, X1 = 892, W = X1 - X0, H = 282;
+    const yD1 = 44, yD2 = 98, yCart = 126;
+    const HY = 146, HH = 64, HB = 210;
+    const yW = HB - 13;
+    const charge = p.L - p.stem;
+    const s = W / p.L;
+    const stemX = X0 + charge * s;
+    const n = Math.max(1, Math.round(charge / p.cl));
+    const o = [];
+    const clip = 'clip_' + uid;
+
+    /* 炮孔（白底） */
+    o.push(`<rect x="${X0}" y="${HY}" width="${W}" height="${HH}" fill="#fff"/>`);
+
+    /* 装药段：45°斜线（八节药卷） */
+    o.push(`<defs><clipPath id="${clip}"><rect x="${X0}" y="${HY}" width="${(stemX - X0).toFixed(1)}" height="${HH}"/></clipPath></defs>`);
+    o.push(`<g clip-path="url(#${clip})" stroke="#111" stroke-width="1">`);
+    for (let x = X0 - HH; x < stemX + 10; x += 78){
+      o.push(`<line x1="${x.toFixed(1)}" y1="${HB}" x2="${(x + HH).toFixed(1)}" y2="${HY}"/>`);
+    }
+    o.push(`</g>`);
+
+    /* 每两节一道分隔线 */
+    for (let k = 2; k < n; k += 2){
+      const x = X0 + (stemX - X0) * k / n;
+      o.push(vln(x, HY, HB, 0.8));
+    }
+
+    /* 填塞段（炮泥） */
+    o.push(`<rect x="${stemX.toFixed(1)}" y="${HY}" width="${(X1 - stemX).toFixed(1)}" height="${HH}" fill="#111"/>`);
+    o.push(`<rect x="${X0}" y="${HY}" width="${W}" height="${HH}" fill="none" stroke="#111" stroke-width="1.5"/>`);
+
+    /* 电子雷管 + 导线 */
+    o.push(`<rect x="${X0 + 7}" y="${yW - 9}" width="26" height="9" fill="#fff" stroke="#333" stroke-width="0.9"/>`);
+    o.push(`<line x1="${X0 + 33}" y1="${yW}" x2="936" y2="${yW}" stroke="#111" stroke-width="1.1"/>`);
+    o.push(`<rect x="936" y="${yW - 14}" width="22" height="28" fill="#fff" stroke="#111" stroke-width="1.1"/>`);
+
+    /* 尺寸线 */
+    o.push(vln(X0, 40, HY - 2), vln(X1, 40, HY - 2), vln(stemX, 94, HY - 2));
+    dimH(o, X0, X1, yD1, `炮孔长${f1(p.L)}m`, T(14.5), true);
+    dimH(o, X0, stemX, yD2, `装药长度${f1(charge)}m`, T(13.5), true, false);
+    dimH(o, stemX, X1, yD2, `填塞段${f1(p.stem)}m`, T(13.5), true, false);
+
+    const ct = `${n}节Φ${f1(p.dia)}药卷`;
+    o.push(txt((X0 + stemX) / 2, yCart, ct, fitT(ct, T(13), stemX - X0 - 14), 'middle'));
+
+    /* 引出标注 */
+    callout(o, '电子雷管', 8, 250, 'start', [[X0 + 12, yW - 4]], T(13.5));
+    const stx = Math.min(700, stemX + 26);
+    callout(o, '炮泥', stx, 250, 'start', [[stemX + 16, HB + 1]], T(13.5));
+    callout(o, '电子雷管导线', 760, 250, 'start', [[X1 + 30, yW]], T(13.5));
+
+    return {h:H, body:o.join('')};
+  }
+
+  /* ---------- 图二：间隔装药 ---------- */
+  function interFigure(p, uid){
+    const X0 = 96, X1 = 892, W = X1 - X0, H = 302;
+    const yT1 = 22, yT2 = 44, yD1 = 58, yD2 = 86;
+    const HY = 116, HH = 80, HB = 196;
+    const bTop = 126, bBot = 186, yCord = 176, yBoard = 190;
+    const s = W / p.L;
+    const n = p.n;
+
+    /* 各装药段起止 */
+    const xs = [];
+    let x = X0;
+    for (let i = 0; i < n; i++){
+      xs.push([x, x + p.ls * s]);
+      x += p.ls * s + (i < n - 1 ? p.gap * s : 0);
+    }
+    const stemX = X0 + (n * p.ls + (n - 1) * p.gap) * s;
+
+    const o = [];
+    o.push(`<rect x="${X0}" y="${HY}" width="${W}" height="${HH}" fill="#fff"/>`);
+
+    /* 竹片 */
+    o.push(`<rect x="${X0}" y="${yBoard - 2}" width="${(stemX - X0).toFixed(1)}" height="4" fill="#f7f7f7" stroke="#555" stroke-width="0.7"/>`);
+
+    /* 药卷（网格剖面） */
+    xs.forEach((seg, i) => {
+      const a = seg[0], b = seg[1], w = b - a;
+      o.push(`<rect x="${a.toFixed(1)}" y="${bTop}" width="${w.toFixed(1)}" height="${bBot - bTop}" fill="#fff" stroke="#111" stroke-width="1"/>`);
+      const cols = Math.max(2, Math.round(w / 13)), rows = 5;
+      for (let c = 1; c < cols; c++){
+        const gx = a + w * c / cols;
+        o.push(vln(gx, bTop, bBot, 0.55, '#666'));
+      }
+      for (let r = 1; r < rows; r++){
+        const gy = bTop + (bBot - bTop) * r / rows;
+        o.push(`<line x1="${a.toFixed(1)}" y1="${gy.toFixed(1)}" x2="${b.toFixed(1)}" y2="${gy.toFixed(1)}" stroke="#666" stroke-width="0.55"/>`);
+      }
+    });
+
+    /* 导爆索 */
+    o.push(`<line x1="${X0 + 6}" y1="${yCord}" x2="${X1}" y2="${yCord}" stroke="#111" stroke-width="3.6"/>`);
+
+    /* 填塞段 */
+    o.push(`<rect x="${stemX.toFixed(1)}" y="${HY}" width="${(X1 - stemX).toFixed(1)}" height="${HH}" fill="#111"/>`);
+    o.push(`<rect x="${X0}" y="${HY}" width="${W}" height="${HH}" fill="none" stroke="#111" stroke-width="1.5"/>`);
+
+    /* 电子雷管 + 导线 */
+    o.push(`<rect x="${X0 + 6}" y="${yCord - 9}" width="26" height="9" fill="#fff" stroke="#333" stroke-width="0.9"/>`);
+    o.push(`<line x1="${X1}" y1="${yCord}" x2="936" y2="${yCord}" stroke="#111" stroke-width="1.1"/>`);
+    o.push(`<rect x="936" y="${yCord - 14}" width="22" height="28" fill="#fff" stroke="#111" stroke-width="1.1"/>`);
+
+    /* 尺寸线：炮孔长 */
+    o.push(vln(X0, 54, HY - 1), vln(X1, 54, HY - 1));
+    o.push(`<line x1="${X0}" y1="${yD1}" x2="${X1}" y2="${yD1}" stroke="#111" stroke-width="0.9" marker-start="url(#arw)" marker-end="url(#arw)"/>`);
+    o.push(txt(W / 2 + X0, yT1, `炮孔长${f1(p.L)}m`, fitT(`炮孔长${f1(p.L)}m`, T(14.5), W - 20), 'middle'));
+    o.push(txt(W / 2 + X0, yT2, `总装药量${f1(p.qty)}kg`, fitT(`总装药量${f1(p.qty)}kg`, T(13.5), W - 20), 'middle'));
+
+    /* 尺寸线：分段 */
+    o.push(`<line x1="${X0}" y1="${yD2}" x2="${X1}" y2="${yD2}" stroke="#111" stroke-width="0.9" marker-start="url(#arw)" marker-end="url(#arw)"/>`);
+    const bounds = [];
+    xs.forEach(seg => { bounds.push(seg[0]); bounds.push(seg[1]); });
+    bounds.push(stemX); bounds.push(X1);
+    const uniq = bounds.filter((v, i) => i === 0 || Math.abs(v - bounds[i - 1]) > 0.5)
+                       .filter(v => Math.abs(v - X0) > 0.5 && Math.abs(v - X1) > 0.5);
+    uniq.forEach(bx => {
+      o.push(`<line x1="${bx.toFixed(1)}" y1="${yD2 - 4}" x2="${bx.toFixed(1)}" y2="${yD2 + 4}" stroke="#111" stroke-width="1.1"/>`);
+      o.push(vln(bx, yD2 + 4, HY - 1, 0.6, '#777'));
+    });
+
+    const dimS = T(11);
+    xs.forEach((seg) => {
+      const cx = (seg[0] + seg[1]) / 2, w = seg[1] - seg[0];
+      o.push(txt(cx, yD2 - 8, `${f1(p.ls)}m`, fitT(`${f1(p.ls)}m`, dimS, w - 2), 'middle'));
+      const qs = `装药量${f1(p.q)}kg`;
+      o.push(txt(cx, yD2 + 17, qs, fitT(qs, dimS, w + 18), 'middle'));
+    });
+    for (let i = 0; i < n - 1; i++){
+      const g1 = xs[i][1], g2 = xs[i + 1][0], cx = (g1 + g2) / 2;
+      if (g2 - g1 < 42) continue;                 // 间隔太窄时省略文字，避免压字
+      const gs = `${f1(p.gap)}m间隔段`;
+      o.push(txt(cx, yD2 + 17, gs, fitT(gs, dimS + 0.5, g2 - g1 + 10), 'middle'));
+    }
+    const ss = `${f1(p.stem)}m填塞`;
+    o.push(txt((stemX + X1) / 2, yD2 + 17, ss, fitT(ss, dimS + 0.5, X1 - stemX + 24), 'middle'));
+
+    /* 引出标注 */
+    const bx = n > 1 ? (xs[1][0] + xs[1][1]) / 2 : (xs[0][0] + xs[0][1]) / 2;
+    callout(o, '电子雷管', 6, 214, 'start', [[X0 + 14, yCord - 4]], T(13));
+    callout(o, '炮孔', 24, 248, 'start', [[X0 + 6, HB - 2]], T(13));
+    callout(o, '导爆索', 372, 214, 'end', [[bx - 8, yCord]], T(13));
+    callout(o, '药卷', 372, 242, 'end', [[bx, bBot - 6]], T(13));
+    callout(o, '竹片', 372, 270, 'end', [[bx + 8, yBoard]], T(13));
+    callout(o, '炮泥', 646, 248, 'start', [[stemX + 22, HB + 1]], T(13));
+    callout(o, '电子雷管导线', 756, 248, 'start', [[X1 + 30, yCord]], T(13));
+
+    return {h:H, body:o.join('')};
+  }
+
+  /* ---------- 组装 ---------- */
+  function compose(){
+    const figs = [];
+    let err = '';
+    if (TAB === 'cont' || TAB === 'both'){
+      const p = readCont();
+      err = err || validateCont(p);
+      if (!err) figs.push({uid:'c', fig:contFigure(p, 'c')});
+    }
+    if (TAB === 'inter' || TAB === 'both'){
+      const p = readInter();
+      err = err || validateInter(p);
+      if (!err) figs.push({uid:'i', fig:interFigure(p, 'i')});
+    }
+    if (err) return {err};
+
+    const GAP = 26;
+    let y = 0;
+    const parts = [];
+    figs.forEach((f, i) => {
+      if (i) y += GAP;
+      parts.push(`<g transform="translate(0 ${y})">${f.fig.body}</g>`);
+      y += f.fig.h;
+    });
+    const h = Math.max(1, Math.round(y));
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 ${h}" width="1000" height="${h}" font-family="${fontFamily()}">${DEFS}${parts.join('')}</svg>`;
+    return {svg, h};
+  }
+
+  /* ---------- 面板计算说明 ---------- */
+  function updateCalc(){
+    const c = readCont();
+    if (isFinite(c.L) && isFinite(c.stem) && c.L > 0 && c.stem >= 0 && c.stem < c.L){
+      const ch = c.L - c.stem;
+      let s = `装药长度（自动）：<b>${f1(ch)} m</b> = ${f1(c.L)} − ${f1(c.stem)}`;
+      if (isFinite(c.cl) && c.cl > 0){
+        const n = Math.max(1, Math.round(ch / c.cl));
+        s += `<br>药卷：<b>${n} 节</b> Φ${f1(c.dia)} × ${f1(c.cl)} m ≈ ${f1(n * c.cl)} m`;
+        if (Math.abs(n * c.cl - ch) > 0.05) s += `<br><span class="dim">（节数取整标注，实际装药长度 ${f1(ch)} m）</span>`;
+      }
+      $('c_calc').innerHTML = s;
+    } else {
+      $('c_calc').innerHTML = '';
+    }
+
+    const p = readInter();
+    if (isFinite(p.L) && p.L > 0 && p.n >= 1 && isFinite(p.ls) && p.ls > 0 && isFinite(p.q) && p.q > 0){
+      let s = `间隔长度（自动）：<b>${p.gap > 0 ? f1(p.gap) : 0} m</b>`;
+      s += `<br>总装药量：<b>${f1(p.qty)} kg</b>（${p.n} 段 × ${f1(p.q)} kg）`;
+      s += `<br>装药合计 ${f1(p.n * p.ls)} m，填塞 ${f1(p.stem)} m`;
+      $('i_calc').innerHTML = s;
+    } else {
+      $('i_calc').innerHTML = '';
+    }
+  }
+
+  /* ---------- 渲染 ---------- */
+  function render(){
+    const box = $('err'), cv = $('canvas');
+    const res = compose();
+    if (res.err){
+      box.style.display = 'block';
+      box.textContent = '⚠ ' + res.err;
+      cv.innerHTML = '<div class="stage-empty">参数未通过校验，请按左侧提示修改</div>';
+    } else {
+      box.style.display = 'none';
+      cv.innerHTML = res.svg;
+      CUR.h = res.h;
+    }
+    updateCalc();
+  }
+
+  /* ---------- 导出 ---------- */
+  function outMm(){
+    const v = parseFloat($('outw').value);
+    return Math.min(400, Math.max(40, isFinite(v) ? v : 160));
+  }
+
+  function currentSVG(mmW){
+    const el = document.querySelector('#canvas svg');
+    if (!el) return null;
+    const node = el.cloneNode(true);
+    if (mmW){
+      node.setAttribute('width', mmW.toFixed(1) + 'mm');
+      node.setAttribute('height', (mmW * CUR.h / 1000).toFixed(1) + 'mm');
+    }
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(node);
+  }
+
+  const CRC_TABLE = (() => {
+    const tb = new Uint32Array(256);
+    for (let n = 0; n < 256; n++){
+      let c = n;
+      for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      tb[n] = c >>> 0;
+    }
+    return tb;
+  })();
+  function crc32(bytes){
+    let c = 0xFFFFFFFF;
+    for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+  function pngWithDpi(buf, dpi){
+    const src = new Uint8Array(buf);
+    if (src.length < 33 || src[0] !== 0x89 || src[1] !== 0x50) return buf;
+    const ihdrLen = (src[8] << 24 | src[9] << 16 | src[10] << 8 | src[11]) >>> 0;
+    const insertAt = 8 + 12 + ihdrLen;
+    const ppu = Math.round(dpi / 0.0254);
+    const chunk = new Uint8Array(4 + 4 + 9 + 4);
+    const dv = new DataView(chunk.buffer);
+    dv.setUint32(0, 9);
+    chunk.set([0x70, 0x48, 0x59, 0x73], 4);
+    dv.setUint32(8, ppu);
+    dv.setUint32(12, ppu);
+    chunk[16] = 1;
+    dv.setUint32(17, crc32(chunk.subarray(4, 17)));
+    const out = new Uint8Array(src.length + chunk.length);
+    out.set(src.subarray(0, insertAt), 0);
+    out.set(chunk, insertAt);
+    out.set(src.subarray(insertAt), insertAt + chunk.length);
+    return out.buffer;
+  }
+
+  function fileName(ext){
+    let nm;
+    if (TAB === 'cont'){
+      const c = readCont();
+      nm = `装药结构_连续装药_孔深${f1(c.L)}m_填塞${f1(c.stem)}m.${ext}`;
+    } else if (TAB === 'inter'){
+      const p = readInter();
+      nm = `装药结构_间隔装药_孔深${f1(p.L)}m_${p.n}段.${ext}`;
+    } else {
+      nm = `装药结构_连续+间隔.${ext}`;
+    }
+    return nm.replace(/[\\/:*?"<>|]/g, '-');
+  }
+
+  function saveBlob(blob, name){
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  }
+
+  $('svg').addEventListener('click', () => {
+    const s = currentSVG(outMm());
+    if (!s) return;
+    saveBlob(new Blob([s], {type:'image/svg+xml;charset=utf-8'}), fileName('svg'));
+  });
+
+  $('png').addEventListener('click', () => {
+    const s = currentSVG();
+    if (!s) return;
+    const mmW = outMm();
+    const pxW = Math.round(mmW / 25.4 * 300);
+    const pxH = Math.round(pxW * CUR.h / 1000);
+    const url = URL.createObjectURL(new Blob([s], {type:'image/svg+xml;charset=utf-8'}));
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = pxW; c.height = pxH;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, pxW, pxH);
+      ctx.drawImage(img, 0, 0, pxW, pxH);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => {
+        b.arrayBuffer().then(ab => saveBlob(new Blob([pngWithDpi(ab, 300)], {type:'image/png'}), fileName('png')));
+      }, 'image/png');
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      alert('PNG 导出失败，可改用「打印 / 存 PDF」。');
+    };
+    img.src = url;
+  });
+
+  $('print').addEventListener('click', () => window.print());
+
+  /* ---------- 字号 ---------- */
+  function showFS(){ $('fsVal').textContent = Math.round(FS * 100) + '%'; }
+  function setFS(v){
+    FS = Math.min(2.0, Math.max(0.7, Math.round(v * 10) / 10));
+    showFS();
+    try { localStorage.setItem('zhuangyao_h_fs', String(FS)); } catch (e) {}
+    render();
+  }
+  $('fsUp').addEventListener('click', () => setFS(FS + 0.1));
+  $('fsDown').addEventListener('click', () => setFS(FS - 0.1));
+
+  /* ---------- 页签 ---------- */
+  function applyTab(){
+    document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === TAB));
+    $('pane-cont').hidden = !(TAB === 'cont' || TAB === 'both');
+    $('pane-inter').hidden = !(TAB === 'inter' || TAB === 'both');
+  }
+  document.querySelectorAll('.tab').forEach(b => {
+    b.addEventListener('click', () => {
+      TAB = b.dataset.tab;
+      applyTab();
+      render();
+    });
+  });
+
+  /* ---------- 输入 / 恢复默认 ---------- */
+  const FIELDS = ['c_L','c_stem','c_dia','c_cl','i_L','i_n','i_ls','i_q','i_stem','outw'];
+  FIELDS.forEach(id => {
+    $(id).addEventListener('input', () => { saveParams(); render(); });
+    $(id).addEventListener('change', () => { saveParams(); render(); });
+  });
+
+  $('font').addEventListener('change', () => {
+    FONTKEY = $('font').value === 'yahei' ? 'yahei' : 'simsun';
+    saveParams();
+    render();
+  });
+
+  $('reset').addEventListener('click', () => {
+    for (const k in DEFAULTS) $(k).value = DEFAULTS[k];
+    FS = 1; showFS();
+    FONTKEY = 'simsun'; $('font').value = 'simsun';
+    saveParams();
+    render();
+  });
+
+  function saveParams(){
+    const o = { font: FONTKEY };
+    FIELDS.forEach(id => o[id] = $(id).value);
+    try { localStorage.setItem('zhuangyao_h_params', JSON.stringify(o)); } catch (e) {}
+  }
+  function loadParams(){
+    try {
+      const raw = localStorage.getItem('zhuangyao_h_params');
+      if (raw){
+        const o = JSON.parse(raw);
+        FIELDS.forEach(id => { if (typeof o[id] === 'string') $(id).value = o[id]; });
+        if (o.font === 'yahei'){ FONTKEY = 'yahei'; $('font').value = 'yahei'; }
+      }
+      const fs = parseFloat(localStorage.getItem('zhuangyao_h_fs'));
+      if (fs >= 0.7 && fs <= 2) FS = fs;
+    } catch (e) {}
+  }
+
+  /* ---------- 只出图模式（供批量截图/打印） ---------- */
+  function initExportMode(){
+    let q;
+    try { q = new URLSearchParams(location.search); } catch (e) { return false; }
+    const ex = q.get('export');
+    if (!ex) return false;
+    if (ex === 'cont' || ex === 'inter' || ex === 'both') TAB = ex;
+    document.body.classList.add('export');
+    applyTab();
+    render();
+    const px = Math.min(6000, Math.max(400, parseFloat(q.get('px')) || 1890));
+    const svg = document.querySelector('#canvas svg');
+    if (svg){
+      const h = Math.round(px * CUR.h / 1000);
+      svg.setAttribute('width', px);
+      svg.setAttribute('height', h);
+    }
+    return true;
+  }
+
+  /* ---------- 启动 ---------- */
+  loadParams();
+  try {
+    const q = new URLSearchParams(location.search);
+    const t = q.get('tab');
+    if (t === 'cont' || t === 'inter' || t === 'both') TAB = t;
+    FIELDS.forEach(id => { if (q.has(id)) $(id).value = q.get(id); });
+    if (q.get('font') === 'yahei'){ FONTKEY = 'yahei'; $('font').value = 'yahei'; }
+    if (q.has('fs')){
+      const v = parseFloat(q.get('fs'));
+      if (v >= 0.7 && v <= 2) FS = v;
+    }
+  } catch (e) {}
+  showFS();
+  if (!initExportMode()){
+    applyTab();
+    render();
+  }
+})();
+</script>
+</body>
+</html>

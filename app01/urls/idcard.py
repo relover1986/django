@@ -7,4 +7,5 @@ urlpatterns = [
     path("home/idcard_list/", views.idcard_list),
     path("home/idcard_batch_upload/", views.idcard_batch_upload),
     path("home/idcard_export_zip/", views.idcard_export_zip, name="idcard_export_zip"),
+    path("home/export_idcard_xlsx/", views.idcard_export_xlsx, name="idcard_export_xlsx"),
 ]

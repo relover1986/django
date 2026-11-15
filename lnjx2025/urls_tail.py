@@ -23,3 +23,12 @@ def zhuangyao_structure_view(request):
 def tufang3d_view(request):
     path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "变电站_机房东炮_土方三维.html")
     return FileResponse(open(path, "rb"), content_type="text/html")
+
+# 装药结构示意图工具 · 水平孔
+def zhuangyao_horizontal_view(request):
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "装药结构图工具_水平孔.html")
+    return FileResponse(open(path, "rb"), content_type="text/html")
+# 钻孔布置图工具
+def drill_layout_view(request):
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "钻孔布置图工具.html")
+    return FileResponse(open(path, "rb"), content_type="text/html")

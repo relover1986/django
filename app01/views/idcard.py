@@ -448,3 +448,36 @@ def idcard_batch_upload(request):
     models.IDCard.objects.create(**result)
     messages.success(request, "识别成功：" + result['name'] + " - " + result['id_number'])
     return redirect("/home/idcard_list/")
+
+
+@require_role("爆破工程技术人员", "资料员")
+def idcard_export_xlsx(request):
+    """导出全部身份证记录的 姓名+身份证号 名单 xlsx"""
+    from datetime import datetime
+    from io import BytesIO
+    from openpyxl.styles import Font
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "名单"
+    ws.append(["姓名", "身份证号"])
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+    for card in models.IDCard.objects.all().order_by('-created_at'):
+        ws.append([card.name or '', card.id_number or ''])
+    # 身份证号强制文本格式，防 Excel 变科学计数法
+    for row in ws.iter_rows(min_row=2, min_col=2, max_col=2):
+        for cell in row:
+            cell.number_format = '@'
+    ws.column_dimensions['A'].width = 12
+    ws.column_dimensions['B'].width = 22
+
+    bio = BytesIO()
+    wb.save(bio)
+    response = HttpResponse(
+        bio.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    filename = f"idcard_{datetime.now().strftime('%Y%m%d%H%M')}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response

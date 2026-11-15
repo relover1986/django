@@ -10,7 +10,7 @@ from .photo import photo_add, photo_delete, photo_batch_delete, photo_list, gene
 from .blasting_certificate import blastingcertificate_add, blastingcertificate_delete, blastingcertificate_list
 from .blasting_certificate import blastingcertificate_export_xlsx, blastingcertificate_export_zip
 # idcard
-from .idcard import idcard_add, idcard_delete, api_idcard_add, api_idcard_list, idcard_list, idcard_export_zip
+from .idcard import idcard_add, idcard_delete, api_idcard_add, api_idcard_list, idcard_list, idcard_export_zip, idcard_export_xlsx
 
 # ── 从 other.py 拆出的模块 ──
 from .drawing import tu_add, tu_delete, tu_list
