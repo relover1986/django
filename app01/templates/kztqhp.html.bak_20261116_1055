@@ -1,0 +1,25 @@
+{% extends "home.html" %}
+{% block content %}
+<br><br>
+<div style="margin: 20px;">
+    <h4>设计批量处理 · 上传</h4>
+    {% if error %}<p style="color: #c0392b; font-weight: bold;">{{ error }}</p>{% endif %}
+{% verbatim %}
+    <p>1. 同时上传 Excel 花名册(.xlsx) 和一个或多个 Word 模板(.docx)</p>
+    <p>2. Excel 第 1 行为表头，第 2 行起<strong>每行一个编号</strong>；编号列请以「编号」为表头</p>
+    <p>3. 按行生成：<strong>每行 x 每个模板各出一份</strong>（2 个编号 x 2 个模板 = 4 份）</p>
+    <p>4. Word 模板用双花括号占位符：{{编号}}、{{单元工程量}}……只替换花括号内内容，正文同名词不受影响</p>
+    <p>5. 没被替换的 {{xxx}} 会原样留在文档里，生成后检查是否缺字段（未命中也会记入服务器日志）</p>
+{% endverbatim %}
+</div>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div style="margin: 20px;">
+        <input type="file" name="file" multiple accept=".xlsx,.docx"
+               style="display: block; margin: 20px 0;">
+        <input type="submit" value="开始生成"
+               style="padding: 10px 20px; background: #007bff; color: white; border: none;">
+        <a href="/home/kztqhp/" style="margin-left: 14px;">返回列表</a>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,1255 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>钻孔布置平面图</title>
+<style>
+  :root{--ink:#111;--muted:#666;--bg:#f5f6f7;--accent:#1f4e79}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Microsoft YaHei","PingFang SC",system-ui,-apple-system,sans-serif;
+       background:var(--bg);color:var(--ink);-webkit-text-size-adjust:100%}
+  .wrap{display:flex;gap:16px;padding:16px;align-items:flex-start;max-width:1180px;margin:0 auto}
+  .panel{width:300px;flex:0 0 300px;background:#fff;border-radius:12px;padding:16px;
+         box-shadow:0 1px 8px rgba(0,0,0,.08)}
+  .panel h1{font-size:16px;margin:0 0 6px}
+  .hint{font-size:11.5px;color:var(--muted);line-height:1.6;margin-bottom:10px}
+  .field{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;font-size:13px}
+  .field label{color:#333;white-space:nowrap}
+  .field input[type=text],.field input[type=number],.field select{width:132px;padding:6px 8px;border:1px solid #cfd6df;
+       border-radius:7px;font-size:12.5px;font-family:inherit;text-align:right;background:#fff;color:var(--ink)}
+  .field select{text-align:left}
+  .field input[type=file]{width:150px;font-size:11px;color:#555}
+  .chk input{width:15px;height:15px;margin:0}
+  .calc{margin-top:10px;font-size:12px;color:#0b6b3a;line-height:1.75;border-top:1px dashed #dde3ea;padding-top:9px}
+  .calc b{color:#0b6b3a}
+  .fsbox{display:flex;align-items:center;gap:6px}
+  .mini{flex:none;width:34px;height:27px;padding:0;border-radius:7px;background:#eef1f5;color:#234;
+        font-size:13px;line-height:1;border:1px solid #dde3ea;cursor:pointer}
+  #fsVal{width:46px;text-align:center;font-size:12px;color:#234}
+  .row2{display:flex;gap:8px;margin-top:10px}
+  button{flex:1;padding:9px;border:0;border-radius:9px;background:var(--accent);color:#fff;
+         font-size:13px;cursor:pointer;font-family:inherit}
+  button.ghost{background:#eef1f5;color:#234}
+  button:active{transform:translateY(1px)}
+  .err{display:none;color:#c00;font-size:12.5px;margin-top:10px;line-height:1.6}
+  .stage{flex:0 1 auto;width:max-content;max-width:100%;background:#fff;border-radius:12px;
+         box-shadow:0 1px 8px rgba(0,0,0,.08);padding:8px;min-width:0;display:flex;
+         justify-content:center;align-items:flex-start}
+  svg{display:block;height:min(calc(100vh - 86px), 1010px);width:auto;max-width:100%}
+  @media (max-width:900px){.wrap{flex-direction:column;padding:10px}.panel{width:100%;flex:auto}
+    .stage{display:block}
+    svg{width:100%;height:auto}}
+  @media print{
+    @page{size:A4 portrait;margin:10mm}
+    body{background:#fff}
+    .panel{display:none}
+    .wrap{padding:0;display:block;max-width:none}
+    .stage{box-shadow:none;border-radius:0;padding:0;display:block}
+    svg{width:100%;height:auto;max-width:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <h1>钻孔布置平面图</h1>
+    <div class="hint">读 CASS 点文件（点号,编码,东坐标,北坐标,高程）。孔深＝孔口高程−设计标高＋超深，自动按整米分档并画分区界线。</div>
+
+    <div class="field"><label>图别</label>
+      <select id="fig">
+        <option value="plan">钻孔布置平面图</option>
+        <option value="net">起爆顺序及网路图</option>
+        <option value="simple">分区示意（简化）</option>
+      </select>
+    </div>
+    <div class="field"><label>数据文件 .dat</label><input id="file" type="file" accept=".dat,.txt"></div>
+    <div class="field"><label>设计标高 (m)</label><input id="z0" type="text" inputmode="decimal" value="718.000"></div>
+    <div class="field"><label>超深 (m)</label><input id="sub" type="text" inputmode="decimal" value="0.5~1.5"></div>
+    <div class="field"><label>孔间延期 (ms)</label><input id="dHole" type="text" inputmode="decimal" value="42"></div>
+    <div class="field"><label>排间延期 (ms)</label><input id="dRow" type="text" inputmode="decimal" value="65"></div>
+    <div class="field"><label>起爆方向</label>
+      <select id="dir">
+        <option value="n2s">自北向南</option>
+        <option value="s2n">自南向北</option>
+      </select>
+    </div>
+    <div class="field"><label>面积校准 (㎡)</label><input id="areafix" type="text" inputmode="decimal" value="0"></div>
+    <div class="field"><label>炸药单耗 (kg/m³)</label><input id="cons" type="text" inputmode="decimal" value="0.40"></div>
+    <div class="field"><label>超深分配</label>
+      <select id="submode">
+        <option value="linear">按挖深线性</option>
+        <option value="min">统一取下限</option>
+        <option value="max">统一取上限</option>
+      </select>
+    </div>
+    <div class="field"><label>孔深分界线</label>
+      <select id="zmode">
+        <option value="class">按孔深档（严格）</option>
+        <option value="trend">按趋势（平滑）</option>
+      </select>
+    </div>
+    <div class="field"><label>轮廓外扩 (m)</label><input id="buf" type="text" inputmode="decimal" value="1.0"></div>
+    <div class="field"><label>外轮廓外扩 (m)</label><input id="obuf" type="text" inputmode="decimal" value="3.0"></div>
+    <div class="field"><label>孔距标注</label>
+      <select id="spmode">
+        <option value="auto">自动统计</option>
+        <option value="fixed">统一填写</option>
+      </select>
+    </div>
+    <div class="field"><label>　</label><input id="spfix" type="text" inputmode="decimal" value="2.0"></div>
+    <div class="field"><label>出图宽度 (mm)</label><input id="outw" type="text" inputmode="decimal" value="145"></div>
+    <div class="field"><label>显示孔号</label><input id="showno" type="checkbox"></div>
+    <div class="field"><label>图中字号</label>
+      <div class="fsbox">
+        <button class="mini" id="fsDown">A−</button>
+        <span id="fsVal">100%</span>
+        <button class="mini" id="fsUp">A+</button>
+      </div>
+    </div>
+    <div class="calc" id="calc"></div>
+
+    <div class="row2">
+      <button id="png">导出 PNG</button>
+      <button id="svg" class="ghost">导出 SVG</button>
+    </div>
+    <div class="row2">
+      <button id="print">打印 / 存 PDF</button>
+      <button class="ghost" id="reset">恢复默认</button>
+    </div>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div class="stage"><div id="canvas"></div></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+const EMBEDDED = `机房东炮1,,569562.354,4714827.781,721.303
+机房东炮2,,569561.812,4714825.994,721.445
+机房东炮3,,569563.267,4714825.782,721.201
+机房东炮4,,569563.761,4714824.003,721.121
+机房东炮5,,569561.994,4714824.191,721.627
+机房东炮6,,569560.529,4714824.210,721.397
+机房东炮7,,569563.621,4714821.636,722.128
+机房东炮8,,569561.857,4714822.187,721.954
+机房东炮9,,569559.754,4714822.207,721.563
+机房东炮10,,569559.041,4714820.411,721.763
+机房东炮11,,569561.117,4714820.523,721.907
+机房东炮12,,569562.828,4714819.717,722.107
+机房东炮13,,569564.444,4714818.426,722.208
+机房东炮14,,569562.447,4714817.752,722.280
+机房东炮15,,569560.528,4714818.407,722.128
+机房东炮16,,569558.744,4714818.281,721.918
+机房东炮17,,569558.139,4714816.343,722.012
+机房东炮18,,569560.278,4714816.300,722.268
+机房东炮19,,569564.294,4714816.569,722.626
+机房东炮20,,569562.449,4714815.267,722.485
+机房东炮21,,569564.046,4714814.388,722.581
+机房东炮22,,569565.959,4714815.427,722.707
+机房东炮23,,569565.543,4714813.115,722.765
+机房东炮24,,569567.354,4714813.769,722.697
+机房东炮25,,569566.629,4714811.610,722.964
+机房东炮26,,569568.360,4714811.846,722.871
+机房东炮27,,569567.646,4714809.982,723.283
+机房东炮28,,569569.516,4714810.190,723.116
+机房东炮29,,569568.871,4714808.365,723.411
+机房东炮30,,569567.719,4714806.516,723.508
+机房东炮31,,569566.503,4714808.086,723.395
+机房东炮32,,569565.361,4714809.762,723.120
+机房东炮33,,569564.017,4714811.590,722.737
+机房东炮34,,569562.789,4714812.973,722.586
+机房东炮35,,569560.856,4714813.708,722.433
+机房东炮36,,569558.863,4714814.020,722.267
+机房东炮37,,569557.217,4714812.225,722.295
+机房东炮38,,569559.254,4714811.896,722.476
+机房东炮39,,569561.252,4714811.449,722.640
+机房东炮40,,569562.735,4714809.995,722.894
+机房东炮41,,569563.914,4714808.183,723.168
+机房东炮42,,569565.211,4714806.444,723.364
+机房东炮43,,569566.685,4714804.814,723.460
+机房东炮44,,569565.391,4714803.596,723.575
+机房东炮45,,569564.053,4714804.909,723.339
+机房东炮46,,569562.798,4714806.692,723.127
+机房东炮47,,569561.515,4714808.369,722.947
+机房东炮48,,569559.805,4714809.684,722.719
+机房东炮49,,569557.784,4714810.133,722.535
+机房东炮50,,569556.457,4714808.452,722.715
+机房东炮51,,569558.210,4714808.031,722.738
+机房东炮52,,569559.897,4714807.101,722.902
+机房东炮53,,569561.289,4714805.476,723.185
+机房东炮54,,569562.312,4714803.654,723.324
+机房东炮55,,569563.875,4714802.396,723.666
+机房东炮56,,569564.330,4714800.236,723.817
+机房东炮57,,569562.773,4714800.721,723.608
+机房东炮58,,569561.332,4714801.987,723.363
+机房东炮59,,569560.090,4714803.675,723.216
+机房东炮60,,569558.759,4714805.234,723.098
+机房东炮61,,569556.969,4714806.242,723.016
+机房东炮62,,569555.806,4714804.751,723.206
+机房东炮63,,569557.390,4714803.805,723.291
+机房东炮64,,569558.672,4714802.136,723.486
+机房东炮65,,569559.660,4714800.342,723.660
+机房东炮66,,569561.581,4714799.156,723.768
+机房东炮67,,569563.262,4714798.321,723.886
+机房东炮68,,569562.417,4714795.415,724.428
+机房东炮69,,569561.563,4714796.729,724.225
+机房东炮70,,569559.783,4714797.715,723.978
+机房东炮71,,569558.215,4714799.124,723.876
+机房东炮72,,569557.146,4714800.756,723.692
+机房东炮73,,569555.671,4714802.374,723.527
+机房东炮74,,569555.199,4714800.504,723.743
+机房东炮75,,569556.111,4714798.782,723.940
+机房东炮76,,569557.328,4714796.937,724.162
+机房东炮77,,569558.907,4714795.864,724.351
+机房东炮78,,569560.516,4714794.846,724.523
+机房东炮79,,569560.390,4714792.873,724.710
+机房东炮80,,569558.604,4714793.762,724.671
+机房东炮81,,569556.928,4714794.869,724.469
+机房东炮82,,569555.541,4714796.494,724.317
+机房东炮83,,569554.501,4714798.176,724.046
+机房东炮84,,569553.968,4714795.236,724.583
+机房东炮85,,569555.364,4714793.859,724.691
+机房东炮86,,569556.776,4714792.410,724.834
+机房东炮87,,569558.569,4714791.382,724.971
+机房东炮88,,569560.397,4714790.839,725.233
+机房东炮89,,569558.672,4714789.195,725.669
+机房东炮90,,569557.066,4714789.808,725.253
+机房东炮91,,569555.424,4714790.954,725.104
+机房东炮92,,569554.002,4714792.331,725.007
+机房东炮93,,569553.807,4714789.536,725.448
+机房东炮94,,569555.383,4714788.489,725.493
+机房东炮95,,569557.150,4714787.601,725.834
+机房东炮96,,569559.103,4714786.887,726.117
+机房东炮97,,569559.037,4714784.940,726.455
+机房东炮98,,569557.248,4714785.533,726.076
+机房东炮99,,569555.391,4714786.530,725.845
+机房东炮100,,569553.409,4714787.419,725.776`;
+
+const V = {W:760, H:1075};
+const AREA = {x0:206, x1:606, y0:92, y1:1002};   // 平面图可用区
+const DEFAULTS = {outw:"145", z0:"718.000", sub:"0.5~1.5", submode:"linear", zmode:"class", buf:"1.0",
+                  spmode:"auto", spfix:"2.0", showno:false};
+
+let FS = 1;
+try{ const v = parseFloat(localStorage.getItem("bpd_fs")); if (v >= 0.8 && v <= 2.0) FS = v; }catch(e){}
+const fs = n => (n * FS).toFixed(1);
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const f1 = v => (Math.round(v*10)/10).toFixed(1).replace(/\.0$/,"");
+const f2 = v => (Math.round(v*100)/100).toFixed(2);
+const units = s => { let u = 0; for (const ch of s) u += /[\u4e00-\u9fa5\uff00-\uffef]/.test(ch) ? 1 : 0.56; return u || 1; };
+const fit = (text, want, avail) => Math.min(want, avail / units(text));
+const median = a => { if (!a.length) return NaN; const b = a.slice().sort((x,y)=>x-y);
+  const m = b.length >> 1; return b.length % 2 ? b[m] : (b[m-1]+b[m])/2; };
+
+function parseSpec(v){
+  const s = String(v).trim().replace(/\s+/g,"").replace(/[mM米]+$/,"");
+  if (!s) return null;
+  const parts = s.split(/[~～\-–—至到]/).map(t => parseFloat(t)).filter(t => isFinite(t));
+  if (!parts.length) return null;
+  const a = Math.min.apply(null, parts), b = Math.max.apply(null, parts);
+  return {min:a, max:b, range: parts.length > 1 && a !== b};
+}
+
+/* CASS 点文件：点号,编码,Y(东),X(北),高程；也兼容空格分隔 */
+function parseDAT(txt){
+  const out = [];
+  txt.split(/\r?\n/).forEach(line => {
+    const t = line.trim();
+    if (!t || t.charAt(0) === ";") return;
+    const parts = t.split(/[,\s]+/).filter(Boolean);
+    if (parts.length < 4) return;
+    const nums = [];
+    for (let i = 1; i < parts.length; i++){
+      const v = Number(parts[i]);
+      if (isFinite(v)) nums.push(v);
+    }
+    if (nums.length < 3) return;
+    const n = nums.length;
+    const x = nums[n-3], y = nums[n-2], z = nums[n-1];
+    out.push({no: parts[0], x: x, y: y, z: z});
+  });
+  return out;
+}
+
+let DATA = parseDAT(EMBEDDED);
+let SRC = "内置示例（变电站 100 孔）";
+const STATE = {overallSp: 1.9};
+
+/* ---------- 逐孔：挖深 / 超深 / 孔深 ---------- */
+function applyDepth(z0, sub, mode){
+  const digs = DATA.map(p => p.z - z0);
+  const dmin = Math.min.apply(null, digs), dmax = Math.max.apply(null, digs);
+  DATA.forEach((p, i) => {
+    const dig = digs[i];
+    let sb;
+    if (mode === "min") sb = sub.min;
+    else if (mode === "max") sb = sub.max;
+    else sb = dmax > dmin ? sub.min + (sub.max - sub.min) * Math.max(0, Math.min(1, (dig - dmin)/(dmax - dmin))) : sub.min;
+    p.dig = dig;
+    p.sub = sb;
+    p.depth = Math.max(1, Math.round(dig + sb));
+    p.t = dig + sb;
+  });
+}
+
+function nnMedian(list){
+  if (list.length < 2) return NaN;
+  const ds = list.map((p, i) => {
+    let b = Infinity;
+    for (let j = 0; j < list.length; j++){
+      if (i === j) continue;
+      const dx = p[0]-list[j][0], dy = p[1]-list[j][1];
+      const d = dx*dx + dy*dy;
+      if (d < b) b = d;
+    }
+    return Math.sqrt(b);
+  });
+  return median(ds);
+}
+
+/* ---------- 距离场 + 孔深档归属场 ---------- */
+function buildField(px, ox, oy, gs, nx, ny){
+  const n = px.length;
+  const N = nx*ny;
+  const dist = new Float32Array(N);
+  const cls = new Float32Array(N);
+  for (let j = 0; j < ny; j++){
+    const py = oy + j*gs;
+    for (let i = 0; i < nx; i++){
+      const qx = ox + i*gs;
+      let md = Infinity, bi = 0;
+      for (let k = 0; k < n; k++){
+        const dx = qx - px[k][0], dy = py - px[k][1];
+        const d2 = dx*dx + dy*dy;
+        if (d2 < md){ md = d2; bi = k; }
+      }
+      dist[j*nx + i] = Math.sqrt(md);
+      cls[j*nx + i] = px[bi][2];
+    }
+  }
+  return {cls: cls, dist: dist};
+}
+
+/* 孔深趋势场（反距离加权），用于"平滑"分界线 */
+function trendField(px, ox, oy, gs, nx, ny, R2){
+  const N = nx*ny, val = new Float32Array(N);
+  const n = px.length;
+  for (let j = 0; j < ny; j++){
+    const py = oy + j*gs;
+    for (let i = 0; i < nx; i++){
+      const qx = ox + i*gs;
+      let sw = 0, sv = 0;
+      for (let k = 0; k < n; k++){
+        const dx = qx - px[k][0], dy = py - px[k][1];
+        const d2 = dx*dx + dy*dy;
+        if (d2 < R2){
+          const w = 1/(d2 + 0.25);
+          sw += w;
+          sv += w*px[k][2];
+        }
+      }
+      val[j*nx + i] = sw ? sv/sw : 0;
+    }
+  }
+  return val;
+}
+
+/* 3×3 中值：去掉单格毛刺，保证"每孔落在自己那一档里" */
+function medianFilter(a, nx, ny){
+  const out = new Float32Array(a.length);
+  const buf = new Float32Array(9);
+  for (let j = 0; j < ny; j++){
+    for (let i = 0; i < nx; i++){
+      let m = 0;
+      for (let dj = -1; dj <= 1; dj++){
+        const jj = Math.min(ny-1, Math.max(0, j+dj));
+        for (let di = -1; di <= 1; di++){
+          const ii = Math.min(nx-1, Math.max(0, i+di));
+          buf[m++] = a[jj*nx + ii];
+        }
+      }
+      for (let x = 1; x < 9; x++){
+        const v = buf[x];
+        let y = x - 1;
+        while (y >= 0 && buf[y] > v){ buf[y+1] = buf[y]; y--; }
+        buf[y+1] = v;
+      }
+      out[j*nx + i] = buf[4];
+    }
+  }
+  return out;
+}
+
+/* 可分离盒式模糊（用于把"一圈圆"轮廓磨成一条顺滑的开挖线） */
+function boxBlur(src, nx, ny, r){
+  const a = new Float32Array(src), b = new Float32Array(src);
+  const pre = new Float64Array(Math.max(nx, ny) + 1);
+  for (let pass = 0; pass < 2; pass++){
+    for (let j = 0; j < ny; j++){
+      let s = 0;
+      for (let i = 0; i < nx; i++){ s += a[j*nx+i]; pre[i+1] = s; }
+      for (let i = 0; i < nx; i++){
+        const p = Math.max(0, i-r), q = Math.min(nx-1, i+r);
+        b[j*nx+i] = (pre[q+1] - pre[p]) / (q - p + 1);
+      }
+    }
+    for (let i = 0; i < nx; i++){
+      let s = 0;
+      for (let j = 0; j < ny; j++){ s += b[j*nx+i]; pre[j+1] = s; }
+      for (let j = 0; j < ny; j++){
+        const p = Math.max(0, j-r), q = Math.min(ny-1, j+r);
+        a[j*nx+i] = (pre[q+1] - pre[p]) / (q - p + 1);
+      }
+    }
+  }
+  return a;
+}
+
+function contourSegs(vals, nx, ny, t, ox, oy, gs, keep){
+  const segs = [];
+  const R = v => Math.round(v*10)/10;
+  const put = (p, q) => segs.push([R(p[0]), R(p[1]), R(q[0]), R(q[1])]);
+  for (let j = 0; j < ny-1; j++){
+    const y = oy + j*gs;
+    for (let i = 0; i < nx-1; i++){
+      const ia = j*nx + i;
+      if (keep && !keep[ia] && !keep[ia+1] && !keep[ia+nx] && !keep[ia+nx+1]) continue;
+      const a = vals[ia], b = vals[ia+1], c = vals[ia+nx+1], e = vals[ia+nx];
+      if (a === 0 || b === 0 || c === 0 || e === 0) continue;
+      let k = 0;
+      if (a > t) k |= 1;
+      if (b > t) k |= 2;
+      if (c > t) k |= 4;
+      if (e > t) k |= 8;
+      if (k === 0 || k === 15) continue;
+      const x = ox + i*gs;
+      const e0 = () => [x + gs*(t-a)/(b-a), y];
+      const e1 = () => [x + gs, y + gs*(t-b)/(c-b)];
+      const e2 = () => [x + gs*(t-e)/(c-e), y + gs];
+      const e3 = () => [x, y + gs*(t-a)/(e-a)];
+      switch (k){
+        case 1:  put(e3(), e0()); break;
+        case 2:  put(e0(), e1()); break;
+        case 3:  put(e3(), e1()); break;
+        case 4:  put(e1(), e2()); break;
+        case 5:  if ((a+b+c+e)/4 > t){ put(e3(), e2()); put(e0(), e1()); }
+                 else { put(e3(), e0()); put(e1(), e2()); } break;
+        case 6:  put(e0(), e2()); break;
+        case 7:  put(e3(), e2()); break;
+        case 8:  put(e2(), e3()); break;
+        case 9:  put(e0(), e2()); break;
+        case 10: if ((a+b+c+e)/4 > t){ put(e3(), e0()); put(e1(), e2()); }
+                 else { put(e3(), e2()); put(e0(), e1()); } break;
+        case 11: put(e1(), e2()); break;
+        case 12: put(e1(), e3()); break;
+        case 13: put(e0(), e1()); break;
+        case 14: put(e0(), e3()); break;
+      }
+    }
+  }
+  return segs;
+}
+
+function contour(vals, nx, ny, t, ox, oy, gs, keep){
+  return contourSegs(vals, nx, ny, t, ox, oy, gs, keep)
+    .map(s => "M" + s[0] + "," + s[1] + "L" + s[2] + "," + s[3]).join("");
+}
+
+/* 把首尾相接的小线段串成若干折线 */
+function chainSegsAll(segs){
+  const key = (x, y) => x.toFixed(1) + "," + y.toFixed(1);
+  const adj = new Map();
+  segs.forEach((s, i) => {
+    const a = key(s[0], s[1]), b = key(s[2], s[3]);
+    if (!adj.has(a)) adj.set(a, []);
+    if (!adj.has(b)) adj.set(b, []);
+    adj.get(a).push(i);
+    adj.get(b).push(i);
+  });
+  const used = new Uint8Array(segs.length);
+  const chains = [];
+  for (let i = 0; i < segs.length; i++){
+    if (used[i]) continue;
+    used[i] = 1;
+    const s0 = segs[i];
+    const pts = [[s0[0], s0[1]], [s0[2], s0[3]]];
+    let cur = [s0[2], s0[3]];
+    for (;;){
+      const ck = key(cur[0], cur[1]);
+      const list = adj.get(ck) || [];
+      let nxt = -1;
+      for (let t = 0; t < list.length; t++){ if (!used[list[t]]){ nxt = list[t]; break; } }
+      if (nxt < 0) break;
+      used[nxt] = 1;
+      const s2 = segs[nxt];
+      cur = (key(s2[0], s2[1]) === ck) ? [s2[2], s2[3]] : [s2[0], s2[1]];
+      pts.push(cur);
+    }
+    chains.push(pts);
+  }
+  return chains;
+}
+
+/* Douglas-Peucker 抽稀，去掉栅格锯齿 */
+function simplify(pts, tol){
+  if (pts.length < 3) return pts;
+  const keep = new Uint8Array(pts.length);
+  keep[0] = keep[pts.length-1] = 1;
+  const stack = [[0, pts.length-1]];
+  while (stack.length){
+    const seg = stack.pop();
+    const a = pts[seg[0]], b = pts[seg[1]];
+    const dx = b[0]-a[0], dy = b[1]-a[1];
+    const L = Math.hypot(dx, dy) || 1e-9;
+    let mi = -1, md = 0;
+    for (let i = seg[0]+1; i < seg[1]; i++){
+      const d = Math.abs(dy*(pts[i][0]-a[0]) - dx*(pts[i][1]-a[1])) / L;
+      if (d > md){ md = d; mi = i; }
+    }
+    if (md > tol && mi > 0){
+      keep[mi] = 1;
+      stack.push([seg[0], mi], [mi, seg[1]]);
+    }
+  }
+  return pts.filter((p, i) => keep[i]);
+}
+
+function pathFromChains(chains, tol){
+  let out = "";
+  chains.forEach(pts => {
+    const p = tol ? simplify(pts, tol) : pts;
+    if (p.length < 2) return;
+    out += "M" + p[0][0].toFixed(1) + "," + p[0][1].toFixed(1);
+    for (let i = 1; i < p.length; i++) out += "L" + p[i][0].toFixed(1) + "," + p[i][1].toFixed(1);
+  });
+  return out;
+}
+
+/* 开挖轮廓只用最长的那条闭合线 */
+function chainSegs(segs){
+  const chains = chainSegsAll(segs);
+  if (!chains.length) return "";
+  let best = chains[0];
+  for (const c of chains) if (c.length > best.length) best = c;
+  let out = "M" + best[0][0].toFixed(1) + "," + best[0][1].toFixed(1);
+  for (let i = 1; i < best.length; i++) out += "L" + best[i][0].toFixed(1) + "," + best[i][1].toFixed(1);
+  return out;
+}
+
+/* ---------- 主绘制 ---------- */
+function buildSVG(cfg){
+  const {s, ox, oy, X, Y, groups, z0, sub, buf, spMode, spFix, showNo} = cfg;
+  const out = [];
+  const gs = 2;
+  const nx = Math.ceil((AREA.x1 - AREA.x0)/gs) + 1;
+  const ny = Math.ceil((AREA.y1 - AREA.y0)/gs) + 1;
+
+  out.push('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + V.W + ' ' + V.H + '" width="' + V.W + '" height="' + V.H +
+           '" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif">');
+  out.push('<rect width="' + V.W + '" height="' + V.H + '" fill="#fff"/>');
+
+  /* 场 */
+  const px = DATA.map(p => [X(p.x), Y(p.y), p.depth]);
+  const spPx = STATE.overallSp * s;
+  const F = buildField(px, AREA.x0, AREA.y0, gs, nx, ny);
+  const clsF = medianFilter(F.cls, nx, ny);
+
+  /* 开挖轮廓（孔位外扩 buf 米）：距离场磨平后取等值线 */
+  const rPx = (buf + 0.45) * s;
+  const sd = boxBlur(F.dist, nx, ny, Math.max(2, Math.round(0.36*spPx)));
+  const outlineD = chainSegs(contourSegs(sd, nx, ny, rPx, AREA.x0, AREA.y0, gs));
+
+  /* 孔深分界线：严格按孔深档 / 按趋势平滑，用轮廓做剪裁 */
+  let bnd = clsF;
+  if (cfg.zoneMode === "trend"){
+    const px2 = DATA.map(p => [X(p.x), Y(p.y), p.t]);
+    bnd = boxBlur(trendField(px2, AREA.x0, AREA.y0, gs, nx, ny, Math.pow(6*s, 2)),
+                  nx, ny, Math.max(2, Math.round(1.0*s)));
+  }
+  const cls = groups.map(g => g.c);
+  let bd = "";
+  for (let i = 0; i < cls.length - 1; i++){
+    const segs = contourSegs(bnd, nx, ny, cls[i] + 0.5, AREA.x0, AREA.y0, gs);
+    bd += pathFromChains(chainSegsAll(segs), 2.2);
+  }
+  out.push('<defs><clipPath id="oc"><path d="' + outlineD + '"/></clipPath></defs>');
+  out.push('<g clip-path="url(#oc)"><path d="' + bd + '" fill="none" stroke="#111" stroke-width="0.9" stroke-linejoin="round"/></g>');
+  out.push('<path d="' + outlineD + '" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round"/>');
+  const oBuf = cfg.outBuf || 0;
+  if (oBuf > 0){
+    const r2 = (buf + oBuf) * s;
+    const outline2 = chainSegs(contourSegs(F.dist, nx, ny, r2, AREA.x0, AREA.y0, gs));
+    out.push('<path d="' + outline2 + '" fill="none" stroke="#111" stroke-width="1" stroke-linejoin="round"/>');
+  }
+
+  /* 炮孔符号 */
+  let hp = "";
+  for (let i = 0; i < px.length; i++){
+    const x = px[i][0], y = px[i][1];
+    hp += "M" + (x-3.3).toFixed(1) + "," + y.toFixed(1) + "H" + (x+3.3).toFixed(1) +
+          "M" + x.toFixed(1) + "," + (y-3.3).toFixed(1) + "V" + (y+3.3).toFixed(1) +
+          "M" + (x-2.3).toFixed(1) + "," + (y-2.3).toFixed(1) + "L" + (x+2.3).toFixed(1) + "," + (y+2.3).toFixed(1) +
+          "M" + (x+2.3).toFixed(1) + "," + (y-2.3).toFixed(1) + "L" + (x-2.3).toFixed(1) + "," + (y+2.3).toFixed(1);
+  }
+  out.push('<path d="' + hp + '" stroke="#111" stroke-width="0.85" fill="none"/>');
+
+  if (showNo){
+    let tn = "";
+    DATA.forEach(p => {
+      tn += '<text x="' + (X(p.x)+4.6).toFixed(1) + '" y="' + (Y(p.y)+2.0).toFixed(1) +
+            '" font-size="' + Math.min(7*FS, 9.2).toFixed(1) + '" fill="#333">' + esc(String(p.no).replace(/^机房东炮/,"")) + '</text>';
+    });
+    out.push(tn);
+  }
+
+  /* 左侧分档标注 */
+  const lx = AREA.x0 - 6, lw = lx - 14;
+  const LBL = 15;                                  /* 左侧标注基准字号 */
+  const lblMax = Math.min(LBL*FS, lw/12);
+  const gap = 4.4*lblMax;
+  const top = AREA.y0 + 16, bot = AREA.y1 - 18 - 2*lblMax;
+  const ys = groups.map(g => g.py);
+  for (let i = 1; i < ys.length; i++) ys[i] = Math.max(ys[i], ys[i-1] + gap);
+  if (ys.length){
+    ys[ys.length-1] = Math.min(ys[ys.length-1], bot);
+    for (let i = ys.length-2; i >= 0; i--) ys[i] = Math.min(ys[i], ys[i+1] - gap);
+    if (ys[0] < top){ const d = top - ys[0]; for (let i = 0; i < ys.length; i++) ys[i] += d; }
+  }
+  groups.forEach((g, i) => {
+    const ly = ys[i];
+    const t1 = "主爆孔钻孔深度" + g.c + "米，" + g.n + "孔";
+    const t2 = "孔距" + f1(spMode === "fixed" ? spFix : g.sp) + "米";
+    const fa = Math.min(fit(t1, LBL*FS, lw), fit(t2, LBL*FS, lw));
+    const lgap = fa * 1.75;
+    out.push('<text x="' + lx + '" y="' + (ly - lgap*0.45).toFixed(1) + '" text-anchor="end" font-size="' + fa.toFixed(1) +
+             '" fill="#111">' + esc(t1) + '</text>');
+    out.push('<text x="' + lx + '" y="' + (ly + lgap*0.55).toFixed(1) + '" text-anchor="end" font-size="' + fa.toFixed(1) +
+             '" fill="#111">' + esc(t2) + '</text>');
+    const midX = Math.max(AREA.x0 + 6, g.px - 22);
+    out.push('<path d="M' + (lx+4) + ',' + ly.toFixed(1) + 'H' + midX.toFixed(1) + 'L' + g.px.toFixed(1) + ',' +
+             g.py.toFixed(1) + '" fill="none" stroke="#111" stroke-width="0.8"/>');
+    out.push('<circle cx="' + g.px.toFixed(1) + '" cy="' + g.py.toFixed(1) + '" r="2.1" fill="#111"/>');
+  });
+
+  out.push('</svg>');
+  return out.join("");
+}
+
+
+/* ---------- 起爆顺序及网路图 ---------- */
+function groupRows(list){
+  const order = list.map((p, i) => i).sort((a, b) => list[b].y - list[a].y);
+  const rows = [];
+  let cur = [], meanY = 0;
+  order.forEach(i => {
+    const y = list[i].y;
+    if (!cur.length){ cur = [i]; meanY = y; return; }
+    if (Math.abs(y - meanY) <= 0.95 && cur.length < 8){
+      cur.push(i);
+      meanY = (meanY*(cur.length-1) + y) / cur.length;
+    } else {
+      rows.push(cur); cur = [i]; meanY = y;
+    }
+  });
+  if (cur.length) rows.push(cur);
+  rows.forEach(r => r.sort((a, b) => list[a].x - list[b].x));
+  return rows;
+}
+
+function buildNetSVG(cfg){
+  const {s, X, Y, kHole, kRow, buf, titleTxt} = cfg;
+  const out = [];
+  const gs = 2;
+  const nx = Math.ceil((AREA.x1 - AREA.x0)/gs) + 1;
+  const ny = Math.ceil((AREA.y1 - AREA.y0)/gs) + 1;
+
+  out.push('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + V.W + ' ' + V.H + '" width="' + V.W + '" height="' + V.H +
+           '" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif">');
+  out.push('<rect width="' + V.W + '" height="' + V.H + '" fill="#fff"/>');
+  out.push('<text x="' + (V.W/2) + '" y="48" text-anchor="middle" font-size="' + fit(titleTxt, Math.min(21*FS, 32), V.W-80).toFixed(1) +
+           '" font-weight="700" fill="#111" letter-spacing="2">' + esc(titleTxt) + '</text>');
+  const subt = "主变室东侧场平石方爆破　" + DATA.length + "孔　电子雷管逐孔起爆　孔间" + f1(kHole) + "ms　排间" + f1(kRow) + "ms";
+  out.push('<text x="' + (V.W/2) + '" y="69" text-anchor="middle" font-size="' +
+           fit(subt, Math.min(12.5*FS, 17), V.W-80).toFixed(1) + '" fill="#333">' + esc(subt) + '</text>');
+
+  /* 开挖轮廓（浅色，作背景参考） */
+  const px = DATA.map(p => [X(p.x), Y(p.y), 1]);
+  const F = buildField(px, AREA.x0, AREA.y0, gs, nx, ny);
+  const sd = boxBlur(F.dist, nx, ny, Math.max(2, Math.round(0.36*STATE.overallSp*s)));
+  const rPx = (buf + 0.45) * s;
+  const outlineD = chainSegs(contourSegs(sd, nx, ny, rPx, AREA.x0, AREA.y0, gs));
+  out.push('<path d="' + outlineD + '" fill="none" stroke="#8a8a8a" stroke-width="1" stroke-linejoin="round"/>');
+
+  /* 排（沿走向一条一条） */
+  let rows = groupRows(DATA);
+  if (cfg.dir === "s2n") rows = rows.slice().reverse();
+  const minHoleX = Math.min.apply(null, DATA.map(p => X(p.x)));
+  const busX = minHoleX - 24;
+  const yTop = Math.min.apply(null, rows.map(r => Y(DATA[r[0]].y)));
+  const yBot = Math.max.apply(null, rows.map(r => Y(DATA[r[0]].y)));
+  const ys0 = rows.map(r => Y(DATA[r[0]].y));
+
+  out.push('<defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#111"/></marker></defs>');
+
+  /* 主线（母线） */
+  const leadTop = Math.max(AREA.y0 + 26, yTop - 30);
+  out.push('<line x1="' + busX + '" y1="' + leadTop + '" x2="' + busX + '" y2="' + (yBot+6) + '" stroke="#111" stroke-width="1.8"/>');
+
+  /* 每排：支线 + 孔位 + 起爆时间 */
+  let lineD = "", dotD = "", txt = "";
+  rows.forEach((row, i) => {
+    const P = row.map(k => [X(DATA[k].x), Y(DATA[k].y)]);
+    const t0 = i * kRow;
+    lineD += "M" + busX + "," + P[0][1].toFixed(1) + "L" + P[0][0].toFixed(1) + "," + P[0][1].toFixed(1);
+    for (let j = 1; j < P.length; j++) lineD += "L" + P[j][0].toFixed(1) + "," + P[j][1].toFixed(1);
+    P.forEach(p => { dotD += "M" + (p[0]-2.4).toFixed(1) + "," + p[1].toFixed(1) + "a2.4,2.4 0 1,0 4.8,0a2.4,2.4 0 1,0 -4.8,0"; });
+    txt += '<text x="' + (busX-6) + '" y="' + (P[0][1]-2).toFixed(1) + '" text-anchor="end" font-size="' +
+           (9*Math.min(FS,1.3)).toFixed(1) + '" fill="#111">' + t0 + 'ms</text>';
+  });
+  out.push('<path d="' + lineD + '" fill="none" stroke="#111" stroke-width="1"/>');
+  out.push('<path d="' + dotD + '" fill="#fff" stroke="#111" stroke-width="1"/>');
+  out.push(txt);
+
+  /* 起爆站 */
+  const sx = busX, sy = leadTop - 16;
+  out.push('<line x1="' + sx + '" y1="' + (sy+9) + '" x2="' + sx + '" y2="' + leadTop + '" stroke="#111" stroke-width="1.4"/>');
+  out.push('<rect x="' + (sx-19) + '" y="' + (sy-9) + '" width="38" height="18" fill="#fff" stroke="#111" stroke-width="1.3"/>');
+  out.push('<text x="' + sx + '" y="' + (sy+4) + '" text-anchor="middle" font-size="' + (8.5*Math.min(FS,1.3)).toFixed(1) + '" fill="#111">起爆站</text>');
+
+  /* 孔间 / 排间 标注 */
+  /* 孔间标注：挑最宽的一排，在中间两个孔之间画尺寸线 */
+  let bestRow = null, bestW = -1;
+  rows.forEach(r => {
+    if (r.length < 3) return;
+    const w = Math.abs(X(DATA[r[r.length-1]].x) - X(DATA[r[0]].x));
+    if (w > bestW){ bestW = w; bestRow = r; }
+  });
+  if (bestRow){
+    const c0 = Math.floor((bestRow.length-2)/2);
+    const a = [X(DATA[bestRow[c0]].x), Y(DATA[bestRow[c0]].y)];
+    const b = [X(DATA[bestRow[c0+1]].x), Y(DATA[bestRow[c0+1]].y)];
+    const yd = Math.min(a[1], b[1]) - 10;
+    out.push('<line x1="' + a[0] + '" y1="' + (a[1]-2) + '" x2="' + a[0] + '" y2="' + yd + '" stroke="#111" stroke-width="0.6"/>');
+    out.push('<line x1="' + b[0] + '" y1="' + (b[1]-2) + '" x2="' + b[0] + '" y2="' + yd + '" stroke="#111" stroke-width="0.6"/>');
+    out.push('<line x1="' + a[0] + '" y1="' + yd + '" x2="' + b[0] + '" y2="' + yd + '" stroke="#111" stroke-width="0.8" marker-start="url(#ar2)" marker-end="url(#ar2)"/>');
+    out.push('<text x="' + ((a[0]+b[0])/2) + '" y="' + (yd-4) + '" text-anchor="middle" font-size="' + (9*Math.min(FS,1.35)).toFixed(1) + '" fill="#111" stroke="#fff" stroke-width="3" paint-order="stroke">孔间 ' + f1(kHole) + 'ms</text>');
+  }
+  if (rows.length >= 2){
+    const y1 = ys0[0], y2 = ys0[1];
+    const xx = busX + 14;
+    out.push('<line x1="' + xx + '" y1="' + y1 + '" x2="' + xx + '" y2="' + y2 + '" stroke="#111" stroke-width="0.8" marker-start="url(#ar2)" marker-end="url(#ar2)"/>');
+    out.push('<text x="' + (xx+7) + '" y="' + ((y1+y2)/2 + 3.2) + '" font-size="' + (9*Math.min(FS,1.35)).toFixed(1) + '" fill="#111" stroke="#fff" stroke-width="3" paint-order="stroke">排间 ' + f1(kRow) + 'ms</text>');
+  }
+
+
+  /* 图例 */
+  const rx2 = 640, ly0 = 205, lstep = 21*FS;
+  const fl = (9.5*Math.min(FS,1.35)).toFixed(1);
+  out.push('<text x="' + (rx2-14) + '" y="' + ly0 + '" font-size="' + (12*Math.min(FS,1.5)).toFixed(1) + '" font-weight="700" fill="#111">图例</text>');
+  const legend = [
+    ["line", "主线（母线）"],
+    ["thin", "支线（排间连线）"],
+    ["dot",  "炮孔及电子雷管"],
+    ["box",  "起爆站"]
+  ];
+  legend.forEach((L, i) => {
+    const yy = ly0 + (i+1)*lstep + 4;
+    if (L[0] === "line") out.push('<line x1="' + (rx2-16) + '" y1="' + yy + '" x2="' + (rx2+6) + '" y2="' + yy + '" stroke="#111" stroke-width="1.8"/>');
+    if (L[0] === "thin") out.push('<line x1="' + (rx2-16) + '" y1="' + yy + '" x2="' + (rx2+6) + '" y2="' + yy + '" stroke="#111" stroke-width="1"/>');
+    if (L[0] === "dot")  out.push('<circle cx="' + (rx2-5) + '" cy="' + yy + '" r="2.6" fill="#fff" stroke="#111" stroke-width="1"/>');
+    if (L[0] === "box")  out.push('<rect x="' + (rx2-17) + '" y="' + (yy-7) + '" width="24" height="14" fill="#fff" stroke="#111" stroke-width="1.2"/>');
+    out.push('<text x="' + (rx2+16) + '" y="' + (yy+4) + '" font-size="' + fl + '" fill="#111">' + L[1] + '</text>');
+  });
+
+  /* 说明 */
+  const notes = [
+    "注：1. 采用电子雷管逐孔起爆，孔间延期 " + f1(kHole) + " ms，排间延期 " + f1(kRow) + " ms，共 " + rows.length + " 排、" + DATA.length + " 孔；",
+    "2. 每排炮孔由支线串联，各排支线接主线（母线），主线引至起爆站；图中数字为该排首孔起爆时间；",
+    "3. 平面坐标为 CASS 实测点，图中单位为 m。"
+  ];
+  const nFS = Math.min(FS, 1.35);
+  notes.forEach((s2, i) => {
+    out.push('<text x="24" y="' + (1012 + i*16.5*nFS) + '" font-size="' + (10*nFS).toFixed(1) + '" fill="#333">' + esc(s2) + '</text>');
+  });
+
+  out.push('</svg>');
+  return out.join("");
+}
+
+
+/* ---------- 分区示意（简化）：凸包近似外形 + 直线分档 ---------- */
+function hull2(pts){
+  const p = pts.slice().sort((a, b) => a[0]-b[0] || a[1]-b[1]);
+  const cr = (o, a, b) => (a[0]-o[0])*(b[1]-o[1]) - (a[1]-o[1])*(b[0]-o[0]);
+  const lo = [], up = [];
+  for (const q of p){ while (lo.length >= 2 && cr(lo[lo.length-2], lo[lo.length-1], q) <= 1e-9) lo.pop(); lo.push(q); }
+  for (let i = p.length-1; i >= 0; i--){ const q = p[i];
+    while (up.length >= 2 && cr(up[up.length-2], up[up.length-1], q) <= 1e-9) up.pop(); up.push(q); }
+  lo.pop(); up.pop();
+  return lo.concat(up);
+}
+
+function polyArea2(g){
+  let a = 0;
+  for (let i = 0; i < g.length; i++){ const p = g[i], q = g[(i+1)%g.length]; a += p[0]*q[1] - q[0]*p[1]; }
+  return a/2;
+}
+
+function offsetConvex(g, d){
+  const n = g.length, lines = [];
+  for (let i = 0; i < n; i++){
+    const a = g[i], b = g[(i+1)%n];
+    const dx = b[0]-a[0], dy = b[1]-a[1], L = Math.hypot(dx, dy) || 1;
+    lines.push({x: a[0] + dy/L*d, y: a[1] - dx/L*d, dx: dx, dy: dy});
+  }
+  const res = [];
+  for (let i = 0; i < n; i++){
+    const L1 = lines[(i-1+n)%n], L2 = lines[i];
+    const den = L1.dx*L2.dy - L1.dy*L2.dx;
+    if (Math.abs(den) < 1e-9){ res.push([L2.x, L2.y]); continue; }
+    const t2 = ((L2.x-L1.x)*L2.dy - (L2.y-L1.y)*L2.dx) / den;
+    res.push([L1.x + t2*L1.dx, L1.y + t2*L1.dy]);
+  }
+  const lim = d*3.2;
+  for (let i = 0; i < n; i++){
+    const v = g[i], q = res[i], dist = Math.hypot(q[0]-v[0], q[1]-v[1]);
+    if (dist > lim){ const k = lim/dist; res[i] = [v[0] + (q[0]-v[0])*k, v[1] + (q[1]-v[1])*k]; }
+  }
+  return res;
+}
+
+/* 水平线 y 与凸多边形的交点（取最左最右） */
+function spanAt(poly, y){
+  let lo = Infinity, hi = -Infinity;
+  for (let i = 0; i < poly.length; i++){
+    const a = poly[i], b = poly[(i+1)%poly.length];
+    if ((a[1] > y) === (b[1] > y)) continue;
+    const x = a[0] + (b[0]-a[0]) * (y - a[1]) / (b[1] - a[1]);
+    if (x < lo) lo = x;
+    if (x > hi) hi = x;
+  }
+  return (lo <= hi) ? [lo, hi] : null;
+}
+
+function buildSimpleSVG(cfg){
+  const {s, X, Y, groups, buf, spMode, spFix, showNo} = cfg;
+  const out = [];
+  out.push('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + V.W + ' ' + V.H + '" width="' + V.W + '" height="' + V.H +
+           '" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif">');
+  out.push('<rect width="' + V.W + '" height="' + V.H + '" fill="#fff"/>');
+
+  /* 近似外形：凸包 + 外扩 buf */
+  const pts = DATA.map(p => [X(p.x), Y(p.y)]);
+  const hull = hull2(pts);
+  const a1 = offsetConvex(hull, buf*s), a2 = offsetConvex(hull, -buf*s);
+  const poly = (Math.abs(polyArea2(a1)) > Math.abs(polyArea2(a2))) ? a1 : a2;
+
+  /* 分块：按孔深档的 y 区间，相邻档取中点做水平分界 */
+  const cls = groups.map(g => g.c);
+  const byC = {};
+  DATA.forEach(p => { (byC[p.depth] = byC[p.depth] || []).push(p); });
+  const bounds = [];
+  for (let i = 0; i < cls.length - 1; i++){
+    const A = byC[cls[i]], B = byC[cls[i+1]];
+    const yA = Math.min.apply(null, A.map(p => p.y));      /* 浅档最南 */
+    const yB = Math.max.apply(null, B.map(p => p.y));      /* 深档最北 */
+    bounds.push(Y((yA + yB)/2));
+  }
+  const ysTop = Y(Math.max.apply(null, DATA.map(p => p.y)));
+  const ysBot = Y(Math.min.apply(null, DATA.map(p => p.y)));
+  const bands = [];
+  for (let i = 0; i < cls.length; i++){
+    const y0 = (i === 0) ? ysTop - 2 : bounds[i-1];
+    const y1 = (i === cls.length-1) ? ysBot + 2 : bounds[i];
+    bands.push({c: cls[i], n: byC[cls[i]].length, y0: y0, y1: y1, sp: groups[i].sp});
+  }
+
+  /* 底图：分块浅灰交替 */
+  bands.forEach((b, i) => {
+    const segs = [];
+    const step = 2;
+    for (let y = b.y0; y <= b.y1; y += step){
+      const sp = spanAt(poly, y);
+      if (sp) segs.push([sp[0], y, sp[1], y]);
+    }
+    if (!segs.length) return;
+    let d = "";
+    segs.forEach(t => { d += "M" + t[0].toFixed(1) + "," + t[1].toFixed(1) + "H" + t[2].toFixed(1); });
+    out.push('<path d="' + d + '" stroke="#eeeeee" stroke-width="' + (step+0.5) + '" fill="none"/>');
+  });
+
+  /* 外轮廓 */
+  let od = "M" + poly[0][0].toFixed(1) + "," + poly[0][1].toFixed(1);
+  for (let i = 1; i < poly.length; i++) od += "L" + poly[i][0].toFixed(1) + "," + poly[i][1].toFixed(1);
+  out.push('<path d="' + od + 'Z" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="miter"/>');
+
+  /* 分块线 */
+  let bd = "";
+  bounds.forEach(y => {
+    const sp = spanAt(poly, y);
+    if (sp) bd += "M" + sp[0].toFixed(1) + "," + y.toFixed(1) + "H" + sp[1].toFixed(1);
+  });
+  out.push('<path d="' + bd + '" fill="none" stroke="#111" stroke-width="1"/>');
+
+  /* 炮孔 */
+  let hp = "";
+  DATA.forEach(p => {
+    const x = X(p.x), y = Y(p.y);
+    hp += "M" + (x-3.2).toFixed(1) + "," + y.toFixed(1) + "H" + (x+3.2).toFixed(1) +
+          "M" + x.toFixed(1) + "," + (y-3.2).toFixed(1) + "V" + (y+3.2).toFixed(1) +
+          "M" + (x-2.2).toFixed(1) + "," + (y-2.2).toFixed(1) + "L" + (x+2.2).toFixed(1) + "," + (y+2.2).toFixed(1) +
+          "M" + (x+2.2).toFixed(1) + "," + (y-2.2).toFixed(1) + "L" + (x-2.2).toFixed(1) + "," + (y+2.2).toFixed(1);
+  });
+  out.push('<path d="' + hp + '" stroke="#111" stroke-width="0.85" fill="none"/>');
+
+  if (showNo){
+    let tn = "";
+    DATA.forEach(p => {
+      tn += '<text x="' + (X(p.x)+4.6).toFixed(1) + '" y="' + (Y(p.y)+2).toFixed(1) + '" font-size="' + Math.min(7*FS, 9.2).toFixed(1) +
+            '" fill="#333">' + esc(String(p.no).replace(/^机房东炮/, "")) + '</text>';
+    });
+    out.push(tn);
+  }
+
+  /* 分块面积（取孔位外包线，不含 1m 外扩）→ 体积 → 药量 */
+  const hullArea = (y0, y1) => {
+    let a = 0;
+    for (let y = Math.ceil(y0); y < y1; y += 1){
+      const sp = spanAt(hull, y);
+      if (sp) a += (sp[1] - sp[0]);
+    }
+    return a / (s*s);
+  };
+  const cons = cfg.cons || 0;
+  let At = 0, Vt = 0, Qt = 0;
+  bands.forEach(b => {
+    const hs = byC[b.c];
+    b.area = hullArea(b.y0, b.y1);
+    b.avgDig = hs.reduce((a, p) => a + (p.dig || 0), 0) / hs.length;
+    b.vol = b.area * b.avgDig;
+    b.q = b.vol * cons;
+    At += b.area;
+  });
+  const fix = cfg.areaFix || 0;
+  if (fix > 0 && At > 0){
+    const k = fix / At;
+    bands.forEach(b => { b.area *= k; });
+    At = fix;
+  }
+  bands.forEach(b => {
+    b.vol = b.area * b.avgDig;
+    b.q = b.vol * cons;
+    Vt += b.vol; Qt += b.q;
+  });
+
+  /* 左侧标注：每块 3 行（孔深孔数 / 面积均深 / 体积药量） */
+  const lx = AREA.x0 - 6, lw = lx - 14;
+  const LBL = 13.2;
+  const lblMax = Math.min(LBL*FS, lw/13);
+  const gap = 7.0*lblMax;
+  const top = AREA.y0 + 14, bot = AREA.y1 - 100 - 3.4*lblMax;
+  const ys = bands.map(b => {
+    const sp = spanAt(poly, (b.y0 + b.y1)/2);
+    b.cx = sp ? (sp[0]+sp[1])/2 : AREA.x0 + 60;
+    return (b.y0 + b.y1)/2;
+  });
+  for (let i = 1; i < ys.length; i++) ys[i] = Math.max(ys[i], ys[i-1] + gap);
+  if (ys.length){
+    ys[ys.length-1] = Math.min(ys[ys.length-1], bot);
+    for (let i = ys.length-2; i >= 0; i--) ys[i] = Math.min(ys[i], ys[i+1] - gap);
+    if (ys[0] < top){ const d = top - ys[0]; for (let i = 0; i < ys.length; i++) ys[i] += d; }
+  }
+  bands.forEach((b, i) => {
+    const ly = ys[i], ty = (b.y0 + b.y1)/2;
+    const t1 = "主爆孔孔深" + b.c + "米，" + b.n + "孔";
+    const t2 = "面积" + f1(b.area) + "㎡　均深" + f1(b.avgDig) + "m";
+    const t3 = "体积" + Math.round(b.vol) + "m³　药量" + Math.round(b.q) + "kg";
+    const fa = Math.min(fit(t1, LBL*FS, lw), fit(t2, LBL*FS, lw), fit(t3, LBL*FS, lw));
+    const lg = fa*1.62;
+    [t1, t2, t3].forEach((txt, k) => {
+      out.push('<text x="' + lx + '" y="' + (ly + (k-1)*lg + fa*0.36).toFixed(1) + '" text-anchor="end" font-size="' + fa.toFixed(1) +
+               '" fill="#111">' + esc(txt) + '</text>');
+    });
+    out.push('<path d="M' + (lx+4) + ',' + ly.toFixed(1) + 'H' + (b.cx-6).toFixed(1) + 'L' + b.cx.toFixed(1) + ',' + ty.toFixed(1) +
+             '" fill="none" stroke="#111" stroke-width="0.8"/>');
+    out.push('<circle cx="' + b.cx.toFixed(1) + '" cy="' + ty.toFixed(1) + '" r="2.1" fill="#111"/>');
+  });
+
+  /* 合计 */
+  const bx = 20, by = AREA.y1 - 74;
+  out.push('<line x1="' + bx + '" y1="' + (by-16) + '" x2="' + lx + '" y2="' + (by-16) + '" stroke="#111" stroke-width="0.8"/>');
+  out.push('<text x="' + bx + '" y="' + by + '" font-size="' + (11.5*FS).toFixed(1) + '" fill="#111">合计 ' + DATA.length + ' 孔　面积 ' + f1(At) + ' ㎡</text>');
+  out.push('<text x="' + bx + '" y="' + (by+20) + '" font-size="' + (11.5*FS).toFixed(1) + '" fill="#111">体积 ' + Math.round(Vt) + ' m³　单耗 ' + f2(cons) + ' kg/m³</text>');
+  out.push('<text x="' + bx + '" y="' + (by+40) + '" font-size="' + (11.5*FS).toFixed(1) + '" fill="#111">总药量 ' + Math.round(Qt) + ' kg（≈' + Math.ceil(Qt/24) + ' 箱，24kg/箱）</text>');
+
+  out.push('</svg>');
+  return out.join("");
+}
+
+/* ---------- 布局与渲染 ---------- */
+function render(){
+  const errBox = $("err"), cv = $("canvas"), calc = $("calc");
+  const z0 = parseFloat($("z0").value);
+  const sub = parseSpec($("sub").value);
+  const buf = parseFloat($("buf").value);
+  const obuf = parseFloat($("obuf").value);
+  const spFix = parseFloat($("spfix").value);
+  const isNet = $("fig").value === "net";
+  const kHole = parseFloat($("dHole").value);
+  const kRow = parseFloat($("dRow").value);
+
+  const bad = m => { errBox.style.display = "block"; errBox.textContent = "⚠ " + m; cv.innerHTML = ""; calc.textContent = ""; };
+  if (!DATA.length) return bad("没有读到孔位数据，点左上角「数据文件 .dat」选一个 CASS 点文件。");
+  if (!isFinite(z0)) return bad("设计标高要填数字，如 718.000。");
+  if (!sub) return bad("超深要填数字，可写 0.5 或 0.5~1.5。");
+  if (!isFinite(buf) || buf < 0) return bad("轮廓外扩要填非负数，如 1.0。");
+  if ($("spmode").value === "fixed" && !isFinite(spFix)) return bad("统一孔距要填数字。");
+  errBox.style.display = "none";
+
+  applyDepth(z0, sub, $("submode").value);
+
+  /* 平面图：左 1/3 放标注文字，右 2/3 放图；网路图沿用整幅 */
+  AREA.x0 = isNet ? 152 : 258;  /* simple/plan 都是左 1/3 文字 */
+  AREA.x1 = isNet ? 606 : 748;
+  AREA.y0 = isNet ? 92 : 26;
+  AREA.y1 = isNet ? 1002 : 1050;
+
+  const xs = DATA.map(p => p.x), ys = DATA.map(p => p.y);
+  const minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+  const minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+  const m = buf + (isFinite(obuf) && obuf > 0 ? obuf : 0) + 1.2;
+  const dx = Math.max(0.001, maxX - minX), dy = Math.max(0.001, maxY - minY);
+  const s = Math.min((AREA.x1-AREA.x0)/(dx+2*m), (AREA.y1-AREA.y0)/(dy+2*m));
+  const wpx = (dx+2*m)*s, hpx = (dy+2*m)*s;
+  const ox = AREA.x0 + ((AREA.x1-AREA.x0) - wpx)/2;
+  const oy = AREA.y0 + ((AREA.y1-AREA.y0) - hpx)/2;
+  const X = x => ox + (x - minX + m)*s;
+  const Y = y => oy + (maxY + m - y)*s;
+
+  STATE.overallSp = nnMedian(DATA.map(p => [p.x, p.y])) || 1.9;
+
+  const clsMap = {};
+  DATA.forEach(p => { (clsMap[p.depth] = clsMap[p.depth] || []).push(p); });
+  const groups = Object.keys(clsMap).map(Number).sort((a,b)=>a-b).map(c => {
+    const list = clsMap[c];
+    const sp = nnMedian(list.map(p => [p.x, p.y]));
+    const cx = list.reduce((a,p)=>a+p.x,0)/list.length;
+    const cy = list.reduce((a,p)=>a+p.y,0)/list.length;
+    return {c: c, n: list.length, sp: isFinite(sp) ? sp : STATE.overallSp, px: X(cx), py: Y(cy)};
+  });
+
+  if ($("fig").value === "simple"){
+    cv.innerHTML = buildSimpleSVG({s: s, X: X, Y: Y, groups: groups, buf: buf,
+      spMode: $("spmode").value, spFix: spFix, showNo: $("showno").checked,
+      cons: (isFinite(parseFloat($("cons").value)) ? parseFloat($("cons").value) : 0.4),
+      areaFix: (isFinite(parseFloat($("areafix").value)) ? parseFloat($("areafix").value) : 0)});
+  } else if (isNet && isFinite(kHole) && isFinite(kRow)){
+    cv.innerHTML = buildNetSVG({s: s, X: X, Y: Y, kHole: kHole, kRow: kRow, buf: buf,
+      dir: $("dir").value, titleTxt: "起爆顺序及起爆网路联接图"});
+  } else {
+    cv.innerHTML = buildSVG({s: s, ox: ox, oy: oy, X: X, Y: Y, groups: groups, z0: z0, sub: sub, buf: buf,
+      spMode: $("spmode").value, spFix: spFix, showNo: $("showno").checked, zoneMode: $("zmode").value,
+      outBuf: (isFinite(obuf) ? obuf : 0)});
+  }
+
+  const total = DATA.reduce((a,p)=>a+p.depth, 0);
+  const dmin = Math.min.apply(null, DATA.map(p=>p.depth)), dmax = Math.max.apply(null, DATA.map(p=>p.depth));
+  calc.innerHTML = "<span style='color:#666'>数据：" + esc(SRC) + "</span><br>" +
+    "<b>" + DATA.length + " 孔</b>　孔深 " + dmin + "~" + dmax + " m<br>" +
+    "总进尺 " + total + " m　平均 " + (total/DATA.length).toFixed(1) + " m<br>" +
+    "平均孔距 " + f2(STATE.overallSp) + " m<br>" +
+    groups.map(g => g.c + "m:" + g.n).join("　") +
+    "<br>出图 <b>" + outMm().toFixed(0) + "×" + (outMm()*V.H/V.W).toFixed(0) + " mm</b>（300 dpi）";
+}
+
+/* ---------- 交互 ---------- */
+let renderTimer = 0;
+function schedule(){
+  clearTimeout(renderTimer);
+  renderTimer = setTimeout(render, 90);
+}
+["outw","areafix","cons","fig","dHole","dRow","dir","obuf","z0","sub","submode","zmode","buf","spmode","spfix","showno"].forEach(id => {
+  const el = $(id);
+  el.addEventListener("input", schedule);
+  el.addEventListener("change", schedule);
+});
+
+function syncSpfix(){
+  const fixed = $("spmode").value === "fixed";
+  $("spfix").disabled = !fixed;
+  $("spfix").style.opacity = fixed ? 1 : 0.45;
+}
+$("spmode").addEventListener("change", syncSpfix);
+
+$("file").addEventListener("change", e => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    let txt;
+    try{ txt = new TextDecoder("gbk").decode(new Uint8Array(rd.result)); }
+    catch(err){ txt = new TextDecoder("utf-8").decode(new Uint8Array(rd.result)); }
+    const pts = parseDAT(txt);
+    e.target.value = "";
+    if (!pts.length){ $("err").style.display = "block"; $("err").textContent = "⚠ 这个文件没解析出孔位（应为 点号,编码,东坐标,北坐标,高程）。"; return; }
+    DATA = pts;
+    SRC = f.name.replace(/\.dat$/i, "") + "（" + pts.length + " 孔）";
+    $("err").style.display = "none";
+    render();
+  };
+  rd.readAsArrayBuffer(f);
+});
+
+function showFS(){ $("fsVal").textContent = Math.round(FS*100) + "%"; }
+function setFS(v){
+  FS = Math.min(2.0, Math.max(0.8, Math.round(v*10)/10));
+  showFS();
+  try{ localStorage.setItem("bpd_fs", FS); }catch(e){}
+  render();
+}
+$("fsUp").addEventListener("click", () => setFS(FS + 0.1));
+$("fsDown").addEventListener("click", () => setFS(FS - 0.1));
+
+$("print").addEventListener("click", () => window.print());
+
+function outMm(){
+  const v = parseFloat($("outw").value);
+  return Math.min(400, Math.max(40, isFinite(v) ? v : 145));
+}
+
+function currentSVG(mmW){
+  const el = document.querySelector("#canvas svg");
+  if (!el) return null;
+  const node = el.cloneNode(true);
+  if (mmW){
+    const vb = el.viewBox.baseVal;
+    node.setAttribute("width", mmW.toFixed(1) + "mm");
+    node.setAttribute("height", (mmW * vb.height / vb.width).toFixed(1) + "mm");
+  }
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(node);
+}
+
+/* 给 PNG 写入 pHYs，Word 插入时按 mm 尺寸摆放 */
+const CRC_TABLE = (() => {
+  const tb = new Uint32Array(256);
+  for (let n = 0; n < 256; n++){
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    tb[n] = c >>> 0;
+  }
+  return tb;
+})();
+function crc32(bytes){
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function pngWithDpi(buf, dpi){
+  const src = new Uint8Array(buf);
+  if (src.length < 33 || src[0] !== 0x89 || src[1] !== 0x50) return buf;
+  const ihdrLen = (src[8]<<24 | src[9]<<16 | src[10]<<8 | src[11]) >>> 0;
+  const insertAt = 8 + 12 + ihdrLen;
+  const ppu = Math.round(dpi / 0.0254);
+  const chunk = new Uint8Array(4 + 4 + 9 + 4);
+  const dv = new DataView(chunk.buffer);
+  dv.setUint32(0, 9);
+  chunk.set([0x70, 0x48, 0x59, 0x73], 4);
+  dv.setUint32(8, ppu);
+  dv.setUint32(12, ppu);
+  chunk[16] = 1;
+  dv.setUint32(17, crc32(chunk.subarray(4, 17)));
+  const out = new Uint8Array(src.length + chunk.length);
+  out.set(src.subarray(0, insertAt), 0);
+  out.set(chunk, insertAt);
+  out.set(src.subarray(insertAt), insertAt + chunk.length);
+  return out.buffer;
+}
+
+function saveBlob(blob, name){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+
+$("svg").addEventListener("click", () => {
+  const s = currentSVG(outMm());
+  if (!s) return;
+  saveBlob(new Blob([s], {type: "image/svg+xml;charset=utf-8"}), fileName("svg"));
+});
+
+$("png").addEventListener("click", () => {
+  const s = currentSVG();
+  if (!s) return;
+  const el = document.querySelector("#canvas svg");
+  const vb = el.viewBox.baseVal;
+  const W = vb.width || V.W, H = vb.height || V.H;
+  const scale = Math.round(outMm() / 25.4 * 300) / W;
+  const url = URL.createObjectURL(new Blob([s], {type: "image/svg+xml;charset=utf-8"}));
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement("canvas");
+    c.width = Math.round(W*scale); c.height = Math.round(H*scale);
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    c.toBlob(b => {
+    b.arrayBuffer().then(ab => saveBlob(new Blob([pngWithDpi(ab, 300)], {type:"image/png"}), fileName("png")));
+  }, "image/png");
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); alert("PNG 导出失败，可改用「打印 / 存 PDF」。"); };
+  img.src = url;
+});
+
+function fileName(ext){
+  if ($("fig").value === "net"){
+    return ("起爆网路图_" + DATA.length + "孔_孔间" + f1(parseFloat($("dHole").value) || 0) +
+            "ms_排间" + f1(parseFloat($("dRow").value) || 0) + "ms." + ext).replace(/[\\/:*?"<>|]/g, "-");
+  }
+  const d = DATA.map(p => p.depth);
+  const lo = Math.min.apply(null, d), hi = Math.max.apply(null, d);
+  return ("钻孔布置图_" + DATA.length + "孔_孔深" + lo + "-" + hi + "m." + ext).replace(/[\\/:*?"<>|]/g, "-");
+}
+
+$("reset").addEventListener("click", () => {
+  $("z0").value = DEFAULTS.z0;
+  $("sub").value = DEFAULTS.sub;
+  $("submode").value = DEFAULTS.submode;
+  $("zmode").value = DEFAULTS.zmode;
+  $("buf").value = DEFAULTS.buf;
+  $("spmode").value = DEFAULTS.spmode;
+  $("spfix").value = DEFAULTS.spfix;
+  $("showno").checked = DEFAULTS.showno;
+  DATA = parseDAT(EMBEDDED);
+  SRC = "内置示例（变电站 100 孔）";
+  syncSpfix();
+  render();
+});
+
+try{
+  const q = new URLSearchParams(location.search);
+  ["z0","sub","buf","spfix","dHole","dRow","areafix","cons"].forEach(k => { if (q.has(k)) $(k).value = q.get(k); });
+  if (q.has("fig")) $("fig").value = q.get("fig");
+  if (q.has("dir")) $("dir").value = q.get("dir");
+  if (q.has("submode")) $("submode").value = q.get("submode");
+  if (q.has("zmode")) $("zmode").value = q.get("zmode");
+  if (q.has("spmode")) $("spmode").value = q.get("spmode");
+  if (q.has("no")) $("showno").checked = q.get("no") === "1";
+  if (q.has("fs")){ const v = parseFloat(q.get("fs")); if (v >= 0.8 && v <= 2.0) FS = v; }
+}catch(e){}
+
+showFS();
+syncSpfix();
+render();
+})();
+</script>
+</body>
+</html>

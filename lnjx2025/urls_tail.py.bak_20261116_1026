@@ -1,0 +1,44 @@
+# 架构图 — 直接用固定文件 serve
+from django.http import FileResponse
+import os
+
+def architecture_diagram_view(request):
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "architecture_diagram.html")
+    return FileResponse(open(path, "rb"), content_type="text/html")
+# 企业督办看板 — test 页面
+def kanban_view(request):
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "kanban.html")
+    return FileResponse(open(path, "rb"), content_type="text/html")
+
+# 矿山安全生产数字化管理清单
+def mine_safety_checklist_view(request):
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'mine_safety_checklist.html')
+    return FileResponse(open(path, 'rb'), content_type='text/html')
+# 装药结构示意图工具
+def zhuangyao_structure_view(request):
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "装药结构图工具.html")
+    return FileResponse(open(path, "rb"), content_type="text/html")
+
+# 变电站机房东炮 · 爆破土方三维分析
+def tufang3d_view(request):
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "变电站_机房东炮_土方三维.html")
+    return FileResponse(open(path, "rb"), content_type="text/html")
+
+# 装药结构示意图工具 · 水平孔
+def zhuangyao_horizontal_view(request):
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "装药结构图工具_水平孔.html")
+    return FileResponse(open(path, "rb"), content_type="text/html")
+# 钻孔布置图工具
+def drill_layout_view(request):
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "钻孔布置图工具.html")
+    return FileResponse(open(path, "rb"), content_type="text/html")
+
+# 隧道炮孔布置图工具
+def bukong_tunnel_view(request):
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "隧道布孔图.html")
+    return FileResponse(open(path, "rb"), content_type="text/html")
+
+# 隧道炮孔布置图工具 · 三维版
+def bukong_3d_view(request):
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "隧道布孔图_三维版.html")
+    return FileResponse(open(path, "rb"), content_type="text/html")

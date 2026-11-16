@@ -891,3 +891,173 @@ def bpzd (k,a,q,v,r):
     df=pd.DataFrame({'k':str(k),'α':a,'v':v,'q':q,'r':r},index=[0])
 
     return df
+
+
+def replace_table_placeholder(document, headers, rows, title='爆破参数设计表', landscape=False):
+    """把文档中独占一段的 {{table}} 替换为表格。
+
+    headers: 表头文本列表；rows: 数据行（list[list[str]]）。
+    纵向 A4：在表格后插一个带 sectPr 的空段，声明"含表格的这一节"的页面属性；
+    后续内容仍由模板原有 sectPr（纵向）接管。
+    返回 True 表示命中并替换。
+    """
+    from docx.shared import Pt, Twips
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.enum.table import WD_ALIGN_VERTICAL, WD_TABLE_ALIGNMENT
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
+    import copy
+
+    target = None
+    for p in document.paragraphs:
+        if '{{table}}' in p.text:
+            target = p
+            break
+    if target is None:
+        return False
+
+    body = document.element.body
+    sectPrs = body.findall('.//' + qn('w:sectPr'))
+    if not sectPrs:
+        return False
+    base = copy.deepcopy(sectPrs[0])
+
+    def make_sect(land):
+        sp = copy.deepcopy(base)
+        pgSz = sp.find(qn('w:pgSz'))
+        w = int(pgSz.get(qn('w:w')))
+        h = int(pgSz.get(qn('w:h')))
+        if land and w < h:
+            w, h = h, w
+            pgSz.set(qn('w:orient'), 'landscape')
+        elif not land and w > h:
+            w, h = h, w
+            pgSz.set(qn('w:orient'), 'portrait')
+        pgSz.set(qn('w:w'), str(w))
+        pgSz.set(qn('w:h'), str(h))
+        mar = sp.find(qn('w:pgMar'))
+        if mar is not None:
+            if land:
+                mar.set(qn('w:left'), '720')
+                mar.set(qn('w:right'), '720')
+            else:
+                # 竖版 34 列：这一节左右边距收到 1cm，给表格腾宽度
+                mar.set(qn('w:left'), '567')
+                mar.set(qn('w:right'), '567')
+            mar.set(qn('w:top'), '720')
+            mar.set(qn('w:bottom'), '720')
+        return sp
+
+    # 横向可用宽度（twips）
+    sect = make_sect(landscape)
+    pgSz = sect.find(qn('w:pgSz'))
+    page_w = int(pgSz.get(qn('w:w')))
+    mar = sect.find(qn('w:pgMar'))
+    if mar is not None:
+        usable = page_w - int(mar.get(qn('w:left'))) - int(mar.get(qn('w:right')))
+    else:
+        usable = page_w - 2880
+
+    ncol = len(headers)
+    # 列宽按表头长短分配；总宽超过可用宽才等比压缩（列少时表格不用铺满整页）
+    weights = [max(500, min(1600, len(str(h)) * 160 + 200)) for h in headers]
+    total = float(sum(weights)) or 1.0
+    # 列少时按 1.35 倍放大到合适宽度；列多时压缩到页面可用宽度
+    target_w = min(float(usable), total * 1.35)
+    tw = [int(w * target_w / total) for w in weights]
+    tw[tw.index(max(tw))] += int(target_w) - sum(tw)
+
+    if ncol <= 8:
+        font_pt = 9
+    elif ncol <= 12:
+        font_pt = 8.5
+    elif ncol <= 20:
+        font_pt = 8
+    elif ncol <= 28:
+        font_pt = 7
+    else:
+        font_pt = 6.5
+
+    table = document.add_table(rows=len(rows) + 1, cols=ncol)
+    table.style = document.styles['Table Grid']
+    table.autofit = False
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER  # 表格整体水平居中
+    tbl = table._tbl
+    tblPr = tbl.tblPr
+
+    old = tblPr.find(qn('w:tblW'))
+    if old is not None:
+        tblPr.remove(old)
+    tblW = OxmlElement('w:tblW')
+    tblW.set(qn('w:type'), 'dxa')
+    tblW.set(qn('w:w'), str(sum(tw)))
+    tblPr.append(tblW)
+    layout = OxmlElement('w:tblLayout')
+    layout.set(qn('w:type'), 'fixed')
+    tblPr.append(layout)
+    cell_mar = OxmlElement('w:tblCellMar')
+    for side, v in (('left', 20), ('right', 20), ('top', 0), ('bottom', 0)):
+        e = OxmlElement('w:' + side)
+        e.set(qn('w:w'), str(v))
+        e.set(qn('w:type'), 'dxa')
+        cell_mar.append(e)
+    tblPr.append(cell_mar)
+
+    for i, gc in enumerate(tbl.tblGrid.findall(qn('w:gridCol'))):
+        gc.set(qn('w:w'), str(tw[i]))
+
+    def fill(cell, text, bold=False):
+        tcPr = cell._tc.get_or_add_tcPr()
+        tcW = OxmlElement('w:tcW')
+        tcW.set(qn('w:type'), 'dxa')
+        tcPr.append(tcW)
+        cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        p = cell.paragraphs[0]
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        pf = p.paragraph_format
+        pf.space_before = Pt(0)
+        pf.space_after = Pt(0)
+        pf.line_spacing = 1.0
+        run = p.add_run(text)
+        run.bold = bold
+        run.font.size = Pt(font_pt)
+
+    for i, h in enumerate(headers):
+        fill(table.rows[0].cells[i], str(h), bold=True)
+    for ri, row in enumerate(rows, start=1):
+        for ci in range(ncol):
+            v = row[ci] if ci < len(row) else ''
+            fill(table.rows[ri].cells[ci], str(v))
+
+    for row in table.rows:
+        for i, c in enumerate(row.cells):
+            tcW = c._tc.tcPr.find(qn('w:tcW'))
+            if tcW is not None:
+                tcW.set(qn('w:w'), str(tw[i]))
+
+    trPr = table.rows[0]._tr.get_or_add_trPr()
+    hdr = OxmlElement('w:tblHeader')
+    hdr.set(qn('w:val'), 'true')
+    trPr.append(hdr)
+
+    # 标题 + 表格放到 {{table}} 位置
+    title_p = document.add_paragraph()
+    title_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    tf = title_p.paragraph_format
+    tf.space_before = Pt(0)
+    tf.space_after = Pt(3)
+    tr = title_p.add_run(title)
+    tr.bold = True
+    tr.font.size = Pt(10)
+
+    target._p.addprevious(title_p._p)
+    target._p.addprevious(tbl)
+    target._p.getparent().remove(target._p)
+
+    # 表格后的空段：声明"含表格的这一节"的页面属性
+    after = OxmlElement('w:p')
+    after_pPr = OxmlElement('w:pPr')
+    after_pPr.append(make_sect(landscape))
+    after.append(after_pPr)
+    tbl.addnext(after)
+    return True

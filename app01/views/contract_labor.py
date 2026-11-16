@@ -35,6 +35,58 @@ import io
 import os
 from django.core.files.base import ContentFile
 from openpyxl import Workbook
+import time as _time_mod
+
+DESIGN_VER = 'design-v3-portrait-center'
+
+
+def _eval_xlsx_formula(f):
+    """把简单 Excel 公式算成数值（ROUND / SUM / 四则）；算不了返回 None。"""
+    import re as _rx
+    try:
+        expr = str(f).lstrip('=').strip()
+        m = _rx.fullmatch(r'(?i)ROUND\(\s*(.+?)\s*,\s*(-?\d+)\s*\)', expr)
+        if m:
+            v = _eval_xlsx_formula('=' + m.group(1))
+            return None if v is None else round(float(v), int(m.group(2)))
+        m = _rx.fullmatch(r'(?i)SUM\(\s*(.*?)\s*\)', expr)
+        if m:
+            total = 0.0
+            for part in m.group(1).split(','):
+                v = _eval_xlsx_formula('=' + part)
+                total += float(v or 0)
+            return total
+        if _rx.fullmatch(r'[\d\.\+\-\*/\(\)\s]+', expr):
+            return eval(expr, {'__builtins__': {}}, {})
+    except Exception:
+        return None
+    return None
+
+
+def _open_xlsx_pair(fobj):
+    """返回 (缓存值表, 公式表)：公式单元格优先取缓存值，没有缓存再求值。"""
+    import io as _io
+    fobj.seek(0)
+    raw = fobj.read()
+    fobj.seek(0)
+    ws_v = load_workbook(_io.BytesIO(raw), data_only=True).worksheets[0]
+    ws_f = load_workbook(_io.BytesIO(raw), data_only=False).worksheets[0]
+    return ws_v, ws_f
+
+
+def _cell_value(ws_v, ws_f, r, c):
+    v = ws_v.cell(r, c).value
+    if v is None:
+        fv = ws_f.cell(r, c).value
+        if isinstance(fv, str) and fv.strip().startswith('='):
+            ev = _eval_xlsx_formula(fv)
+            if ev is not None:
+                v = ev
+            else:
+                print('=== 公式未能求值(按空值处理): R%dC%d %r' % (r, c, fv[:100]), flush=True)
+    if isinstance(v, float) and v.is_integer():
+        v = int(v)
+    return v
 from PIL import Image
 from openpyxl.drawing.image import Image as ExcelImage
 import base64
@@ -164,42 +216,103 @@ def design_list(request):
 
 
 def design_upload(request):
-    """设计批量处理 — 上传：按行出，每行 x 每个模板各一份"""
+    """设计批量处理 — 按行出（每行 x 每个模板各一份）；
+    第二个 Excel（爆破参数设计表）整表插入模板的 {{table}} 位置。"""
     import re as _re
+
+    def read_table_xlsx(fobj):
+        ws_, ws_f_ = _open_xlsx_pair(fobj)
+        ncol_ = ws_.max_column
+
+        def row_vals(r):
+            return [cell_text(_cell_value(ws_, ws_f_, r, c)) for c in range(1, ncol_ + 1)]
+
+        # 第 1 行若只有 1 个非空格 -> 视为大标题行，表头在第 2 行
+        first = row_vals(1)
+        filled = [i for i, v in enumerate(first) if str(v).strip()]
+        if len(filled) == 1:
+            title_ = str(first[filled[0]]).strip()
+            headers_ = row_vals(2)
+            start_ = 3
+        else:
+            title_ = None
+            headers_ = first
+            start_ = 2
+        rows_ = []
+        for r in range(start_, ws_.max_row + 1):
+            vals = row_vals(r)
+            if any(str(v).strip() for v in vals):
+                rows_.append(vals)
+        return title_, headers_, rows_
+
     if request.method == 'POST':
-        files = request.FILES.getlist('file')
-        xlsxs = [f for f in files if f.name.lower().endswith('.xlsx')]
-        tpls = [f for f in files if f.name.lower().endswith('.docx')]
-        if not xlsxs or not tpls:
+        data_files = [f for f in request.FILES.getlist('file_data')
+                      if f.name.lower().endswith('.xlsx')]
+        table_files = [f for f in request.FILES.getlist('file_table')
+                       if f.name.lower().endswith('.xlsx')]
+        tpls = [f for f in request.FILES.getlist('file')
+                if f.name.lower().endswith('.docx')]
+        # 兼容旧表单：xlsx 全塞在 file 里 → 第 1 个当数据、第 2 个当表格
+        if not data_files:
+            allx = [f for f in request.FILES.getlist('file')
+                    if f.name.lower().endswith('.xlsx')]
+            data_files = allx[:1]
+            if not table_files:
+                table_files = allx[1:2]
+        if not data_files or not tpls:
             return render(request, 'kztqhp.html',
-                          {'error': '请同时上传 1 个 Excel(.xlsx) 和至少 1 个 Word 模板(.docx)'})
-        wb = load_workbook(xlsxs[0])
-        ws = wb.worksheets[0]
+                          {'error': '请上传 1 个数据 Excel(.xlsx) 和至少 1 个 Word 模板(.docx)；爆破参数设计表 Excel 可选'})
+        # 上传指纹：用于核对"这次到底用了哪份文件/哪个进程的代码"
+        import hashlib as _hl
+        _db = data_files[0].read()
+        data_files[0].seek(0)
+        _tb = table_files[0].read() if table_files else b''
+        if table_files:
+            table_files[0].seek(0)
+        print('=== 设计批量 上传: ver=%s pid=%d data=%s(%dB,md5=%s) table=%s(%dB,md5=%s) tpls=%s'
+              % (DESIGN_VER, os.getpid(), data_files[0].name, len(_db), _hl.md5(_db).hexdigest()[:10],
+                 table_files[0].name if table_files else '-', len(_tb), _hl.md5(_tb).hexdigest()[:10],
+                 [f.name for f in tpls]), flush=True)
+        ws, ws_f = _open_xlsx_pair(data_files[0])
         # 编号列：表头含「编号」优先，否则第3列（合同姓名位；实测该列即 45m3/100m3）
         code_col = 3
         for c in range(1, ws.max_column + 1):
-            v = ws.cell(1, c).value
+            v = _cell_value(ws, ws_f, 1, c)
             if v and '编号' in str(v):
                 code_col = c
                 break
+        # 表格 Excel：整表（含表头）插入 {{table}}
+        table_title = None
+        table_headers = None
+        table_rows = None
+        if table_files:
+            table_title, table_headers, table_rows = read_table_xlsx(table_files[0])
         tpl_data = []
         for tf in tpls:
             tpl_data.append((tf.name, tf.read()))
         made = 0
         for row in range(2, ws.max_row + 1):
-            raw = ws.cell(row, code_col).value
+            raw = _cell_value(ws, ws_f, row, code_col)
             code = '' if raw is None else str(raw).strip()
             if not code or code.lower() == 'none':
                 continue  # 空行跳过，不出 None.docx
             for tname, tbytes in tpl_data:
                 document = Document(io.BytesIO(tbytes))
                 for col in range(1, ws.max_column + 1):
-                    h = ws.cell(1, col).value
+                    h = _cell_value(ws, ws_f, 1, col)
                     if h is None:
                         continue
-                    val = ws.cell(row, col).value
+                    val = _cell_value(ws, ws_f, row, col)
                     sval = cell_text(val)  # 空值不写成字面 None；日期只留纯日期
                     合同('{{%s}}' % str(h).strip(), sval, document)
+                # 表格插入（模板里必须有独占一段的 {{table}}）
+                if table_headers:
+                    try:
+                        if not replace_table_placeholder(document, table_headers, table_rows,
+                                                        title=table_title or '爆破参数设计表'):
+                            print('=== 设计批量 {{table}} 未命中:', code, tname, flush=True)
+                    except Exception as e:
+                        print('=== 设计批量 {{table}} 失败:', code, tname, repr(e), flush=True)
                 # 未命中检测 -> pm2 日志
                 residual = set()
                 for p in document.paragraphs:
@@ -209,11 +322,26 @@ def design_upload(request):
                         for c in r.cells:
                             residual.update(_re.findall(r'\{\{[^}]+\}\}', c.text))
                 if residual:
+                    # {{取整}}：数据 Excel 没有这一列时，从「总装药量」单元格取数字四舍五入
+                    if '{{取整}}' in residual:
+                        total_col = None
+                        for c in range(1, ws.max_column + 1):
+                            hv = _cell_value(ws, ws_f, 1, c)
+                            if hv and '总装药量' in str(hv):
+                                total_col = c
+                                break
+                        if total_col:
+                            raw_total = cell_text(_cell_value(ws, ws_f, row, total_col))
+                            m = _re.search(r'\d+(?:\.\d+)?', raw_total)
+                            if m:
+                                合同('{{取整}}', str(int(round(float(m.group())))), document)
+                                residual.discard('{{取整}}')
+                if residual:
                     print('=== 设计批量 未命中:', code, tname, sorted(residual), flush=True)
                 buf = io.BytesIO()
                 document.save(buf)
                 stem = tname.rsplit('.', 1)[0]
-                fname = '%s_%s.docx' % (code, stem)
+                fname = '%s_%s_%s.docx' % (code, stem, _time_mod.strftime('%m%d_%H%M%S'))
                 models.DesignDoc.objects.create(
                     code=code, template_name=stem,
                     file=ContentFile(buf.getvalue(), name=fname))

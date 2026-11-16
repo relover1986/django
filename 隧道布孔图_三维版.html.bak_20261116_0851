@@ -1,0 +1,2557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>隧道炮孔布置 · 三维布孔图</title>
+<style>
+  :root{
+    --bg:#edf3f9;
+    --ink:#152538;
+    --muted:#72849a;
+    --line:#e0e9f3;
+    --blue:#1d6fe0;
+    --blue-deep:#1558b4;
+    --cyan:#0ea5c6;
+    --orange:#e08a1e;
+    --red:#cf4b47;
+    --green:#159a72;
+    --shadow:0 10px 28px rgba(34,72,112,.07);
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Microsoft YaHei","PingFang SC","Segoe UI",system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;overflow:hidden;
+  }
+  button,input{font:inherit}
+  button{cursor:pointer;border:0;background:none;color:inherit}
+  ::selection{background:#cfe6ff}
+  .app{display:flex;height:100vh;min-height:680px}
+
+  /* ================= left panel ================= */
+  .panel{
+    width:392px;flex:0 0 392px;min-height:0;display:flex;flex-direction:column;
+    background:linear-gradient(180deg,#fcfdff 0%,#f5f9fd 100%);
+    border-right:1px solid #dce6f1;
+  }
+  .brand{display:flex;align-items:center;gap:12px;padding:20px 22px 15px;flex:0 0 auto}
+  .brand-mark{
+    width:42px;height:42px;border-radius:13px;display:grid;place-items:center;color:#fff;
+    background:linear-gradient(145deg,#1e74e8 0%,#0e9fbd 100%);
+    box-shadow:0 9px 20px rgba(20,105,205,.24);flex:0 0 auto;
+  }
+  .brand-mark svg{width:23px;height:23px}
+  .brand h1{font-size:16px;line-height:1.2;margin:0;letter-spacing:.3px;font-weight:700}
+  .brand p{margin:4px 0 0;font-size:9.5px;color:#8798ac;letter-spacing:1.8px;font-weight:600}
+  .scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0 20px 16px;scrollbar-width:thin;scrollbar-color:#cbd9e8 transparent}
+  .scroll::-webkit-scrollbar{width:6px}
+  .scroll::-webkit-scrollbar-thumb{background:#cbd9e8;border-radius:6px}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-top:11px}
+  .card-head{display:flex;align-items:center;justify-content:space-between;padding:13px 15px 0}
+  .card-head h2{margin:0;font-size:12px;font-weight:750;letter-spacing:.3px;color:#2b4058}
+  .card-head .tag{font-size:9.5px;color:#5f87aa;background:#edf6fe;border:1px solid #d9eafa;border-radius:999px;padding:3px 7px;font-weight:600}
+  .card-body{padding:11px 15px 14px}
+
+  .modes{display:flex;gap:6px;background:#f3f7fc;border:1px solid #e3ebf5;border-radius:10px;padding:3px}
+  .modes button{flex:1;height:30px;border-radius:7px;font-size:10.5px;color:#5b7088;font-weight:600;transition:.15s}
+  .modes button.on{background:#fff;color:#1768c6;box-shadow:0 2px 7px rgba(35,80,130,.12)}
+  .modes button:hover{color:#1768c6}
+  .action-row{display:flex;gap:8px;margin-top:9px}
+  .btn{height:34px;border-radius:9px;border:1px solid #d7e3f0;background:#f8fbfe;color:#46617d;font-size:11px;font-weight:650;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:.15s;padding:0 10px}
+  .btn:hover{border-color:#9ec5ee;background:#f1f8ff;color:#1b6bcf}
+  .btn.primary{background:linear-gradient(135deg,#1e74e8,#0e9fbd);border-color:transparent;color:#fff;box-shadow:0 7px 16px rgba(25,115,210,.22);flex:1}
+  .btn.primary:hover{filter:brightness(1.04);color:#fff}
+  .btn.ghost{background:#fff}
+  .btn:active{transform:translateY(1px)}
+  .status{margin:8px 0 0;font-size:9.5px;line-height:1.5;color:#8a9cae;min-height:14px}
+  .status.warn{color:#a46812}
+  .status b{color:#805616}
+
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}
+  .stats .stat:last-child:nth-child(5){grid-column:1/-1}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:13px;padding:11px 12px;box-shadow:0 4px 14px rgba(35,72,110,.035)}
+  .stat>span{display:block;font-size:9.5px;color:#8294a8;letter-spacing:.3px}
+  .stat-row{display:flex;align-items:baseline;gap:4px;margin-top:4px}
+  .stat b{font-size:21px;line-height:1;font-weight:750;letter-spacing:-.6px;font-variant-numeric:tabular-nums;color:#1b3048}
+  .stat i{font-style:normal;font-size:9.5px;color:#91a1b4;white-space:nowrap}
+  .stat small{display:block;margin-top:3px;font-size:8.5px;color:#a1b0c1}
+
+  .field{margin-bottom:10px}
+  .field:last-child{margin-bottom:0}
+  .field label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10.5px;color:#4a5e75;margin-bottom:5px;font-weight:600}
+  .field label .tag{font-size:8.5px;color:#7b8fa5;font-weight:500;background:#f1f5fa;border-radius:4px;padding:2px 5px}
+  .input-wrap{display:flex;align-items:center;border:1px solid #d5e1ee;border-radius:9px;background:#f9fbfd;overflow:hidden;transition:.15s}
+  .input-wrap:focus-within{border-color:#3f8be4;background:#fff;box-shadow:0 0 0 3px rgba(45,124,225,.1)}
+  .input-wrap input{border:0;outline:none;background:transparent;width:100%;padding:7px 9px;font-size:13px;font-weight:700;color:#18314d;font-variant-numeric:tabular-nums;letter-spacing:.2px}
+  .input-wrap .unit{padding:0 9px;font-size:9.5px;color:#8fa0b3;border-left:1px solid #e5edf5;line-height:26px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .const-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .const-grid>div{background:#f7fafd;border:1px solid #e6eef7;border-radius:9px;padding:8px 10px;display:flex;align-items:baseline;gap:5px;flex-wrap:wrap}
+  .const-grid span{width:100%;font-size:9px;color:#8294a8}
+  .const-grid b{font-size:18px;line-height:1;color:#1b3b5c;font-variant-numeric:tabular-nums}
+  .const-grid i{font-style:normal;font-size:8.5px;color:#8fa0b3}
+  .count-result{
+    margin-top:2px;padding:8px 10px;border-radius:9px;background:#f2f8ff;
+    border:1px solid #dbe9f7;display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;
+  }
+  .count-result span{font-size:9.5px;color:#6f869b}
+  .count-result b{font-size:20px;line-height:1;color:#1768c6;font-variant-numeric:tabular-nums}
+  .count-result small{width:100%;font-size:8.5px;color:#8b9cae}
+  .hint{margin:6px 0 0;font-size:9px;line-height:1.5;color:#8c9caf}
+
+  .sel-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .inline-actions{display:flex;align-items:center;gap:8px;margin-top:9px}
+  .inline-actions .btn{flex:1;height:30px;font-size:10.5px}
+  .check{display:flex;align-items:center;gap:5px;font-size:10px;color:#5d7288;white-space:nowrap;cursor:pointer}
+  .check input{accent-color:#1d6fe0;width:13px;height:13px}
+
+  .switch-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;font-size:10.5px;color:#50657c}
+  .switch{position:relative;display:inline-block;width:30px;height:17px;flex:0 0 auto}
+  .switch input{opacity:0;width:0;height:0;position:absolute}
+  .switch span{position:absolute;inset:0;background:#d6e2ee;border-radius:999px;transition:.18s}
+  .switch span::before{content:"";position:absolute;width:13px;height:13px;left:2px;top:2px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(20,40,60,.2);transition:.18s}
+  .switch input:checked+span{background:#1d6fe0}
+  .switch input:checked+span::before{transform:translateX(13px)}
+
+  .title-input,.title-select{width:100%;border:1px solid #d5e1ee;border-radius:9px;background:#f9fbfd;padding:7px 9px;font-size:10.5px;color:#334a62;outline:none;margin-top:4px}
+  .title-input:focus,.title-select:focus{border-color:#3f8be4;background:#fff;box-shadow:0 0 0 3px rgba(45,124,225,.1)}
+  .export-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+  .export-grid .btn{height:31px;font-size:10px}
+
+  .notes{font-size:9px;line-height:1.65;color:#8b9aac;padding:2px 3px 0;margin:11px 0 0}
+  .notes b{color:#60758b}
+  .panel-footer{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:9px 20px;border-top:1px solid #e2eaf3;color:#8b9cae;font-size:9px;background:#fbfdff}
+  .panel-footer svg{width:11px;height:11px;flex:0 0 auto}
+  .panel-footer .sep{margin-left:auto;color:#b0bdcb}
+
+  /* ================= stage ================= */
+  .right-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px;margin:14px 14px 14px 0;overflow-y:auto;padding-bottom:6px}
+  .right-col .stage{flex:0 0 auto;width:100%;height:64vh;min-height:480px;margin:0}
+  .stage{
+    position:relative;flex:1;min-width:0;margin:14px 14px 14px 0;border-radius:22px;overflow:hidden;
+    background:#071321;box-shadow:0 24px 60px rgba(18,48,80,.2);isolation:isolate;transition:background .25s;
+  }
+  .seq-panel{flex:0 0 auto;background:#fff;border-radius:18px;box-shadow:0 16px 40px rgba(33,67,105,.13);padding:13px 18px 10px;color:#20364d}
+  .seq-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:4px}
+  .seq-head h2{margin:0;font-size:13px;letter-spacing:.2px;color:#18324b}
+  .seq-head p{margin:2px 0 0;font-size:10px;color:#8a9bad}
+  .seq-badge{font-size:11px;font-weight:800;color:#1d6fe0;background:#eef5ff;border-radius:999px;padding:4px 9px;white-space:nowrap}
+  #cvSeq{width:100%;height:365px;display:block;background:#fff;border-radius:12px}
+  .seq-body{display:flex;gap:14px;align-items:stretch}
+  .seq-body #cvSeq{flex:1 1 auto;min-width:0}
+  .seq-side{flex:0 0 auto;width:148px;display:flex;flex-direction:column;justify-content:center;padding:4px 0 6px}
+  .seq-side-title{font-size:17px;font-weight:800;color:#18324b;margin-bottom:9px;letter-spacing:.5px}
+  .seq-legend{display:flex;flex-direction:column;gap:8px;font-size:14.5px;color:#20364d}
+  .seq-legend span{display:flex;align-items:center;gap:7px;white-space:nowrap}
+  .seq-legend i{width:9px;height:9px;border-radius:50%;display:block;flex:0 0 auto}
+  .seq-legend em{font-style:normal;color:#5b7286;margin-left:1px}
+  .seq-legend .s1{background:#e74c3c}.seq-legend .s2{background:#e67e22}.seq-legend .s3{background:#e0b400}.seq-legend .s4{background:#27ae60}
+  .seq-legend .s5{background:#2f80ed}.seq-legend .s6{background:#8e44ad}.seq-legend .s7{background:#16a085}.seq-legend .s8{background:#d81b60}
+  #scene3d{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none;outline:none}
+  #scene3d.dragging{cursor:grabbing}
+  .paper{position:absolute;inset:0;display:none;padding:64px 18px 16px;background:linear-gradient(180deg,#eef3f9,#e7eef6)}
+  .paper svg{width:100%;height:100%;display:block;background:#fff;border-radius:14px;box-shadow:0 16px 40px rgba(33,67,105,.13);touch-action:none}
+  #cv .hole{cursor:grab}
+  #cv .hole:active{cursor:grabbing}
+  #cv.add-mode .hole{cursor:crosshair}
+
+  .stage-head{position:absolute;left:28px;top:20px;z-index:4;pointer-events:none;color:#fff;max-width:46%}
+  .eyebrow{font-size:9px;letter-spacing:2.6px;color:#58b3d8;font-weight:800}
+  .stage-head h1{margin:6px 0 3px;font-size:21px;line-height:1.2;font-weight:650;letter-spacing:.2px;text-shadow:0 2px 24px rgba(0,0,0,.35)}
+  .stage-head p{margin:0;font-size:10.5px;color:#8fa8bd;font-variant-numeric:tabular-nums;letter-spacing:.2px}
+
+  .tabbar{
+    position:absolute;left:50%;top:18px;transform:translateX(-50%);z-index:7;display:flex;gap:3px;
+    background:rgba(11,30,50,.72);border:1px solid rgba(255,255,255,.11);border-radius:11px;padding:3px;
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  }
+  .tabbar button{height:29px;padding:0 14px;border-radius:8px;font-size:10.5px;font-weight:650;color:#9fb9ce;transition:.16s}
+  .tabbar button:hover{color:#fff}
+  .tabbar button.active{background:rgba(48,120,180,.85);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.2)}
+
+  .tools{position:absolute;right:19px;top:17px;z-index:8;display:flex;gap:6px}
+  .tool{
+    height:34px;min-width:34px;padding:0 9px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;gap:5px;
+    border:1px solid rgba(255,255,255,.12);background:rgba(14,34,55,.64);color:#c9ddee;
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-size:10px;transition:.15s;
+  }
+  .tool:hover{background:rgba(34,84,124,.76);border-color:rgba(120,190,240,.38);color:#fff}
+  .tool:active{transform:translateY(1px)}
+  .tool svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .tool .label{white-space:nowrap}
+
+  .hud{
+    position:absolute;right:20px;bottom:20px;z-index:5;width:232px;padding:13px 15px 12px;border-radius:15px;
+    background:linear-gradient(145deg,rgba(13,37,60,.9),rgba(9,25,42,.8));
+    border:1px solid rgba(92,174,220,.23);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    color:#eaf4ff;box-shadow:0 16px 38px rgba(0,0,0,.26);
+  }
+  .hud-label{font-size:9px;letter-spacing:1.6px;color:#7da8c6;font-weight:700}
+  .hud-value{display:flex;align-items:baseline;gap:5px;margin:5px 0 2px}
+  .hud-value b{font-size:31px;line-height:1.05;letter-spacing:-1px;font-variant-numeric:tabular-nums;color:#7fe0ff;font-weight:750}
+  .hud-value span{font-size:10px;color:#8db2c9}
+  .hud-value em{font-style:normal;font-size:11px;color:#8db2c9;margin-left:3px}
+  .hud-sub{font-size:9.5px;color:#9db8cb;line-height:1.5}
+  .hud-sub b{color:#e6f3ff;font-weight:650}
+  .hud-line{height:1px;background:rgba(255,255,255,.1);margin:9px 0 7px}
+  .hud-meta{display:flex;justify-content:space-between;gap:8px;font-size:9.5px;color:#91aec2;margin-top:3px}
+  .hud-meta b{color:#d8e9f7;font-weight:650;font-variant-numeric:tabular-nums}
+
+  .legend{
+    position:absolute;left:22px;bottom:20px;z-index:5;padding:10px 12px;border-radius:11px;
+    background:rgba(9,26,43,.68);border:1px solid rgba(255,255,255,.09);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#bcd4e6;display:flex;gap:13px;align-items:center;
+  }
+  .lg{display:flex;align-items:center;gap:5px;font-size:9px;white-space:nowrap}
+  .lg i{width:7px;height:7px;border-radius:50%;display:block;box-shadow:0 0 0 3px rgba(255,255,255,.04)}
+  .lg.per i{background:#ffb454}
+  .lg.floor i{background:#4fd39b}
+  .lg.under i{background:#a78bfa}
+  .lg.int i{background:#5fd0ff}
+  .lg.cut i{background:#f472d0}
+  .lg.sel i{background:#ff5c52}
+
+  .hintbar{
+    position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:5;
+    font-size:9.5px;color:#6e8ba2;white-space:nowrap;letter-spacing:.4px;pointer-events:none;
+  }
+  .tooltip{
+    position:absolute;z-index:20;pointer-events:none;padding:7px 9px;border-radius:8px;
+    background:rgba(5,17,30,.95);border:1px solid rgba(110,200,240,.26);
+    box-shadow:0 10px 26px rgba(0,0,0,.35);color:#eaf6ff;font-size:9.5px;line-height:1.55;
+    opacity:0;transform:translateY(3px);transition:opacity .12s,transform .12s;white-space:nowrap;
+  }
+  .tooltip.show{opacity:1;transform:translateY(0)}
+  .tooltip b{display:block;font-size:10.5px;color:#fff;margin-bottom:1px}
+  .tooltip span{display:block;color:#94b9cf}
+  .tooltip i{font-style:normal;color:#e8f4ff;font-variant-numeric:tabular-nums}
+
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(10px);z-index:60;
+    padding:9px 15px;border-radius:9px;background:#12283d;border:1px solid rgba(110,200,240,.3);
+    color:#dcefff;font-size:10.5px;box-shadow:0 14px 34px rgba(0,0,0,.3);opacity:0;pointer-events:none;
+    transition:opacity .22s,transform .22s;max-width:70vw;text-align:center;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.err{background:#4a1719;border-color:#9d3b3e;color:#ffe4e3}
+  .debug{display:none}
+
+  /* 2D 模式 */
+  .stage.mode2d{background:#e9eff6;box-shadow:0 24px 60px rgba(18,48,80,.12)}
+  .stage.mode2d #scene3d{display:none}
+  .stage.mode2d .paper{display:block}
+  .stage.mode2d .stage-head,.stage.mode2d .hud,.stage.mode2d .legend{display:none}
+  .stage.mode2d .tabbar{background:rgba(255,255,255,.9);border-color:#d6e2ef;box-shadow:0 8px 20px rgba(30,65,100,.1)}
+  .stage.mode2d .tabbar button{color:#617890}
+  .stage.mode2d .tabbar button.active{background:#1d6fe0;color:#fff}
+  .stage.mode2d .tool{background:rgba(255,255,255,.9);border-color:#d6e2ef;color:#42617f;box-shadow:0 8px 20px rgba(30,65,100,.08)}
+  .stage.mode2d .tool:hover{background:#fff;border-color:#9ec5ee;color:#1768c6}
+  .stage.mode2d .tool.view3d{display:none}
+  .stage.mode2d .hintbar{color:#637b93}
+
+  @media (max-width:1180px){
+    .panel{width:360px;flex-basis:360px}
+    .stage-head{max-width:38%}
+    .stage-head h1{font-size:19px}
+    .hud{width:210px}
+    .tabbar{left:auto;right:168px;transform:none}
+    .tools{top:62px}
+  }
+  @media (max-width:980px){
+    body{overflow:auto}
+    .app{height:auto;min-height:100vh;flex-direction:column}
+    .panel{width:100%;flex:0 0 auto;border-right:0;border-bottom:1px solid #dce6f1}
+    .scroll{overflow:visible;max-height:none}
+    .stage{height:72vh;min-height:520px;margin:0 10px 10px}
+    .panel-footer{position:static}
+  }
+  @media (max-width:640px){
+    .brand{padding:16px 16px 12px}
+    .scroll{padding:0 14px 14px}
+    .stage{height:70vh;min-height:460px;margin:0 8px 8px;border-radius:16px}
+    .stage-head{left:18px;top:14px;max-width:54%}
+    .stage-head h1{font-size:16px}
+    .stage-head p{font-size:9px}
+    .tabbar{top:10px;left:auto;right:12px;transform:none}
+    .tabbar button{height:28px;padding:0 10px;font-size:9.5px}
+    .tools{top:56px;right:12px}
+    .tool{height:31px;min-width:31px;padding:0 7px}
+    .tool .label{display:none}
+    .hud{right:12px;bottom:12px;width:144px;padding:8px 10px}
+    .hud-value b{font-size:22px}
+    .hud-sub{font-size:8.5px}
+    .hud-line{margin:7px 0 5px}
+    .hud-meta:last-child{display:none}
+    .legend{display:none}
+    .hintbar{display:none}
+    .seq-body{flex-direction:column;gap:8px}
+    .seq-side{width:100%;flex-direction:row;align-items:center;gap:12px;padding:0}
+    .seq-side-title{font-size:14px;margin-bottom:0;white-space:nowrap}
+    .seq-legend{flex-direction:row;flex-wrap:wrap;gap:4px 14px;font-size:12px}
+    .paper{padding:52px 8px 8px}
+  }
+  @media (max-width:400px){
+    .hud{width:136px}
+    .hud-value b{font-size:20px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 20V9a8 8 0 0 1 16 0v11"/>
+          <path d="M2 20h20M8 20V9a4 4 0 0 1 8 0v11"/>
+          <path d="M6 13h2M16 13h2M10 20v-3M14 20v-3"/>
+        </svg>
+      </div>
+      <div>
+        <h1>隧道炮孔布置</h1>
+        <p>TUNNEL BLAST · 3D</p>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <section class="card" style="margin-top:2px">
+        <div class="card-head"><h2>显示与导出</h2><span class="tag">本地保存</span></div>
+        <div class="card-body">
+          <div class="field">
+            <label for="fGrade">围岩级别 / 图名</label>
+            <select class="title-select" id="fGrade" aria-label="围岩级别图名">
+              <option value="II">#1 施工支洞Ⅱ类围岩布孔示意图</option>
+              <option value="III">#1 施工支洞Ⅲ类围岩布孔示意图</option>
+              <option value="IV">#1 施工支洞Ⅳ类围岩布孔示意图</option>
+              <option value="V">#1 施工支洞Ⅴ类围岩布孔示意图</option>
+            </select>
+            <p class="hint">周边孔默认 36（不含底板）；底板孔默认：Ⅱ类 9、Ⅲ类 16、Ⅳ类 11、Ⅴ类 12。</p>
+          </div>
+          <div class="switch-row"><span>显示网格</span><label class="switch"><input type="checkbox" id="fGrid" checked><span></span></label></div>
+          <div class="switch-row"><span>显示尺寸标注</span><label class="switch"><input type="checkbox" id="fDim" checked><span></span></label></div>
+          <div class="switch-row"><span>三维钻孔示意</span><label class="switch"><input type="checkbox" id="fRods" checked><span></span></label></div>
+          <div class="export-grid">
+            <button class="btn" id="btnCsv">导出 CSV</button>
+            <button class="btn" id="btnSvg">导出 SVG</button>
+            <button class="btn" id="btnPng">导出 PNG</button>
+            <button class="btn" id="btnReset">恢复默认</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" style="margin-top:11px">
+        <div class="card-head"><h2>布孔控制</h2><span class="tag" id="statusTag">已布孔</span></div>
+        <div class="card-body">
+          <div class="modes">
+            <button id="mMove" class="on">移动</button>
+            <button id="mAdd">添加</button>
+            <button id="mDel">删除</button>
+          </div>
+          <div class="action-row">
+            <button class="btn primary" id="btnGen">自动布孔</button>
+            <button class="btn ghost" id="btnClear">清空</button>
+          </div>
+          <p class="status" id="dirtyMsg"></p>
+        </div>
+      </section>
+
+      <div class="stats">
+        <div class="stat"><span>当前孔数</span><div class="stat-row"><b id="statCount">133</b><i>孔</i></div><small id="statTarget">合计 133 孔</small></div>
+        <div class="stat"><span>断面面积</span><div class="stat-row"><b id="statArea">44.7</b><i>m²</i></div><small id="statPerimeter">周长 26.3 m</small></div>
+        <div class="stat"><span>周边孔</span><div class="stat-row"><b id="statPer">36</b><i>孔</i></div><small id="statPerNote">墙拱 36 · 底板 9（底板下 2）</small></div>
+        <div class="stat"><span>辅助孔</span><div class="stat-row"><b id="statInt">78</b><i>孔</i></div><small>辅助孔</small></div>
+        <div class="stat"><span>掏槽孔</span><div class="stat-row"><b id="statCut">8</b><i>孔</i></div><small>中心掏槽</small></div>
+      </div>
+
+      <section class="card">
+        <div class="card-head"><h2>断面参数</h2><span class="tag">按图纸固定</span></div>
+        <div class="card-body">
+          <div class="const-grid">
+            <div><span>总宽 W</span><b>760</b><i>cm</i></div>
+            <div><span>总高 H</span><b>655</b><i>cm</i></div>
+            <div><span>拱高（矢高）</span><b>254</b><i>cm</i></div>
+            <div><span>直墙高</span><b>401</b><i>cm</i></div>
+          </div>
+          <p class="hint">按最新图纸固定；右下角在底板下方多出一块：向下 50、宽 55（自右墙向左）。底板孔固定点 x=0、x=705、x=760；其余普通孔在 x=0～705 之间均分；底板下 2 孔只计总数。</p>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>布孔参数</h2><span class="tag">目标孔数 = 结果</span></div>
+        <div class="card-body">
+          <div class="grid2">
+            <div class="field"><label for="fPerCount">周边孔个数 <span class="tag">不含底板</span></label><div class="input-wrap"><input id="fPerCount" type="number" step="1" min="14"><span class="unit">个</span></div></div>
+            <div class="field"><label for="fAuxCount">辅助孔个数</label><div class="input-wrap"><input id="fAuxCount" type="number" step="1" min="0"><span class="unit">个</span></div></div>
+          </div>
+          <div class="grid2">
+            <div class="field"><label for="fCutCount">掏槽孔个数 <span class="tag">中心</span></label><div class="input-wrap"><input id="fCutCount" type="number" step="1" min="0"><span class="unit">个</span></div></div>
+            <div class="field"><label for="fFloorCount">底板孔个数 <span class="tag">含固定 3 孔</span></label><div class="input-wrap"><input id="fFloorCount" type="number" step="1" min="3"><span class="unit">个</span></div></div>
+          </div>
+          <div class="count-result">
+            <span>合计孔数（自动结果）</span>
+            <b id="calcTotal">133</b>
+            <small id="calcBreak">墙拱 36 + 辅助 78 + 掏槽 8 + 底板 9 + 底板下 2</small>
+          </div>
+          <p class="hint">周边孔：左墙 60 起、右墙 50 起、间距 60；拱圈按剩余个数均分。底板孔从左侧 100 排到右侧 55；辅助孔内部自动排布。</p>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>选中炮孔</h2><span class="tag" id="selTag">未选择</span></div>
+        <div class="card-body">
+          <div class="sel-grid">
+            <div class="field"><label for="fX">X 坐标</label><div class="input-wrap"><input id="fX" type="number" step="0.1" disabled><span class="unit">cm</span></div></div>
+            <div class="field"><label for="fY">Y 坐标</label><div class="input-wrap"><input id="fY" type="number" step="0.1" disabled><span class="unit">cm</span></div></div>
+          </div>
+          <div class="inline-actions">
+            <button class="btn" id="btnDel">删除选中</button>
+            <label class="check"><input type="checkbox" id="fNum">显示编号</label>
+          </div>
+          <p class="hint">在 2D 视图中拖动炮孔；方向键微调，Shift ×10，Delete 删除。</p>
+        </div>
+      </section>
+
+      <p class="notes">
+        <b>说明：</b>2D 为可编辑布孔图，3D 为掌子面炮孔立体示意。三维孔深按 3.0 m 显示，仅用于空间关系表达，不参与二维坐标计算。<br>
+        <b>数据：</b>修改后自动保存在本机浏览器；导出 CSV 为工程坐标（cm）。
+      </p>
+    </div>
+
+    <div class="panel-footer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      本地计算 · 自动保存
+      <span class="sep">HTML · SVG / Canvas</span>
+    </div>
+  </aside>
+
+  <div class="right-col">
+  <main class="stage mode2d" id="stage">
+    <canvas id="scene3d" aria-label="隧道掌子面三维炮孔视图"></canvas>
+    <div class="paper" id="paper"><svg id="cv" xmlns="http://www.w3.org/2000/svg"></svg></div>
+
+    <div class="stage-head">
+      <div class="eyebrow">TUNNEL FACE · BLAST HOLES</div>
+      <h1 id="stageTitle">隧道掌子面 · 三维布孔</h1>
+      <p id="stageSub">760 × 655 cm · 拱高 254 cm · 133 孔</p>
+    </div>
+
+    <div class="tabbar">
+      <button id="tab2d" class="active">2D 布孔</button>
+      <button id="tab3d">3D 立体</button>
+    </div>
+
+    <div class="tools">
+      <button class="tool view3d" id="btnResetView" title="复位视角">
+        <svg viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.7-6.2"/><path d="M3.5 4.6v5.2h5.2"/></svg><span class="label">复位</span>
+      </button>
+      <button class="tool view3d" id="btnFront" title="正对掌子面">
+        <svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg><span class="label">正视</span>
+      </button>
+      <button class="tool view3d" id="btnTop" title="俯视">
+        <svg viewBox="0 0 24 24"><path d="M12 3.5 20 8v8l-8 4.5L4 16V8l8-4.5Z"/><path d="M12 12.5v8M12 12.5 4.4 8.3M12 12.5l7.6-4.2"/></svg><span class="label">俯视</span>
+      </button>
+      <button class="tool" id="btnExport" title="导出当前视图 PNG">
+        <svg viewBox="0 0 24 24"><path d="M12 3.5v11m0 0 4-4m-4 4-4-4"/><path d="M4.5 15v3.2a1.8 1.8 0 0 0 1.8 1.8h11.4a1.8 1.8 0 0 0 1.8-1.8V15"/></svg><span class="label">导出</span>
+      </button>
+    </div>
+
+    <div class="hud">
+      <div class="hud-label">当前布孔</div>
+      <div class="hud-value"><b id="hudCount">133</b><span>孔</span><em id="hudTarget">/ 133</em></div>
+      <div class="hud-sub">周边 <b id="hudPer">36</b> · 辅助 <b id="hudInt">78</b></div>
+      <div class="hud-line"></div>
+      <div class="hud-meta"><span>断面面积</span><b id="hudArea">51.5 m²</b></div>
+      <div class="hud-meta"><span>断面尺寸</span><b id="hudSize">780 × 660 cm</b></div>
+    </div>
+
+    <div class="legend">
+      <span class="lg per"><i></i>周边孔</span>
+      <span class="lg floor"><i></i>底板孔</span>
+      <span class="lg under"><i></i>底板下</span>
+      <span class="lg int"><i></i>辅助孔</span>
+      <span class="lg cut"><i></i>掏槽孔</span>
+      <span class="lg sel"><i></i>选中</span>
+    </div>
+
+    <div class="hintbar" id="hintbar">拖拽旋转 · 滚轮缩放 · 右键平移 · 单击炮孔选中</div>
+    <div class="tooltip" id="tooltip"></div>
+    <div class="toast" id="toast"></div>
+    <div class="debug" id="debug"></div>
+  </main>
+
+  <section class="seq-panel" id="seqPanel">
+    <div class="seq-head">
+      <div>
+        <h2>起爆顺序示意</h2>
+        <p>与上方布孔图联动 · 按当前断面缩放</p>
+      </div>
+      <span class="seq-badge" id="seqTotal">133 孔</span>
+    </div>
+    <div class="seq-body">
+    <svg id="cvSeq" xmlns="http://www.w3.org/2000/svg"></svg>
+    <aside class="seq-side">
+      <div class="seq-side-title">起爆顺序</div>
+      <div class="seq-legend">
+      <span><i class="s1"></i>1 · 8孔 <em>50ms</em></span>
+      <span><i class="s2"></i>2 · 16孔 <em>80ms</em></span>
+      <span><i class="s3"></i>3 · 23孔 <em>120ms</em></span>
+      <span><i class="s4"></i>4 · 29孔 <em>180ms</em></span>
+      <span><i class="s5"></i>5 · 36孔 <em>260ms</em></span>
+      <span><i class="s6"></i>6 · 9孔 <em>340ms</em></span>
+      <span><i class="s7"></i>7 · 9孔 <em>460ms</em></span>
+      <span><i class="s8"></i>8 · 2孔 <em>580ms</em></span>
+      </div>
+    </aside>
+    </div>
+  </section>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   基础数据 / 工具
+   ============================================================ */
+// 辅助孔初始位置：按用户提供的干净版示意图识别+左右对称化（cm，W=760/H=655 坐标系）
+// 辅助孔初始位置：按用户提供的干净版示意图识别+左右对称化（cm，W=760/H=655 坐标系）
+const AUX_PATTERN = [
+  [347,603.6],[413,603.6],[268.9,588.6],[491.1,588.6],[348.5,564.9],[411.5,564.9],
+  [196.8,559.9],[563.2,559.9],[271.9,547.4],[488.1,547.4],[356,521.1],[404,521.1],
+  [136.7,516.1],[623.3,516.1],[204.3,512.3],[555.7,512.3],[279.4,501.1],[480.6,501.1],
+  [90.1,462.3],[151.7,462.3],[608.3,462.3],[669.9,462.3],[217.8,458.5],[542.2,458.5],
+  [60.1,401],[120.2,401],[639.8,401],[699.9,401],[180.2,399.5],[579.8,399.5],
+  [60.1,340.9],[120.2,340.9],[180.2,340.9],[579.8,340.9],[639.8,340.9],[699.9,340.9],
+  [60.1,280.9],[120.2,280.9],[180.2,280.9],[579.8,280.9],[639.8,280.9],[699.9,280.9],
+  [60.1,220.8],[120.2,220.8],[180.2,220.8],[579.8,220.8],[639.8,220.8],[699.9,220.8],
+  [60.1,160.7],[120.2,160.7],[180.2,160.7],[579.8,160.7],[639.8,160.7],[699.9,160.7],
+  [220.8,150.2],[300.4,150.2],[380,150.2],[459.6,150.2],[539.2,150.2],[60.1,100.6],
+  [144.2,100.6],[214.8,100.6],[294.4,100.6],[380,100.6],[465.6,100.6],[545.2,100.6],
+  [615.8,100.6],[699.9,100.6],[88.6,51.1],[154.7,51.1],[229.8,51.1],[304.9,51.1],
+  [455.1,51.1],[530.2,51.1],[605.3,51.1],[671.4,51.1],[380,49.6]
+];
+
+const GRADES = {
+  II: { title: "#1 施工支洞Ⅱ类围岩布孔示意图", perCount: 36, cutCount: 8, floorCount: 9 },
+  III: { title: "#1 施工支洞Ⅲ类围岩布孔示意图", perCount: 36, cutCount: 8, floorCount: 16 },
+  IV: { title: "#1 施工支洞Ⅳ类围岩布孔示意图", perCount: 36, cutCount: 8, floorCount: 11 },
+  V: { title: "#1 施工支洞Ⅴ类围岩布孔示意图", perCount: 36, cutCount: 8, floorCount: 12 }
+};
+
+const DEF = {
+  // 断面尺寸按最新图纸固定为常量
+  W: 760, H: 655, rise: 254,
+  // 三个布孔变量
+  perCount: 36, auxCount: 77, cutCount: 8, floorCount: 9,
+  // 右下角处理（图纸标注）
+  floorInsetLeft: 100, floorInsetRight: 55,
+  wallStartLeft: 60, wallStartRight: 50, wallSpacing: 60,
+  notchW: 55, notchH: 50,
+  int: 80,
+  grade: "II",
+  title: GRADES.II.title
+};
+
+let S = Object.assign({}, DEF);
+let holes = [];               // [x, y] cm
+let selected = -1;
+let mode = "move";            // move | add | del
+let tab = "2d";               // 2d | 3d
+let showNum = false;
+let showGrid = true;
+let showDim = true;
+let showRods = true;
+let dirty = false;
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const fmt = (v, d = 1) => Number.isFinite(v)
+  ? v.toLocaleString("zh-CN", { minimumFractionDigits: d, maximumFractionDigits: d })
+  : "—";
+
+function vsub(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+function cross3(a, b) {
+  return [
+    a[1] * b[2] - a[2] * b[1],
+    a[2] * b[0] - a[0] * b[2],
+    a[0] * b[1] - a[1] * b[0]
+  ];
+}
+function len3(v) { return Math.hypot(v[0], v[1], v[2]); }
+function norm3(v) {
+  const l = len3(v) || 1;
+  return [v[0] / l, v[1] / l, v[2] / l];
+}
+function dot3(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+
+let stage, svg, canvas3d, ctx3d;
+let W3 = 0, H3 = 0, DPR = 1;
+let raf3 = 0;
+let drag2 = null;
+let drag3 = null;
+let toastTimer = 0;
+const el = {};
+
+function cacheDom() {
+  stage = $("#stage");
+  svg = $("#cv");
+  canvas3d = $("#scene3d");
+  ctx3d = canvas3d.getContext("2d");
+  const ids = [
+    "mMove", "mAdd", "mDel", "btnGen", "btnClear", "statusTag", "dirtyMsg",
+    "statCount", "statArea", "statPer", "statInt", "statCut", "statTarget", "statPerimeter", "statPerNote",
+    "fPerCount", "fAuxCount", "fCutCount", "fFloorCount",
+    "calcTotal", "calcBreak",
+    "fX", "fY", "btnDel", "fNum", "fGrid", "fDim", "fRods", "fGrade", "selTag",
+    "btnCsv", "btnSvg", "btnPng", "btnReset",
+    "stageTitle", "stageSub", "tab2d", "tab3d",
+    "btnResetView", "btnFront", "btnTop", "btnExport",
+    "hudCount", "hudTarget", "hudPer", "hudInt", "hudArea", "hudSize", "cvSeq", "seqTotal",
+    "hintbar", "tooltip", "toast", "debug"
+  ];
+  ids.forEach(id => { el[id] = document.getElementById(id); });
+}
+
+/* ============================================================
+   断面几何
+   ============================================================ */
+function geom() {
+  const W = Math.max(100, Number(S.W) || 100);
+  const H = Math.max(100, Number(S.H) || 100);
+  const rise = clamp(Number(S.rise) || 100, 10, H - 10);
+  const wall = H - rise;
+  const R = (Math.pow(W / 2, 2) + rise * rise) / (2 * rise);
+  const cy = wall + rise - R;
+  return { W, H, rise, wall, R, cy };
+}
+
+function archAngles(g) {
+  return [
+    Math.atan2(g.wall - g.cy, -g.W / 2),
+    Math.atan2(g.wall - g.cy, g.W / 2)
+  ];
+}
+
+function archPoints(g, n) {
+  const a = archAngles(g);
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const t = a[0] + (a[1] - a[0]) * i / n;
+    pts.push([g.W / 2 + g.R * Math.cos(t), g.cy + g.R * Math.sin(t)]);
+  }
+  return pts;
+}
+
+function outline(g) {
+  const a = archAngles(g);
+  const arcLen = g.R * Math.abs(a[1] - a[0]);
+  const n = Math.max(10, Math.round(arcLen / 5));
+  const pts = [[0, 0], [0, g.wall]];
+  const ap = archPoints(g, n);
+  for (let i = 1; i < ap.length - 1; i++) pts.push(ap[i]);
+  const nw = clamp(Number(S.notchW) || 0, 0, g.W - 40);
+  const nh = clamp(Number(S.notchH) || 0, 0, g.wall - 10);
+  if (nw > 0 && nh > 0) {
+    // 右下角凹槽：从底板标高向下 50，宽度从右墙向左 55
+    pts.push([g.W, g.wall], [g.W, 0], [g.W, -nh], [g.W - nw, -nh], [g.W - nw, 0]);
+  } else {
+    pts.push([g.W, g.wall], [g.W, 0]);
+  }
+  return pts;
+}
+
+function segDist(pt, a, b) {
+  const vx = b[0] - a[0], vy = b[1] - a[1];
+  const wx = pt[0] - a[0], wy = pt[1] - a[1];
+  const L = vx * vx + vy * vy;
+  const t = L > 0 ? clamp((wx * vx + wy * vy) / L, 0, 1) : 0;
+  return Math.hypot(pt[0] - (a[0] + t * vx), pt[1] - (a[1] + t * vy));
+}
+
+function distOutline(pt, poly) {
+  let d = Infinity;
+  for (let i = 0; i < poly.length; i++) {
+    d = Math.min(d, segDist(pt, poly[i], poly[(i + 1) % poly.length]));
+  }
+  return d;
+}
+
+function insidePoly(pt, poly) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i], b = poly[j];
+    if (((a[1] > pt[1]) !== (b[1] > pt[1])) &&
+        (pt[0] < (b[0] - a[0]) * (pt[1] - a[1]) / (b[1] - a[1]) + a[0])) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function insideOrEdge(pt, poly) {
+  return insidePoly(pt, poly) || distOutline(pt, poly) < 0.6;
+}
+
+function polyArea(poly) {
+  let s = 0;
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i], b = poly[(i + 1) % poly.length];
+    s += a[0] * b[1] - b[0] * a[1];
+  }
+  return Math.abs(s / 2);
+}
+
+function polyLength(poly) {
+  let s = 0;
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i], b = poly[(i + 1) % poly.length];
+    s += Math.hypot(b[0] - a[0], b[1] - a[1]);
+  }
+  return s;
+}
+
+/* ============================================================
+   自动布孔
+   ============================================================ */
+function wallArchPoints(g, count) {
+  // 墙孔按图纸固定间距：左墙从 60 起、右墙从 50 起，间距 60
+  const leftStart = clamp(Number(S.wallStartLeft) || 60, 0, g.wall);
+  const rightStart = clamp(Number(S.wallStartRight) || 50, 0, g.wall);
+  const spacing = Math.max(20, Number(S.wallSpacing) || 60);
+  const left = [];
+  for (let y = leftStart; y <= g.wall + 1e-6; y += spacing) left.push([0, y]);
+  const right = [];
+  for (let y = rightStart; y <= g.wall + 1e-6; y += spacing) right.push([g.W, y]);
+
+  // 剩余的周边孔个数分配给拱圈；拱圈包含左右拱脚两个端点
+  const archN = Math.max(2, Math.round(count) - left.length - right.length);
+  const a = archAngles(g);
+  const arch = [];
+  for (let i = 0; i < archN; i++) {
+    const t = a[0] + (a[1] - a[0]) * i / (archN - 1);
+    arch.push([g.W / 2 + g.R * Math.cos(t), g.cy + g.R * Math.sin(t)]);
+  }
+  right.reverse(); // 沿拱圈到右墙后，自上而下编号
+  return left.concat(arch, right);
+}
+
+function blockCorners(g) {
+  const nw = clamp(Number(S.notchW) || 0, 0, g.W - 40);
+  const nh = clamp(Number(S.notchH) || 0, 0, g.wall - 10);
+  if (nw <= 0 || nh <= 0) return [];
+  // 55×50 向下多出块的四角（含地下两个角点）
+  return [
+    [g.W - nw, 0],
+    [g.W, 0],
+    [g.W - nw, -nh],
+    [g.W, -nh]
+  ];
+}
+
+function cutLayout(g, count) {
+  const n = clamp(Math.round(Number(count) || 0), 0, 200);
+  if (!n) return [];
+  const cx = g.W / 2, cy = 300;
+  const ring = [
+    [cx - 60, cy], [cx, cy - 60], [cx + 60, cy], [cx, cy + 60],
+    [cx - 60, cy - 60], [cx + 60, cy - 60],
+    [cx - 60, cy + 60], [cx + 60, cy + 60]
+  ];
+  if (n <= 8) return ring.slice(0, n);
+  const pts = ring.slice();
+  pts.push([cx, cy]);
+  const cand = [];
+  for (let x = cx - 150; x <= cx + 150; x += 30) {
+    for (let y = 150; y <= 390; y += 30) {
+      const p = [x, y];
+      if (insideOrEdge(p, outline(g)) && distOutline(p, outline(g)) > 28) cand.push(p);
+    }
+  }
+  while (pts.length < n && cand.length) {
+    let bi = 0, bd = -1;
+    for (let i = 0; i < cand.length; i++) {
+      let dmin = Infinity;
+      for (const q of pts) dmin = Math.min(dmin, Math.hypot(cand[i][0] - q[0], cand[i][1] - q[1]));
+      if (dmin > bd) { bd = dmin; bi = i; }
+    }
+    pts.push(cand.splice(bi, 1)[0]);
+  }
+  return pts;
+}
+
+function seqAuxLayout(g, count) {
+  const n = clamp(Math.round(Number(count) || 0), 0, 2000);
+  if (!n) return [];
+  const weights = [1.08, 1.0, 0.9, 0.76];
+  const rowCount = Math.min(8, Math.max(0, Math.round(n * 0.06)));
+  const ringTotal = Math.max(0, n - rowCount);
+  const wsum = weights.reduce((a, b) => a + b, 0);
+  const counts = weights.map(w => Math.floor(ringTotal * w / wsum));
+  let left = ringTotal - counts.reduce((a, b) => a + b, 0);
+  for (let i = 0; left > 0; i = (i + 1) % 4, left--) counts[i]++;
+
+  const pts = [];
+  const rings = [55, 110, 165, 220];
+  rings.forEach((d, ri) => {
+    const Rr = g.R - d;
+    const half = g.W / 2 - d;
+    const ys = g.cy + Math.sqrt(Math.max(0, Rr * Rr - half * half));
+    const a0 = Math.atan2(ys - g.cy, -half);
+    const a1 = Math.atan2(ys - g.cy, half);
+    const path = [[d, 0], [d, ys]];
+    for (let i = 0; i <= 60; i++) {
+      const a = a0 + (a1 - a0) * i / 60;
+      path.push([g.W / 2 + Rr * Math.cos(a), g.cy + Rr * Math.sin(a)]);
+    }
+    path.push([g.W - d, 0]);
+    const segs = [];
+    let total = 0;
+    for (let i = 1; i < path.length; i++) {
+      const len = Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]);
+      segs.push(len); total += len;
+    }
+    for (let k = 0; k < counts[ri]; k++) {
+      let t = total * (k + 0.5) / counts[ri], si = 0;
+      while (si < segs.length - 1 && t > segs[si]) { t -= segs[si]; si++; }
+      const a = path[si], b = path[si + 1];
+      const u = segs[si] ? t / segs[si] : 0;
+      pts.push([a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u]);
+    }
+  });
+  const x0 = 115, x1 = g.W - 70;
+  for (let k = 0; k < rowCount; k++) {
+    pts.push([x0 + (x1 - x0) * (k + 0.5) / rowCount, 50]);
+  }
+  return pts.filter(p => insideOrEdge(p, outline(g)) && distOutline(p, outline(g)) > 18);
+}
+
+function perimeter(g) {
+  const hs = wallArchPoints(g, Number(S.perCount) || 25);
+  const insetL = clamp(Number(S.floorInsetLeft) || 100, 0, g.W / 2);
+  const nw = clamp(Number(S.notchW) || 0, 0, g.W - 40);
+  // 普通底板孔布置在多出块左侧，多出块四角另用 4 个固定角孔
+  const floorEnd = Math.max(insetL + 20, g.W - nw - 55);
+  // 底板孔输入值 = 底板线上的绿色孔总数；固定点 x=0、x=W-55、x=W
+  const totalFloor = clamp(Math.round(Number(S.floorCount) || 0), 3, 500);
+  const endX = g.W - clamp(Number(S.notchW) || 0, 0, g.W - 40);
+  const n = Math.max(0, totalFloor - 3);
+  if (n === 1) {
+    hs.push([endX / 2, 0]);
+  } else if (n > 1) {
+    for (let i = 1; i <= n; i++) {
+      hs.push([endX * i / (n + 1), 0]);
+    }
+  }
+  return hs;
+}
+
+function candidates(step) {
+  const g = geom(), poly = outline(g);
+  const margin = 50;
+  const nx = Math.floor((g.W - 2 * margin) / step) + 1;
+  if (nx < 1) return [];
+  const x0 = (g.W - (nx - 1) * step) / 2;
+  const ny = Math.floor((g.H - 2 * margin) / step) + 1;
+  const pts = [];
+  for (let j = 0; j < ny; j++) {
+    for (let i = 0; i < nx; i++) {
+      const p = [x0 + i * step, margin + j * step];
+      if (distOutline(p, poly) >= margin && insidePoly(p, poly)) pts.push(p);
+    }
+  }
+  return pts;
+}
+
+function pickInterior(per, needed) {
+  let step = Math.max(20, Number(S.int) || 80);
+  let cand = candidates(step);
+  while (cand.length < needed && step > 24) {
+    step -= 2;
+    cand = candidates(step);
+  }
+  if (cand.length <= needed) return cand.slice();
+
+  const chosen = [];
+  const used = new Set();
+  const base = per.slice();
+  while (chosen.length < needed) {
+    let best = -1, bestD = -1;
+    for (let i = 0; i < cand.length; i++) {
+      if (used.has(i)) continue;
+      let dmin = Infinity;
+      for (const b of base) {
+        const d = Math.hypot(cand[i][0] - b[0], cand[i][1] - b[1]);
+        if (d < dmin) dmin = d;
+      }
+      if (dmin > bestD) { bestD = dmin; best = i; }
+    }
+    if (best < 0) break;
+    used.add(best);
+    chosen.push(cand[best]);
+    base.push(cand[best]);
+  }
+  return chosen;
+}
+
+function declaredCount() {
+  const under = blockCorners(geom()).filter(p => p[1] < -0.5).length;
+  return Math.max(0, Math.round(Number(S.perCount) || 0)) +
+    Math.max(0, Math.round(Number(S.auxCount) || 0)) +
+    Math.max(0, Math.round(Number(S.cutCount) || 0)) +
+    Math.max(3, Math.round(Number(S.floorCount) || 0)) + under;
+}
+
+function auxLayout(per, needed) {
+  if (needed <= 0) return [];
+  const g = geom();
+  const poly = outline(g);
+  const sx = g.W / DEF.W, sy = g.H / DEF.H;
+  const pool = [];
+  for (const [x, y] of AUX_PATTERN) {
+    const p = [x * sx, y * sy];
+    if (insideOrEdge(p, poly) && distOutline(p, poly) > 22) {
+      if (!pool.some(q => Math.hypot(q[0] - p[0], q[1] - p[1]) < 6)) pool.push(p);
+    }
+  }
+  if (needed === pool.length) return pool.slice();
+  if (needed < pool.length) {
+    // 从图纸点位中均匀抽稀
+    const chosen = [], base = per.slice();
+    const rest = pool.slice();
+    while (chosen.length < needed && rest.length) {
+      let bi = 0, bd = -1;
+      for (let i = 0; i < rest.length; i++) {
+        let dmin = Infinity;
+        for (const b of base) dmin = Math.min(dmin, Math.hypot(rest[i][0] - b[0], rest[i][1] - b[1]));
+        if (dmin > bd) { bd = dmin; bi = i; }
+      }
+      const p = rest.splice(bi, 1)[0];
+      chosen.push(p);
+      base.push(p);
+    }
+    return chosen;
+  }
+  // 超过图纸点位数量时，用 60cm 网格补足
+  const result = pool.slice();
+  const base = per.concat(pool);
+  let step = 60;
+  const cand = [];
+  for (let x = 60; x <= g.W - 60; x += step) {
+    for (let y = 50; y <= g.H - 60; y += step) {
+      const p = [x, y];
+      if (insideOrEdge(p, poly) && distOutline(p, poly) > 50) cand.push(p);
+    }
+  }
+  while (result.length < needed && cand.length) {
+    let bi = 0, bd = -1;
+    for (let i = 0; i < cand.length; i++) {
+      let dmin = Infinity;
+      for (const b of base) dmin = Math.min(dmin, Math.hypot(cand[i][0] - b[0], cand[i][1] - b[1]));
+      if (dmin > bd) { bd = dmin; bi = i; }
+    }
+    const p = cand.splice(bi, 1)[0];
+    result.push(p);
+    base.push(p);
+  }
+  return result;
+}
+
+function autoLayout() {
+  const g = geom();
+  const per = perimeter(g);
+  const auxNeeded = clamp(Math.round(Number(S.auxCount) || 0), 0, 2000);
+  const cutNeeded = clamp(Math.round(Number(S.cutCount) || 0), 0, 200);
+  const cut = cutLayout(g, cutNeeded).map(p => [+p[0].toFixed(2), +p[1].toFixed(2), "cut"]);
+  const interior = auxLayout(per.concat(cut), auxNeeded);
+  const nw = clamp(Number(S.notchW) || 0, 0, g.W - 40);
+  const fixed = [
+    [0, 0, "ffloor"],
+    [g.W - nw, 0, "ffloor"],
+    [g.W, 0, "ffloor"]
+  ];
+  for (const p of blockCorners(g)) {
+    if (p[1] < -0.5) fixed.push([p[0], p[1], "under"]);
+  }
+  holes = per.concat(interior, cut, fixed).map(p => [+p[0].toFixed(2), +p[1].toFixed(2), p[2] ? p[2] : undefined]);
+  // 去掉映射产生的 undefined 第三项，保持普通孔为二元数组
+  holes = holes.map(p => p[2] ? p : [p[0], p[1]]);
+  selected = -1;
+  dirty = false;
+  refreshAll();
+  const target = declaredCount();
+  if (holes.length !== target) {
+    toast("辅助孔最多布置 " + interior.length + " 个（目标 " + auxNeeded +
+      " 个），合计 " + holes.length + " 孔；请减小辅助孔个数或调整断面。", true);
+    return false;
+  }
+  return true;
+}
+
+function holeType(h, poly) {
+  return distOutline(h, poly) < 2.2 ? "perimeter" : "interior";
+}
+
+function holeKind(h, poly) {
+  if (h[2] === "cut") return "cut";
+  if (h[2] === "ffloor") return "floor";
+  if (h[2] === "under") return "under";
+  if (h[1] <= 0.5) return "floor";
+  return holeType(h, poly) === "perimeter" ? "perimeter" : "aux";
+}
+
+/* ============================================================
+   统计
+   ============================================================ */
+function computeStats() {
+  const g = geom();
+  const poly = outline(g);
+  let per = 0, int = 0, cut = 0, floor = 0, wallArch = 0, floorFixed = 0, under = 0;
+  for (const h of holes) {
+    if (h[2] === "cut") {
+      cut++;
+    } else if (h[2] === "ffloor") {
+      floorFixed++;
+      floor++;
+    } else if (h[2] === "under") {
+      under++;
+    } else if (h[1] <= 0.5) {
+      floor++;
+    } else if (holeType(h, poly) === "perimeter") {
+      wallArch++;
+    } else {
+      int++;
+    }
+  }
+  per = wallArch;
+  return {
+    count: holes.length,
+    target: declaredCount(),
+    per, int, cut,
+    floor,
+    floorRegular: floor - floorFixed,
+    floorFixed,
+    under,
+    block: floorFixed + under,
+    wallArch,
+    area: polyArea(poly) / 10000,
+    perimeter: polyLength(poly) / 100,
+    wall: g.wall,
+    rise: g.rise,
+    R: g.R,
+    W: g.W,
+    H: g.H
+  };
+}
+
+function updatePanelStats() {
+  const st = computeStats();
+  el.statCount.textContent = st.count;
+  el.statTarget.textContent = "合计 " + st.target + " 孔";
+  el.statArea.textContent = fmt(st.area, 1);
+  el.statPerimeter.textContent = "周长 " + fmt(st.perimeter, 1) + " m";
+  el.statPer.textContent = st.per;
+  el.statPerNote.textContent = "墙拱 " + st.wallArch + " · 底板 " + st.floor + "（底板下 " + st.under + "）";
+  el.statInt.textContent = st.int;
+  el.statCut.textContent = st.cut;
+  el.calcTotal.textContent = st.target;
+  el.calcBreak.textContent = "墙拱 " + Math.round(Number(S.perCount) || 0) +
+    " + 辅助 " + Math.round(Number(S.auxCount) || 0) +
+    " + 掏槽 " + Math.round(Number(S.cutCount) || 0) +
+    " + 底板 " + Math.round(Number(S.floorCount) || 0) +
+    " + 底板下 " + st.under;
+
+  el.hudCount.textContent = st.count;
+  el.hudTarget.textContent = "/ " + st.target;
+  el.hudPer.textContent = st.per;
+  el.hudInt.textContent = st.int;
+  el.hudArea.textContent = fmt(st.area, 1) + " m²";
+  el.hudSize.textContent = st.W + " × " + st.H + " cm";
+  el.stageSub.textContent = st.W + " × " + st.H + " cm · 拱高 " + st.rise + " cm · " + st.count + " 孔";
+
+  const mismatch = st.count !== st.target;
+  el.statusTag.textContent = (mismatch || dirty) ? "需重算" : "已布孔";
+  el.statusTag.style.color = (mismatch || dirty) ? "#a46812" : "#5f87aa";
+  el.statusTag.style.background = (mismatch || dirty) ? "#fff8e8" : "#edf6fe";
+  el.statusTag.style.borderColor = (mismatch || dirty) ? "#f0d8a8" : "#d9eafa";
+
+  let msg = "布孔完成，可直接在 2D 视图中拖动微调。";
+  if (mismatch) {
+    msg = "实际 " + st.count + " 孔，计算目标 " + st.target + " 孔；辅助孔受断面/间距限制，请减小辅助孔个数。";
+  } else if (dirty) {
+    msg = "参数已修改，正在按新的周边/辅助/底板孔个数重排。";
+  }
+  el.dirtyMsg.textContent = msg;
+  el.dirtyMsg.classList.toggle("warn", mismatch || dirty);
+
+  if (selected >= 0 && holes[selected]) {
+    el.selTag.textContent = "孔 #" + (selected + 1);
+    el.fX.disabled = el.fY.disabled = false;
+    el.fX.value = holes[selected][0].toFixed(1);
+    el.fY.value = holes[selected][1].toFixed(1);
+  } else {
+    el.selTag.textContent = "未选择";
+    el.fX.disabled = el.fY.disabled = true;
+    el.fX.value = el.fY.value = "";
+  }
+
+  el.debug.textContent = JSON.stringify({
+    count: st.count, target: st.target, area: +st.area.toFixed(2),
+    wall: +st.wall.toFixed(1), rise: st.rise, R: +st.R.toFixed(1),
+    perimeter: +st.perimeter.toFixed(2)
+  });
+  stage.dataset.count = String(st.count);
+  stage.dataset.area = st.area.toFixed(2);
+}
+
+/* ============================================================
+   2D 绘图
+   ============================================================ */
+function dimH(x1, x2, y, txt) {
+  return '<g stroke="#3b5067" stroke-width="1.3" fill="none">' +
+    '<line x1="' + x1 + '" y1="' + y + '" x2="' + x2 + '" y2="' + y + '"/>' +
+    '<line x1="' + x1 + '" y1="' + (y - 8) + '" x2="' + x1 + '" y2="' + (y + 8) + '"/>' +
+    '<line x1="' + x2 + '" y1="' + (y - 8) + '" x2="' + x2 + '" y2="' + (y + 8) + '"/>' +
+    '</g><text x="' + ((x1 + x2) / 2) + '" y="' + (y - 13) +
+    '" font-size="23" font-weight="600" text-anchor="middle" fill="#1f354c">' + txt + '</text>';
+}
+
+function dimV(y1, y2, x, txt) {
+  const my = (y1 + y2) / 2;
+  const tx = x + 16;
+  return '<g stroke="#3b5067" stroke-width="1.3" fill="none">' +
+    '<line x1="' + x + '" y1="' + y1 + '" x2="' + x + '" y2="' + y2 + '"/>' +
+    '<line x1="' + (x - 8) + '" y1="' + y1 + '" x2="' + (x + 8) + '" y2="' + y1 + '"/>' +
+    '<line x1="' + (x - 8) + '" y1="' + y2 + '" x2="' + (x + 8) + '" y2="' + y2 + '"/>' +
+    '</g><text x="' + tx + '" y="' + my + '" font-size="23" font-weight="600" text-anchor="middle" fill="#1f354c" ' +
+    'transform="rotate(-90 ' + tx + ' ' + my + ')">' + txt + '</text>';
+}
+
+function render2D() {
+  const g = geom();
+  const out = outline(g);
+  const Y = y => g.H - y;
+  const PAD_L = 100, PAD_R = 165, PAD_T = 80, PAD_B = 300;
+  const vbX = -PAD_L, vbY = -PAD_T;
+  const vbW = g.W + PAD_L + PAD_R, vbH = g.H + PAD_T + PAD_B;
+  svg.setAttribute("viewBox", vbX + " " + vbY + " " + vbW + " " + vbH);
+  svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  svg.classList.toggle("add-mode", mode === "add");
+
+  let s = "";
+  s += '<defs>' +
+    '<pattern id="grid50" width="50" height="50" patternUnits="userSpaceOnUse">' +
+    '<path d="M50 0H0V50" fill="none" stroke="#edf2f8" stroke-width="1"/>' +
+    '</pattern>' +
+    '<pattern id="grid100" width="100" height="100" patternUnits="userSpaceOnUse">' +
+    '<path d="M100 0H0V100" fill="none" stroke="#e3ebf4" stroke-width="1.2"/>' +
+    '</pattern>' +
+    '</defs>';
+  s += '<rect x="' + vbX + '" y="' + vbY + '" width="' + vbW + '" height="' + vbH + '" fill="#ffffff"/>';
+  if (showGrid) {
+    s += '<rect x="' + vbX + '" y="' + vbY + '" width="' + vbW + '" height="' + vbH + '" fill="url(#grid50)"/>';
+    s += '<rect x="' + vbX + '" y="' + vbY + '" width="' + vbW + '" height="' + vbH + '" fill="url(#grid100)"/>';
+  }
+
+  // 断面轮廓
+  s += '<path d="M' + out.map(p => p[0].toFixed(2) + ',' + Y(p[1]).toFixed(2)).join(" L") + ' Z" ' +
+    'fill="#f2f7fc" stroke="#17324a" stroke-width="2.6" stroke-linejoin="round"/>';
+  // 底板延伸线
+  s += '<line x1="-28" y1="' + Y(0) + '" x2="' + (g.W + 28) + '" y2="' + Y(0) +
+    '" stroke="#17324a" stroke-width="2"/>';
+  // 中心线
+  s += '<line x1="' + (g.W / 2) + '" y1="' + (Y(0) + 6) + '" x2="' + (g.W / 2) + '" y2="' + (Y(g.H) - 6) +
+    '" stroke="#c3d2e2" stroke-width="1.2" stroke-dasharray="9 7"/>';
+  s += '<text x="' + (g.W / 2 + 8) + '" y="' + (Y(g.H) + 18) + '" font-size="14" fill="#9aabba">中心线</text>';
+
+  if (showDim) {
+    s += dimH(0, g.W, Y(0) + 140, String(Math.round(g.W)));
+    s += dimV(Y(g.H), Y(0), g.W + 55, String(Math.round(g.H)));
+    s += dimV(Y(g.H), Y(g.wall), g.W + 100, String(Math.round(g.rise)));
+    s += dimV(Y(g.wall), Y(0), g.W + 100, String(Math.round(g.wall)));
+    const nw = clamp(Number(S.notchW) || 0, 0, g.W - 40);
+    const nh = clamp(Number(S.notchH) || 0, 0, g.wall - 10);
+    if (nw > 0 && nh > 0) {
+      s += dimH(g.W - nw, g.W, Y(0) + 100, String(Math.round(nw)));
+      s += dimV(Y(-nh), Y(0), g.W + 18, String(Math.round(nh)));
+    }
+  }
+
+  // 炮孔
+  for (let k = 0; k < holes.length; k++) {
+    const h = holes[k];
+    const hx = h[0], hy = Y(h[1]);
+    const kind = holeKind(h, out);
+    const isSel = k === selected;
+    const color = isSel ? "#c8322d" : (kind === "cut" ? "#d946ef" : (kind === "under" ? "#7c3aed" : (kind === "floor" ? "#159a72" : (kind === "perimeter" ? "#d98216" : "#1d6fe0"))));
+    const r = 7;
+    s += '<g class="hole" data-i="' + k + '">';
+    s += '<circle cx="' + hx + '" cy="' + hy + '" r="' + r + '" fill="#ffffff" stroke="' + color + '" stroke-width="2.3"/>';
+    s += '<line x1="' + (hx - 5) + '" y1="' + hy + '" x2="' + (hx + 5) + '" y2="' + hy + '" stroke="' + color + '" stroke-width="1.8"/>';
+    s += '<line x1="' + hx + '" y1="' + (hy - 5) + '" x2="' + hx + '" y2="' + (hy + 5) + '" stroke="' + color + '" stroke-width="1.8"/>';
+    if (isSel) {
+      s += '<circle data-sel="1" cx="' + hx + '" cy="' + hy + '" r="13" fill="none" stroke="#c8322d" stroke-width="1.7" stroke-dasharray="4 3"/>';
+    }
+    s += '<circle cx="' + hx + '" cy="' + hy + '" r="17" fill="transparent"/>';
+    if (showNum) {
+      s += '<text x="' + (hx + 11) + '" y="' + (hy - 9) +
+        '" font-size="16" fill="' + (isSel ? "#c8322d" : "#5b7187") + '">' + (k + 1) + '</text>';
+    }
+    s += '</g>';
+  }
+
+  // 图例
+  s += '<g transform="translate(' + (vbX + 12) + ',' + (vbY + 14) + ')">' +
+    '<rect width="570" height="42" rx="8" fill="#ffffff" stroke="#dfe8f2"/>' +
+    '<circle cx="18" cy="21" r="6" fill="#fff" stroke="#d98216" stroke-width="2"/>' +
+    '<text x="31" y="26" font-size="16" fill="#4a6076">周边孔</text>' +
+    '<circle cx="105" cy="21" r="6" fill="#fff" stroke="#159a72" stroke-width="2"/>' +
+    '<text x="118" y="26" font-size="16" fill="#4a6076">底板孔</text>' +
+    '<circle cx="198" cy="21" r="6" fill="#fff" stroke="#7c3aed" stroke-width="2"/>' +
+    '<text x="211" y="26" font-size="16" fill="#4a6076">底板下</text>' +
+    '<circle cx="290" cy="21" r="6" fill="#fff" stroke="#1d6fe0" stroke-width="2"/>' +
+    '<text x="303" y="26" font-size="16" fill="#4a6076">辅助孔</text>' +
+    '<circle cx="382" cy="21" r="6" fill="#fff" stroke="#d946ef" stroke-width="2"/>' +
+    '<text x="395" y="26" font-size="16" fill="#4a6076">掏槽孔</text>' +
+    '<circle cx="470" cy="21" r="6" fill="#fff" stroke="#c8322d" stroke-width="2"/>' +
+    '<text x="483" y="26" font-size="16" fill="#4a6076">选中</text>' +
+    '</g>';
+
+  // 标题
+  s += '<text x="' + (g.W / 2) + '" y="' + (Y(0) + 210) +
+    '" font-size="28" text-anchor="middle" fill="#152b41" font-weight="600">' +
+    escapeXml(S.title) + '（共 ' + holes.length + ' 孔）</text>';
+  const st = computeStats();
+  s += '<text x="' + (g.W / 2) + '" y="' + (Y(0) + 242) +
+    '" font-size="17" text-anchor="middle" fill="#71879b">' +
+    '周边孔 ' + st.per + ' · 辅助孔 ' + st.int + ' · 掏槽孔 ' + st.cut + ' · 底板孔 ' + st.floor +
+    ' · 底板下 ' + st.under + ' · 单位 cm · 断面 ' + fmt(polyArea(out) / 10000, 1) + ' m²</text>';
+  s += '<text x="' + (vbX + 12) + '" y="' + (Y(0) + 242) +
+    '" font-size="15" fill="#9aabba">单位：cm</text>';
+
+  svg.innerHTML = s;
+}
+
+function escapeXml(t) {
+  return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/* ============================================================
+   2D 编辑
+   ============================================================ */
+function svgPt(evt) {
+  const r = svg.getBoundingClientRect();
+  const vb = svg.viewBox.baseVal;
+  const scale = Math.min(r.width / vb.width, r.height / vb.height);
+  const ox = r.left + (r.width - vb.width * scale) / 2;
+  const oy = r.top + (r.height - vb.height * scale) / 2;
+  const sx = (evt.clientX - ox) / scale + vb.x;
+  const sy = (evt.clientY - oy) / scale + vb.y;
+  return [sx, HfromScreen(sy)];
+}
+
+function HfromScreen(sy) {
+  return geom().H - sy;
+}
+
+function hitTest(evt) {
+  const p = svgPt(evt);
+  let best = -1, bd = 19;
+  for (let i = 0; i < holes.length; i++) {
+    const d = Math.hypot(holes[i][0] - p[0], holes[i][1] - p[1]);
+    if (d < bd) { bd = d; best = i; }
+  }
+  return best;
+}
+
+function addHoleAt(p) {
+  const g = geom();
+  const poly = outline(g);
+  const np = [
+    +clamp(p[0], 0, g.W).toFixed(2),
+    +clamp(p[1], 0, g.H).toFixed(2)
+  ];
+  if (!insideOrEdge(np, poly)) {
+    toast("该位置在隧道断面之外，请在轮廓内添加炮孔。", true);
+    return;
+  }
+  holes.push(np);
+  selected = holes.length - 1;
+  dirty = false;
+  refreshAll();
+}
+
+function isBlockHole(i) {
+  return i >= 0 && holes[i] && (holes[i][2] === "ffloor" || holes[i][2] === "under");
+}
+
+function deleteSelected() {
+  if (selected < 0) return;
+  if (isBlockHole(selected)) {
+    toast("固定孔，不能删除。", true);
+    return;
+  }
+  holes.splice(selected, 1);
+  selected = -1;
+  refreshAll();
+}
+
+function bind2D() {
+  svg.addEventListener("pointerdown", (e) => {
+    if (tab !== "2d" || e.button !== 0) return;
+    const i = hitTest(e);
+    if (mode === "move") {
+      if (i >= 0) {
+        selected = i;
+        if (!isBlockHole(i)) {
+          drag2 = { id: e.pointerId, idx: i };
+          svg.setPointerCapture(e.pointerId);
+        }
+        updatePanelStats();
+        render2D();
+      } else {
+        selected = -1;
+        updatePanelStats();
+        render2D();
+      }
+    } else if (mode === "add") {
+      if (i >= 0) {
+        selected = i;
+        updatePanelStats();
+        render2D();
+      } else {
+        addHoleAt(svgPt(e));
+      }
+    } else if (mode === "del") {
+      if (i >= 0) {
+        holes.splice(i, 1);
+        selected = -1;
+        refreshAll();
+      }
+    }
+  });
+
+  svg.addEventListener("pointermove", (e) => {
+    if (!drag2 || drag2.id !== e.pointerId) return;
+    const p = svgPt(e);
+    const g = geom();
+    const poly = outline(g);
+    const np = [
+      +clamp(p[0], 0, g.W).toFixed(2),
+      +clamp(p[1], 0, g.H).toFixed(2)
+    ];
+    if (!insideOrEdge(np, poly)) return;
+    const old = holes[drag2.idx];
+    if (old && old[2]) np.push(old[2]);
+    holes[drag2.idx] = np;
+    render2D();
+    updatePanelStats();
+    schedule3D();
+  });
+
+  const end2 = (e) => {
+    if (drag2 && drag2.id === e.pointerId) {
+      drag2 = null;
+      save();
+    }
+  };
+  svg.addEventListener("pointerup", end2);
+  svg.addEventListener("pointercancel", end2);
+
+  svg.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    if (tab !== "2d") return;
+    const i = hitTest(e);
+    if (i >= 0) {
+      if (isBlockHole(i)) {
+        toast("固定孔，不能删除。", true);
+        return;
+      }
+      holes.splice(i, 1);
+      selected = -1;
+      refreshAll();
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (tab !== "2d") return;
+    if (e.target && e.target.tagName === "INPUT") return;
+    if ((e.key === "Delete" || e.key === "Backspace") && selected >= 0) {
+      e.preventDefault();
+      deleteSelected();
+      return;
+    }
+    const step = e.shiftKey ? 10 : 1;
+    let dx = 0, dy = 0;
+    if (e.key === "ArrowLeft") dx = -step;
+    else if (e.key === "ArrowRight") dx = step;
+    else if (e.key === "ArrowUp") dy = step;
+    else if (e.key === "ArrowDown") dy = -step;
+    else return;
+    if (selected >= 0 && holes[selected]) {
+      e.preventDefault();
+      if (isBlockHole(selected)) return;
+      const g = geom();
+      const np = [
+        +clamp(holes[selected][0] + dx, 0, g.W).toFixed(2),
+        +clamp(holes[selected][1] + dy, 0, g.H).toFixed(2)
+      ];
+      if (!insideOrEdge(np, outline(g))) return;
+      holes[selected][0] = np[0];
+      holes[selected][1] = np[1];
+      render2D();
+      updatePanelStats();
+      schedule3D();
+      save();
+    }
+  });
+}
+
+function setMode(m, keepTab) {
+  mode = m;
+  el.mMove.classList.toggle("on", m === "move");
+  el.mAdd.classList.toggle("on", m === "add");
+  el.mDel.classList.toggle("on", m === "del");
+  if (tab !== "2d" && !keepTab) setTab("2d");
+  render2D();
+}
+
+function refreshAll() {
+  render2D();
+  updatePanelStats();
+  renderSequence();
+  schedule3D();
+  save();
+}
+
+/* ============================================================
+   本地保存
+   ============================================================ */
+const SAVE_VERSION = 15;
+let migratedCut = null;
+
+function save() {
+  try {
+    localStorage.setItem("buKong.v1", JSON.stringify({
+      v: SAVE_VERSION, S, holes, showNum, showGrid, showDim, showRods
+    }));
+  } catch (e) { /* ignore */ }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem("buKong.v1");
+    if (!raw) return false;
+    const o = JSON.parse(raw);
+    if (!o || !o.S || !Array.isArray(o.holes)) return false;
+
+    // 版本升级 / 断面常量变化 / 旧计数模型：不再沿用旧孔位，按新图自动重排
+    const legacy = o.v !== SAVE_VERSION ||
+      Number(o.S.W) !== DEF.W || Number(o.S.H) !== DEF.H ||
+      Number(o.S.rise) !== DEF.rise || o.S.perCount == null ||
+      o.S.auxCount == null || o.S.cutCount == null || o.S.floorCount == null ||
+      o.S.grade == null || !GRADES[o.S.grade];
+    showNum = !!o.showNum;
+    showGrid = o.showGrid !== false;
+    showDim = o.showDim !== false;
+    showRods = o.showRods !== false;
+    if (legacy) {
+      const oldCut = (o.holes || []).filter(h => Array.isArray(h) && h[2] === "cut");
+      let cutOld = oldCut;
+      if (!cutOld.length) {
+        const oldS = o.S || {};
+        const cs = Math.max(0, Math.round(Number(oldS.perCount) || 0)) +
+          Math.max(0, Math.round(Number(oldS.floorCount) || 0) - 3);
+        const ce = cs + Math.max(0, Math.round(Number(oldS.cutCount) || 0));
+        cutOld = (o.holes || []).slice(cs, ce);
+      }
+      migratedCut = cutOld
+        .filter(h => Array.isArray(h) && Number.isFinite(+h[0]) && Number.isFinite(+h[1]))
+        .map(h => [+h[0], +h[1]]);
+      S = Object.assign({}, DEF);
+      holes = [];
+      return true;
+    }
+
+    S = Object.assign({}, DEF, o.S);
+    S.W = DEF.W; S.H = DEF.H; S.rise = DEF.rise;
+    S.grade = GRADES[S.grade] ? S.grade : "II";
+    S.title = GRADES[S.grade].title;
+    const g = geom();
+    const poly = outline(g);
+    const loaded = o.holes
+      .filter(h => Array.isArray(h) && h.length >= 2 && Number.isFinite(+h[0]) && Number.isFinite(+h[1]))
+      .map(h => {
+        const p = [clamp(+h[0], 0, g.W), clamp(+h[1], -2000, g.H)];
+        if (h[2] === "ffloor" || h[2] === "under" || h[2] === "cut") p.push(h[2]);
+        return p;
+      });
+    // 兼容旧存档：掏槽孔被拖动后可能丢失第三项标记，按自动布孔顺序补回
+    const cutStart = Math.max(0, Math.round(Number(S.perCount) || 0)) +
+      Math.max(0, Math.round(Number(S.floorCount) || 0) - 3);
+    const cutEnd = cutStart + Math.max(0, Math.round(Number(S.cutCount) || 0));
+    loaded.forEach((h, i) => {
+      if (!h[2] && i >= cutStart && i < cutEnd) h.push("cut");
+    });
+    holes = loaded.filter(h => insideOrEdge(h, poly));
+    if (holes.length !== loaded.length) dirty = true;
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/* ============================================================
+   3D 掌子面
+   ============================================================ */
+const V3 = {
+  yaw: 1.10, pitch: 0.30, dist: 20, viewSize: 18,
+  panX: 0, panY: 0, target: [0, -2, 3.3],
+  fov: 36 * Math.PI / 180, ortho: true,
+  home: null, minView: 4, maxView: 80
+};
+let screenHoles = [];
+
+function build3D() {
+  const g = geom();
+  const out = outline(g);
+  const M = 0.01;
+  const cx = g.W / 2;
+  const depth = 4.0;
+  const holeDepth = 3.0;
+
+  const to3 = p => [(cx - p[0]) * M, 0, p[1] * M];
+  const face = out.map(to3);
+  const back = face.map(p => [p[0], -depth, p[2]]);
+
+  // 右下凹槽使轮廓非凸，从第1点整体扇形三角化会画出界（底板线以下多出填充块）。
+  // 拆成两块各自为凸的多边形分别三角化：主断面（矩形+拱）+ 凹槽矩形，拼起来不重不漏。
+  const nw = clamp(Number(S.notchW) || 0, 0, g.W - 40);
+  const nh = clamp(Number(S.notchH) || 0, 0, g.wall - 10);
+  const hasNotch = nw > 0 && nh > 0;
+  const mainOut = hasNotch ? out.slice(0, out.length - 3) : out;
+  const notchOut = hasNotch
+    ? [[g.W - nw, 0], [g.W, 0], [g.W, -nh], [g.W - nw, -nh]]
+    : [];
+  const fanTris = (poly3) => {
+    const t = [];
+    for (let i = 1; i < poly3.length - 1; i++) t.push([poly3[0], poly3[i], poly3[i + 1]]);
+    return t;
+  };
+  const faceParts = [mainOut.map(to3), notchOut.map(to3)].filter(p => p.length >= 3);
+  const tris = [];
+  const backTris = [];
+  for (const part of faceParts) {
+    for (const t of fanTris(part)) tris.push(t);
+    for (const t of fanTris(part.map(q => [q[0], -depth, q[2]]))) backTris.push(t);
+  }
+
+  const sides = [];
+  for (let i = 0; i < face.length; i++) {
+    const j = (i + 1) % face.length;
+    sides.push([face[i], face[j], back[j], back[i]]);
+  }
+
+  const hs = holes.map((h, i) => ({
+    i,
+    p: [(cx - h[0]) * M, 0, h[1] * M],
+    e: [(cx - h[0]) * M, -holeDepth, h[1] * M],
+    type: holeType(h, out),
+    kind: holeKind(h, out)
+  }));
+
+  return { face, back, tris, backTris, sides, hs, depth, holeDepth, M, g };
+}
+
+function cameraBasis(yaw, pitch) {
+  const cp = Math.cos(pitch), sp = Math.sin(pitch);
+  const fwd = norm3([-cp * Math.cos(yaw), -cp * Math.sin(yaw), -sp]);
+  let right = cross3(fwd, [0, 0, 1]);
+  if (len3(right) < 1e-6) right = [1, 0, 0];
+  else right = norm3(right);
+  const up = cross3(right, fwd);
+  return { right, up, fwd };
+}
+
+function fit3D() {
+  const geo = build3D();
+  const g = geo.g;
+  const baseZ = g.H * geo.M / 2;
+  const base = [0, -geo.depth / 2, baseZ];
+
+  const yaw = 1.10, pitch = 0.30;
+  const basis = cameraBasis(yaw, pitch);
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  const add = (p) => {
+    const rel = [p[0] - base[0], p[1] - base[1], p[2] - base[2]];
+    const sx = dot3(rel, basis.right);
+    const sy = dot3(rel, basis.up);
+    if (sx < minX) minX = sx;
+    if (sx > maxX) maxX = sx;
+    if (sy < minY) minY = sy;
+    if (sy > maxY) maxY = sy;
+  };
+  geo.face.forEach(add);
+  geo.back.forEach(add);
+  geo.hs.forEach(h => add(h.e));
+  add([0, 0, g.H * geo.M]);
+
+  const hExtent = Math.max(1, maxX - minX);
+  const vExtent = Math.max(1, maxY - minY);
+  const aspect = H3 > 0 ? W3 / H3 : 1.33;
+  const fitSize = Math.max(vExtent, hExtent / Math.max(0.4, aspect)) * 1.7;
+  const r = Math.max(1, 0.5 * Math.hypot(hExtent, vExtent));
+  const dist = r / Math.sin(V3.fov / 2) * 1.2;
+
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
+  const target = [
+    base[0] + basis.right[0] * cx + basis.up[0] * cy,
+    base[1] + basis.right[1] * cx + basis.up[1] * cy,
+    base[2] + basis.right[2] * cx + basis.up[2] * cy
+  ];
+
+  V3.home = {
+    yaw, pitch, dist,
+    viewSize: fitSize,
+    panX: 0, panY: 0,
+    target: target.slice()
+  };
+  V3.viewSize = fitSize;
+  V3.target = target.slice();
+  V3.minView = Math.max(1.5, fitSize * 0.32);
+  V3.maxView = Math.max(15, fitSize * 8);
+
+  if (V3.dist < 1) V3.dist = dist;
+}
+
+function reset3D(animate) {
+  if (!V3.home) return;
+  if (!animate) {
+    V3.yaw = V3.home.yaw;
+    V3.pitch = V3.home.pitch;
+    V3.dist = V3.home.dist;
+    V3.viewSize = V3.home.viewSize;
+    V3.panX = 0;
+    V3.panY = 0;
+    V3.target = V3.home.target.slice();
+    request3D();
+    return;
+  }
+  animate3D(V3.home, 460);
+}
+
+function animate3D(to, duration) {
+  const from = {
+    yaw: V3.yaw, pitch: V3.pitch, dist: V3.dist,
+    viewSize: V3.viewSize, panX: V3.panX, panY: V3.panY,
+    target: V3.target.slice()
+  };
+  let dy = ((to.yaw - from.yaw + Math.PI) % (Math.PI * 2)) - Math.PI;
+  if (dy < -Math.PI) dy += Math.PI * 2;
+  const toView = Number.isFinite(to.viewSize) ? to.viewSize : V3.viewSize;
+  const t0 = performance.now();
+  const step = (now) => {
+    const k = clamp((now - t0) / duration, 0, 1);
+    const e = 1 - Math.pow(1 - k, 3);
+    V3.yaw = from.yaw + dy * e;
+    V3.pitch = from.pitch + (to.pitch - from.pitch) * e;
+    V3.dist = from.dist + (to.dist - from.dist) * e;
+    V3.viewSize = from.viewSize + (toView - from.viewSize) * e;
+    V3.panX = from.panX + (to.panX - from.panX) * e;
+    V3.panY = from.panY + (to.panY - from.panY) * e;
+    V3.target = [
+      from.target[0] + (to.target[0] - from.target[0]) * e,
+      from.target[1] + (to.target[1] - from.target[1]) * e,
+      from.target[2] + (to.target[2] - from.target[2]) * e
+    ];
+    render3D();
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function makeProj3D() {
+  const t = V3.target;
+  const cp = Math.cos(V3.pitch), sp = Math.sin(V3.pitch);
+  const eye = [
+    t[0] + V3.dist * cp * Math.cos(V3.yaw),
+    t[1] + V3.dist * cp * Math.sin(V3.yaw),
+    t[2] + V3.dist * sp
+  ];
+  const fwd = norm3([t[0] - eye[0], t[1] - eye[1], t[2] - eye[2]]);
+  let right = cross3(fwd, [0, 0, 1]);
+  if (len3(right) < 1e-6) right = [1, 0, 0];
+  else right = norm3(right);
+  const up = cross3(right, fwd);
+  const orthoScale = H3 / Math.max(1e-6, V3.viewSize);
+  const focal = (H3 * 0.5) / Math.tan(V3.fov / 2);
+  const cx = W3 / 2 + V3.panX;
+  const cy = H3 / 2 + V3.panY;
+  return {
+    eye, fwd, right, up,
+    project(p) {
+      const vx = p[0] - eye[0], vy = p[1] - eye[1], vz = p[2] - eye[2];
+      const zc = vx * fwd[0] + vy * fwd[1] + vz * fwd[2];
+      if (zc < 0.2) return null;
+      const s = V3.ortho ? orthoScale : focal / zc;
+      return {
+        x: cx + (vx * right[0] + vy * right[1] + vz * right[2]) * s,
+        y: cy - (vx * up[0] + vy * up[1] + vz * up[2]) * s,
+        z: zc
+      };
+    }
+  };
+}
+
+function request3D() {
+  if (raf3) return;
+  raf3 = requestAnimationFrame(() => {
+    raf3 = 0;
+    if (tab === "3d") render3D();
+  });
+}
+
+function schedule3D() {
+  if (tab === "3d") request3D();
+}
+
+function resize3D() {
+  const rect = stage.getBoundingClientRect();
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const w = Math.max(1, Math.round(rect.width));
+  const h = Math.max(1, Math.round(rect.height));
+  if (w === W3 && h === H3 && canvas3d.width === Math.round(w * DPR)) return;
+  W3 = w; H3 = h;
+  canvas3d.width = Math.round(w * DPR);
+  canvas3d.height = Math.round(h * DPR);
+  ctx3d.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+
+function drawBg3D() {
+  const grd = ctx3d.createLinearGradient(0, 0, 0, H3);
+  grd.addColorStop(0, "#0b1d30");
+  grd.addColorStop(0.55, "#081625");
+  grd.addColorStop(1, "#040b14");
+  ctx3d.fillStyle = grd;
+  ctx3d.fillRect(0, 0, W3, H3);
+
+  const rgl = ctx3d.createRadialGradient(W3 * 0.5, H3 * 0.08, 0, W3 * 0.5, H3 * 0.08, Math.max(W3, H3) * 0.8);
+  rgl.addColorStop(0, "rgba(46,137,181,.16)");
+  rgl.addColorStop(0.55, "rgba(20,70,105,.05)");
+  rgl.addColorStop(1, "rgba(0,0,0,0)");
+  ctx3d.fillStyle = rgl;
+  ctx3d.fillRect(0, 0, W3, H3);
+
+  ctx3d.fillStyle = "rgba(120,190,225,.05)";
+  const gap = 34;
+  for (let y = 26; y < H3; y += gap) {
+    for (let x = (Math.round(y / gap) % 2) * gap / 2 + 14; x < W3; x += gap) {
+      ctx3d.fillRect(x, y, 1.2, 1.2);
+    }
+  }
+}
+
+function shadeColor(rgb, k, a) {
+  return "rgba(" +
+    Math.round(clamp(rgb[0] * k, 0, 255)) + "," +
+    Math.round(clamp(rgb[1] * k, 0, 255)) + "," +
+    Math.round(clamp(rgb[2] * k, 0, 255)) + "," +
+    (a === undefined ? 1 : a) + ")";
+}
+
+function drawGround3D(cam) {
+  ctx3d.save();
+  ctx3d.strokeStyle = "rgba(105,175,210,.09)";
+  ctx3d.lineWidth = 0.7;
+  ctx3d.beginPath();
+  for (let x = -9; x <= 9; x += 1) {
+    const a = cam.project([x, -9, 0]);
+    const b = cam.project([x, 4, 0]);
+    if (a && b) { ctx3d.moveTo(a.x, a.y); ctx3d.lineTo(b.x, b.y); }
+  }
+  for (let y = -9; y <= 4; y += 1) {
+    const a = cam.project([-9, y, 0]);
+    const b = cam.project([9, y, 0]);
+    if (a && b) { ctx3d.moveTo(a.x, a.y); ctx3d.lineTo(b.x, b.y); }
+  }
+  ctx3d.stroke();
+  ctx3d.restore();
+}
+
+function drawFaceGrid(cam, geo) {
+  const g = geo.g;
+  const fp = geo.face.map(p => cam.project(p));
+  if (fp.some(p => !p)) return;
+  ctx3d.save();
+  ctx3d.beginPath();
+  ctx3d.moveTo(fp[0].x, fp[0].y);
+  for (let i = 1; i < fp.length; i++) ctx3d.lineTo(fp[i].x, fp[i].y);
+  ctx3d.closePath();
+  ctx3d.clip();
+  ctx3d.strokeStyle = "rgba(82,63,43,.14)";
+  ctx3d.lineWidth = 0.7;
+  ctx3d.beginPath();
+  const w = g.W * geo.M, h = g.H * geo.M;
+  for (let x = -Math.floor(w / 2); x <= Math.ceil(w / 2); x += 1) {
+    const a = cam.project([x, 0, 0]);
+    const b = cam.project([x, 0, h]);
+    if (a && b) { ctx3d.moveTo(a.x, a.y); ctx3d.lineTo(b.x, b.y); }
+  }
+  for (let z = 0; z <= h; z += 1) {
+    const a = cam.project([-w / 2, 0, z]);
+    const b = cam.project([w / 2, 0, z]);
+    if (a && b) { ctx3d.moveTo(a.x, a.y); ctx3d.lineTo(b.x, b.y); }
+  }
+  ctx3d.stroke();
+  ctx3d.restore();
+}
+
+function drawDashed3D(cam, pts, color, width, dash) {
+  ctx3d.save();
+  ctx3d.setLineDash(dash || [5, 5]);
+  ctx3d.beginPath();
+  let started = false;
+  for (const p of pts) {
+    const q = cam.project(p);
+    if (!q) { started = false; continue; }
+    if (!started) { ctx3d.moveTo(q.x, q.y); started = true; }
+    else ctx3d.lineTo(q.x, q.y);
+  }
+  ctx3d.strokeStyle = color;
+  ctx3d.lineWidth = width;
+  ctx3d.stroke();
+  ctx3d.restore();
+}
+
+function drawPoly3D(cam, pts, color, width, glow) {
+  ctx3d.save();
+  ctx3d.beginPath();
+  let started = false;
+  for (const p of pts) {
+    const q = cam.project(p);
+    if (!q) { started = false; continue; }
+    if (!started) { ctx3d.moveTo(q.x, q.y); started = true; }
+    else ctx3d.lineTo(q.x, q.y);
+  }
+  ctx3d.strokeStyle = color;
+  ctx3d.lineWidth = width;
+  if (glow) { ctx3d.shadowColor = color; ctx3d.shadowBlur = glow; }
+  ctx3d.stroke();
+  ctx3d.restore();
+}
+
+function seqGroupOf(h, poly) {
+  if (h[2] === "cut") return 1;
+  if (h[2] === "under") return 8;
+  const k = holeKind(h, poly);
+  if (k === "floor") return 6;
+  if (k === "perimeter") return 5;
+  if (h[1] <= 100) return 7;                 // 底板上一排辅助孔
+  const d = distOutline(h, poly);
+  if (d >= 150) return 2;                    // 辅助孔由内向外分三带
+  if (d >= 95) return 3;
+  return 4;
+}
+function renderSequence() {
+  const svg = el.cvSeq;
+  if (!svg) return;
+  const g = geom(), W = g.W, H = g.H;
+  const pad = 26;
+  const mainSvg = document.getElementById("cv");
+  const mainVb = mainSvg && mainSvg.getAttribute("viewBox");
+  svg.setAttribute("viewBox", mainVb || `${-pad} ${-pad} ${W + pad * 2} ${H + pad * 2}`);
+  if (mainSvg) {
+    const r = mainSvg.getBoundingClientRect();
+    if (r.width > 40 && r.height > 40) svg.style.height = r.height + "px";
+  }
+  const Y = y => H - y;
+  const colors = { 1: "#e74c3c", 2: "#e67e22", 3: "#d4a400", 4: "#27ae60", 5: "#2f80ed", 6: "#8e44ad", 7: "#16a085", 8: "#d81b60" };
+  const ms = { 1: 50, 2: 80, 3: 120, 4: 180, 5: 260, 6: 340, 7: 460, 8: 580 };
+  const poly = outline(g);
+  const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 };
+  const tops = {};
+  let s = "";
+  // 实际孔位：实心圆点按段着色（无圆圈边框、无十字线）
+  for (const h of holes) {
+    const grp = seqGroupOf(h, poly);
+    counts[grp]++;
+    if (!tops[grp] || h[1] > tops[grp][1]) tops[grp] = h;
+    s += '<circle cx="' + h[0] + '" cy="' + Y(h[1]) + '" r="7" fill="' + colors[grp] + '"/>';
+  }
+  // 段号：2~5 段沿中线标在该段最高孔上方，其余标在本段最高孔处；中线标签互相错开
+  const centerLabels = [];
+  for (const grp of [2, 3, 4, 5]) {
+    const t = tops[grp];
+    if (t) centerLabels.push({ grp, ly: Y(t[1]) - 18 });
+  }
+  centerLabels.sort((a, b) => a.ly - b.ly);
+  for (let i = 1; i < centerLabels.length; i++) {
+    if (centerLabels[i].ly - centerLabels[i - 1].ly < 27)
+      centerLabels[i].ly = centerLabels[i - 1].ly + 27;
+  }
+  const labels = centerLabels.map(l => ({ grp: l.grp, lx: W / 2, ly: l.ly }));
+  for (const grp of [1, 6, 7, 8]) {
+    const t = tops[grp];
+    if (!t) continue;
+    labels.push({ grp, lx: t[0], ly: grp === 8 ? Y(t[1]) + 22 : Y(t[1]) - 18 });
+  }
+  for (const l of labels) {
+    s += '<text x="' + l.lx + '" y="' + l.ly + '" font-size="20" font-weight="800" text-anchor="middle" fill="' +
+      colors[l.grp] + '" paint-order="stroke" stroke="#fff" stroke-width="4">' + l.grp + '</text>';
+  }
+  svg.innerHTML = s;
+  // 图例孔数实时统计（原为写死数字）
+  const leg = document.querySelector(".seq-legend");
+  if (leg) {
+    let ls = "";
+    for (let i = 1; i <= 8; i++) {
+      ls += '<span><i class="s' + i + '"></i>' + i + ': ' + counts[i] + '孔（<em>' + ms[i] + 'ms</em>）</span>';
+    }
+    leg.innerHTML = ls;
+  }
+  if (el.seqTotal) el.seqTotal.textContent = holes.length + " 孔";
+}
+
+function render3D() {
+  if (!ctx3d || !W3 || !H3 || tab !== "3d") return;
+  if (!V3.home) fit3D();
+
+  const geo = build3D();
+  const cam = makeProj3D();
+  ctx3d.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx3d.clearRect(0, 0, W3, H3);
+  drawBg3D();
+  drawGround3D(cam);
+
+  const L = norm3([-0.55, -0.35, 0.75]);
+  const faces = [];
+
+  for (const quad of geo.sides) {
+    const p = quad.map(q => cam.project(q));
+    if (p.some(q => !q)) continue;
+    const a = quad[0], b = quad[1], c = quad[2];
+    const n = norm3(cross3(vsub(b, a), vsub(c, a)));
+    const k = 0.68 + 0.32 * Math.abs(dot3(n, L));
+    faces.push({
+      pts: p,
+      depth: (p[0].z + p[1].z + p[2].z + p[3].z) / 4,
+      fill: shadeColor([124, 105, 84], k, 1),
+      alpha: 1,
+      kind: "side"
+    });
+  }
+
+  for (const tri of geo.backTris) {
+    const p = tri.map(q => cam.project(q));
+    if (p.some(q => !q)) continue;
+    const n = norm3(cross3(vsub(tri[1], tri[0]), vsub(tri[2], tri[0])));
+    const k = 0.65 + 0.30 * Math.abs(dot3(n, L));
+    faces.push({
+      pts: p,
+      depth: (p[0].z + p[1].z + p[2].z) / 3,
+      fill: shadeColor([92, 78, 64], k, 1),
+      alpha: 1,
+      kind: "back"
+    });
+  }
+
+  for (const tri of geo.tris) {
+    const p = tri.map(q => cam.project(q));
+    if (p.some(q => !q)) continue;
+    const n = norm3(cross3(vsub(tri[1], tri[0]), vsub(tri[2], tri[0])));
+    const k = 0.76 + 0.30 * Math.abs(dot3(n, L));
+    faces.push({
+      pts: p,
+      depth: (p[0].z + p[1].z + p[2].z) / 3,
+      fill: shadeColor([205, 184, 151], k, 1),
+      alpha: 0.94,
+      kind: "face"
+    });
+  }
+
+  faces.sort((a, b) => b.depth - a.depth);
+  for (const f of faces) {
+    ctx3d.beginPath();
+    ctx3d.moveTo(f.pts[0].x, f.pts[0].y);
+    for (let i = 1; i < f.pts.length; i++) ctx3d.lineTo(f.pts[i].x, f.pts[i].y);
+    ctx3d.closePath();
+    ctx3d.globalAlpha = f.alpha;
+    ctx3d.fillStyle = f.fill;
+    ctx3d.fill();
+    ctx3d.globalAlpha = 1;
+    if (f.kind === "side") {
+      ctx3d.strokeStyle = "rgba(255,255,255,.045)";
+      ctx3d.lineWidth = 0.7;
+      ctx3d.stroke();
+    } else {
+      ctx3d.strokeStyle = f.fill;
+      ctx3d.lineWidth = 0.6;
+      ctx3d.stroke();
+    }
+  }
+
+  // 掌子面与背轮廓
+  drawPoly3D(cam, geo.back, "rgba(130,170,190,.30)", 1, 0);
+  drawPoly3D(cam, geo.face, "rgba(92,216,250,.95)", 1.7, 8);
+  drawFaceGrid(cam, geo);
+  drawDashed3D(cam, [[0, 0, 0], [0, 0, geo.g.H * geo.M]], "rgba(255,255,255,.22)", 1, [6, 6]);
+  drawDashed3D(cam, [[-geo.g.W * geo.M / 2, 0, 0], [geo.g.W * geo.M / 2, 0, 0]], "rgba(255,255,255,.22)", 1, [6, 6]);
+
+  // 钻孔示意
+  if (showRods) {
+    for (const h of geo.hs) {
+      const a = cam.project(h.p);
+      const b = cam.project(h.e);
+      if (!a || !b) continue;
+      const sel = h.i === selected;
+      const col = sel ? "rgba(255,92,82,.82)" : (h.kind === "cut" ? "rgba(244,114,208,.65)" : (h.kind === "under" ? "rgba(167,139,250,.55)" : (h.kind === "floor" ? "rgba(79,211,155,.40)" : (h.kind === "perimeter" ? "rgba(255,180,84,.42)" : "rgba(95,208,255,.36)"))));
+      ctx3d.save();
+      ctx3d.setLineDash([2, 3]);
+      ctx3d.strokeStyle = col;
+      ctx3d.lineWidth = sel ? 1.6 : 0.9;
+      ctx3d.beginPath();
+      ctx3d.moveTo(a.x, a.y);
+      ctx3d.lineTo(b.x, b.y);
+      ctx3d.stroke();
+      ctx3d.restore();
+      if (sel) {
+        ctx3d.beginPath();
+        ctx3d.arc(b.x, b.y, 2.2, 0, Math.PI * 2);
+        ctx3d.fillStyle = col;
+        ctx3d.fill();
+      }
+    }
+  }
+
+  // 孔口标记
+  screenHoles = [];
+  for (const h of geo.hs) {
+    const p = cam.project(h.p);
+    if (!p) continue;
+    const sel = h.i === selected;
+    const col = sel ? "#ff5c52" : (h.kind === "cut" ? "#f472d0" : (h.kind === "under" ? "#a78bfa" : (h.kind === "floor" ? "#4fd39b" : (h.kind === "perimeter" ? "#ffb454" : "#5fd0ff"))));
+    ctx3d.beginPath();
+    ctx3d.arc(p.x, p.y, sel ? 4.4 : 2.8, 0, Math.PI * 2);
+    ctx3d.fillStyle = col;
+    ctx3d.fill();
+    ctx3d.lineWidth = 0.8;
+    ctx3d.strokeStyle = "rgba(4,16,28,.8)";
+    ctx3d.stroke();
+    if (sel) {
+      ctx3d.beginPath();
+      ctx3d.arc(p.x, p.y, 7.5, 0, Math.PI * 2);
+      ctx3d.strokeStyle = "rgba(255,92,82,.95)";
+      ctx3d.lineWidth = 1.4;
+      ctx3d.stroke();
+    }
+    if (showNum) {
+      ctx3d.font = "8px 'Microsoft YaHei',sans-serif";
+      ctx3d.textAlign = "left";
+      ctx3d.textBaseline = "bottom";
+      ctx3d.fillStyle = "rgba(230,244,255,.8)";
+      ctx3d.fillText(String(h.i + 1), p.x + 5, p.y - 4);
+    }
+    screenHoles.push({
+      x: p.x, y: p.y, idx: h.i, type: h.type, kind: h.kind,
+      xcm: holes[h.i][0], ycm: holes[h.i][1]
+    });
+  }
+
+  drawScale3D();
+  stage.dataset.holes = String(holes.length);
+}
+
+function drawScale3D() {
+  const mpp = V3.viewSize / H3;
+  const raw = 70 * mpp;
+  const pow = Math.pow(10, Math.floor(Math.log10(Math.max(raw, 1e-6))));
+  const nn = raw / pow;
+  const nice = nn < 1.5 ? 1 : nn < 3.5 ? 2 : nn < 7.5 ? 5 : 10;
+  const meters = nice * pow;
+  const px = clamp(meters / mpp, 34, 150);
+  const x0 = W3 < 560 ? 18 : W3 / 2 - px / 2;
+  const y0 = H3 - 44;
+
+  ctx3d.save();
+  ctx3d.strokeStyle = "rgba(190,220,238,.65)";
+  ctx3d.fillStyle = "rgba(190,220,238,.78)";
+  ctx3d.lineWidth = 1;
+  ctx3d.beginPath();
+  ctx3d.moveTo(x0, y0);
+  ctx3d.lineTo(x0 + px, y0);
+  ctx3d.moveTo(x0, y0 - 3);
+  ctx3d.lineTo(x0, y0 + 3);
+  ctx3d.moveTo(x0 + px, y0 - 3);
+  ctx3d.lineTo(x0 + px, y0 + 3);
+  ctx3d.stroke();
+  ctx3d.font = "9px 'Microsoft YaHei',sans-serif";
+  ctx3d.textAlign = "center";
+  ctx3d.textBaseline = "bottom";
+  ctx3d.fillText((meters >= 1 ? meters.toLocaleString("zh-CN") : meters.toFixed(1)) + " m", x0 + px / 2, y0 - 5);
+  ctx3d.restore();
+}
+
+/* ============================================================
+   3D 交互
+   ============================================================ */
+function hideTooltip() {
+  el.tooltip.classList.remove("show");
+}
+
+function showTooltip(h, px, py) {
+  const tip = el.tooltip;
+  const kindName = h.kind === "cut" ? "掏槽孔" : (h.kind === "floor" ? "底板孔" : (h.kind === "under" ? "底板下" : (h.kind === "perimeter" ? "周边孔" : "辅助孔")));
+  tip.innerHTML = "<b>孔 #" + (h.idx + 1) + " · " + kindName + "</b>" +
+    "<span>X = <i>" + h.xcm.toFixed(1) + "</i> cm　Y = <i>" + h.ycm.toFixed(1) + "</i> cm</span>" +
+    "<span>到轮廓距离 <i>" + distOutline([h.xcm, h.ycm], outline(geom())).toFixed(1) + "</i> cm</span>";
+  tip.classList.add("show");
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  let left = px + 14, top = py - th - 6;
+  if (left + tw > W3 - 10) left = px - tw - 14;
+  if (top < 8) top = py + 14;
+  tip.style.left = left + "px";
+  tip.style.top = top + "px";
+}
+
+function hit3D(px, py) {
+  let best = null, bd = 12;
+  for (const h of screenHoles) {
+    const d = Math.hypot(h.x - px, h.y - py);
+    if (d < bd) { bd = d; best = h; }
+  }
+  return best;
+}
+
+function bind3D() {
+  canvas3d.addEventListener("pointerdown", (e) => {
+    if (tab !== "3d") return;
+    drag3 = {
+      id: e.pointerId,
+      x: e.clientX,
+      y: e.clientY,
+      mode: (e.button === 2 || e.button === 1 || e.shiftKey) ? "pan" : "rotate",
+      moved: false
+    };
+    canvas3d.setPointerCapture(e.pointerId);
+    canvas3d.classList.add("dragging");
+    hideTooltip();
+  });
+
+  canvas3d.addEventListener("pointermove", (e) => {
+    if (!drag3 || drag3.id !== e.pointerId) {
+      if (tab === "3d") {
+        const r = canvas3d.getBoundingClientRect();
+        const h = hit3D(e.clientX - r.left, e.clientY - r.top);
+        canvas3d.style.cursor = h ? "pointer" : "grab";
+        if (h) showTooltip(h, e.clientX - r.left, e.clientY - r.top);
+        else hideTooltip();
+      }
+      return;
+    }
+    const dx = e.clientX - drag3.x;
+    const dy = e.clientY - drag3.y;
+    drag3.x = e.clientX;
+    drag3.y = e.clientY;
+    if (Math.abs(dx) + Math.abs(dy) > 2) drag3.moved = true;
+    if (drag3.mode === "pan") {
+      V3.panX += dx;
+      V3.panY += dy;
+    } else {
+      V3.yaw -= dx * 0.0075;
+      V3.pitch = clamp(V3.pitch + dy * 0.0055, 0.06, 1.56);
+    }
+    request3D();
+  });
+
+  const end3 = (e) => {
+    if (!drag3 || drag3.id !== e.pointerId) return;
+    const wasClick = !drag3.moved;
+    drag3 = null;
+    canvas3d.classList.remove("dragging");
+    if (wasClick && tab === "3d") {
+      const r = canvas3d.getBoundingClientRect();
+      const h = hit3D(e.clientX - r.left, e.clientY - r.top);
+      if (h) {
+        selected = h.idx;
+        updatePanelStats();
+        save();
+        request3D();
+      } else {
+        selected = -1;
+        updatePanelStats();
+        request3D();
+      }
+    }
+  };
+  canvas3d.addEventListener("pointerup", end3);
+  canvas3d.addEventListener("pointercancel", end3);
+  canvas3d.addEventListener("pointerleave", () => {
+    if (!drag3) hideTooltip();
+  });
+  canvas3d.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  canvas3d.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const delta = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+    V3.viewSize = clamp(V3.viewSize * Math.exp(delta * 0.0011), V3.minView, V3.maxView);
+    request3D();
+  }, { passive: false });
+
+  canvas3d.addEventListener("dblclick", () => reset3D(true));
+}
+
+/* ============================================================
+   Tab / 初始化
+   ============================================================ */
+function setTab(t) {
+  tab = t;
+  hideTooltip();
+  stage.classList.toggle("mode2d", t === "2d");
+  el.tab2d.classList.toggle("active", t === "2d");
+  el.tab3d.classList.toggle("active", t === "3d");
+  if (t === "2d") {
+    el.hintbar.textContent = "拖动炮孔 · 点空白添加 · 点炮孔删除 · 方向键微调";
+    render2D();
+    updatePanelStats();
+  } else {
+    el.hintbar.textContent = "拖拽旋转 · 滚轮缩放 · 右键平移 · 单击炮孔选中";
+    resize3D();
+    request3D();
+  }
+}
+
+/* ============================================================
+   导出
+   ============================================================ */
+function downloadBlob(name, blob) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+function safeName() {
+  return String(S.title || "隧道布孔图").replace(/[\\/:*?"<>|]/g, "_");
+}
+
+function exportCSV() {
+  const g = geom(), out = outline(g);
+  const rows = ["序号,x_cm,y_cm,类型"];
+  holes.forEach((h, i) => {
+    const kind = holeKind(h, out);
+    const label = kind === "cut" ? "掏槽孔" : (kind === "floor" ? "底板孔" : (kind === "under" ? "底板下" : (kind === "perimeter" ? "周边孔" : "辅助孔")));
+    rows.push((i + 1) + "," + h[0].toFixed(1) + "," + h[1].toFixed(1) + "," + label);
+  });
+  downloadBlob(safeName() + "_坐标.csv", new Blob(["\ufeff" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" }));
+  toast("CSV 已导出");
+}
+
+function exportSVG() {
+  render2D();
+  const clone = svg.cloneNode(true);
+  clone.querySelectorAll("[data-sel]").forEach(n => n.remove());
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  clone.setAttribute("width", String(geom().W));
+  clone.setAttribute("height", String(geom().H));
+  downloadBlob(safeName() + ".svg", new Blob([new XMLSerializer().serializeToString(clone)], { type: "image/svg+xml" }));
+  toast("SVG 已导出");
+}
+
+async function exportPNG() {
+  if (tab === "3d") {
+    render3D();
+    const a = document.createElement("a");
+    a.download = safeName() + "_三维.png";
+    a.href = canvas3d.toDataURL("image/png");
+    a.click();
+    toast("PNG 已导出");
+    return;
+  }
+  render2D();
+  const clone = svg.cloneNode(true);
+  clone.querySelectorAll("[data-sel]").forEach(n => n.remove());
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  const vb = svg.viewBox.baseVal;
+  clone.setAttribute("width", String(vb.width));
+  clone.setAttribute("height", String(vb.height));
+  const text = new XMLSerializer().serializeToString(clone);
+  const blob = new Blob([text], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement("canvas");
+    c.width = Math.round(geom().W * 1.6);
+    c.height = Math.round(geom().H * 1.6);
+    const cx = c.getContext("2d");
+    cx.fillStyle = "#fff";
+    cx.fillRect(0, 0, c.width, c.height);
+    cx.drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    const a = document.createElement("a");
+    a.download = safeName() + "_二维.png";
+    a.href = c.toDataURL("image/png");
+    a.click();
+    toast("PNG 已导出");
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); toast("PNG 导出失败", true); };
+  img.src = url;
+}
+
+/* ============================================================
+   Toast / 绑定 / 启动
+   ============================================================ */
+function toast(msg, isErr) {
+  el.toast.textContent = msg;
+  el.toast.classList.toggle("err", !!isErr);
+  el.toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.toast.classList.remove("show"), 3000);
+}
+
+function syncForm() {
+  el.fPerCount.value = S.perCount;
+  el.fAuxCount.value = S.auxCount;
+  el.fCutCount.value = S.cutCount;
+  el.fFloorCount.value = S.floorCount;
+  el.fGrade.value = S.grade;
+  el.fNum.checked = showNum;
+  el.fGrid.checked = showGrid;
+  el.fDim.checked = showDim;
+  el.fRods.checked = showRods;
+}
+
+function bindUI() {
+  el.mMove.addEventListener("click", () => setMode("move"));
+  el.mAdd.addEventListener("click", () => setMode("add"));
+  el.mDel.addEventListener("click", () => setMode("del"));
+
+  el.btnGen.addEventListener("click", () => {
+    if (autoLayout()) toast("已自动布置 " + holes.length + " 孔");
+  });
+  el.btnClear.addEventListener("click", () => {
+    holes = [];
+    selected = -1;
+    dirty = false;
+    refreshAll();
+    toast("已清空孔位");
+  });
+
+  // 参数变化后立即重排布孔，右侧 2D/3D 同步刷新
+  const specs = [
+    { id: "fPerCount", key: "perCount", min: 14, max: 500 },
+    { id: "fAuxCount", key: "auxCount", min: 0, max: 2000 },
+    { id: "fCutCount", key: "cutCount", min: 0, max: 200 },
+    { id: "fFloorCount", key: "floorCount", min: 3, max: 500 }
+  ];
+  let paramTimer = 0;
+
+  function applyParam(spec, force) {
+    let v = Number(el[spec.id].value);
+    if (!Number.isFinite(v)) {
+      if (force) el[spec.id].value = S[spec.key];
+      return false;
+    }
+    if (v < spec.min) {
+      if (!force) return false;
+      v = spec.min;
+    }
+    if (v > spec.max) v = spec.max;
+    S[spec.key] = v;
+    if (force) el[spec.id].value = v;
+
+    dirty = true;
+    autoLayout();          // 关键：参数一变，右侧立即重新布孔
+    return true;
+  }
+
+  specs.forEach(spec => {
+    el[spec.id].addEventListener("input", () => {
+      clearTimeout(paramTimer);
+      paramTimer = setTimeout(() => applyParam(spec, false), 280);
+    });
+    el[spec.id].addEventListener("change", () => {
+      clearTimeout(paramTimer);
+      applyParam(spec, true);
+    });
+  });
+
+  el.fX.addEventListener("change", () => {
+    if (selected < 0 || !holes[selected]) return;
+    if (isBlockHole(selected)) { updatePanelStats(); toast("固定孔。", true); return; }
+    const g = geom();
+    const v = Number(el.fX.value);
+    const np = [Number.isFinite(v) ? +clamp(v, 0, g.W).toFixed(2) : holes[selected][0], holes[selected][1]];
+    if (insideOrEdge(np, outline(g))) {
+      holes[selected][0] = np[0];
+      refreshAll();
+    } else {
+      updatePanelStats();
+      toast("该坐标在隧道断面之外。", true);
+    }
+  });
+  el.fY.addEventListener("change", () => {
+    if (selected < 0 || !holes[selected]) return;
+    if (isBlockHole(selected)) { updatePanelStats(); toast("固定孔。", true); return; }
+    const g = geom();
+    const v = Number(el.fY.value);
+    const np = [holes[selected][0], Number.isFinite(v) ? +clamp(v, 0, g.H).toFixed(2) : holes[selected][1]];
+    if (insideOrEdge(np, outline(g))) {
+      holes[selected][1] = np[1];
+      refreshAll();
+    } else {
+      updatePanelStats();
+      toast("该坐标在隧道断面之外。", true);
+    }
+  });
+
+  el.btnDel.addEventListener("click", deleteSelected);
+
+  el.fNum.addEventListener("change", () => {
+    showNum = el.fNum.checked;
+    render2D();
+    request3D();
+    save();
+  });
+  el.fGrid.addEventListener("change", () => {
+    showGrid = el.fGrid.checked;
+    render2D();
+    save();
+  });
+  el.fDim.addEventListener("change", () => {
+    showDim = el.fDim.checked;
+    render2D();
+    save();
+  });
+  el.fRods.addEventListener("change", () => {
+    showRods = el.fRods.checked;
+    request3D();
+    save();
+  });
+  el.fGrade.addEventListener("change", () => {
+    const grade = el.fGrade.value;
+    if (!GRADES[grade]) return;
+    S.grade = grade;
+    S.title = GRADES[grade].title;
+    S.perCount = GRADES[grade].perCount;
+    S.cutCount = GRADES[grade].cutCount;
+    S.floorCount = GRADES[grade].floorCount;
+    syncForm();
+    autoLayout();
+  });
+
+  el.btnCsv.addEventListener("click", exportCSV);
+  el.btnSvg.addEventListener("click", exportSVG);
+  el.btnPng.addEventListener("click", exportPNG);
+  el.btnExport.addEventListener("click", exportPNG);
+  el.btnReset.addEventListener("click", () => {
+    const wasTab = tab;
+    S = Object.assign({}, DEF);
+    holes = [];
+    selected = -1;
+    mode = "move";
+    dirty = false;
+    showNum = false;
+    showGrid = true;
+    showDim = true;
+    showRods = true;
+    try { localStorage.removeItem("buKong.v1"); } catch (e) {}
+    syncForm();
+    autoLayout();
+    setMode("move", true);
+    fit3D();
+    if (wasTab === "3d") {
+      reset3D(false);
+      setTab("3d");
+    } else {
+      setTab("2d");
+    }
+    toast("已恢复默认");
+  });
+
+  el.tab2d.addEventListener("click", () => setTab("2d"));
+  el.tab3d.addEventListener("click", () => setTab("3d"));
+  el.btnResetView.addEventListener("click", () => reset3D(true));
+  el.btnFront.addEventListener("click", () => {
+    if (!V3.home) return;
+    animate3D({
+      yaw: Math.PI / 2,
+      pitch: 0.07,
+      dist: V3.home.dist,
+      viewSize: V3.home.viewSize * 0.92,
+      panX: 0, panY: 0,
+      target: [0, -0.8, geom().H * 0.005]
+    }, 460);
+  });
+  el.btnTop.addEventListener("click", () => {
+    if (!V3.home) return;
+    animate3D({
+      yaw: -Math.PI / 2,
+      pitch: 1.555,
+      dist: V3.home.dist,
+      viewSize: V3.home.viewSize,
+      panX: 0, panY: 0,
+      target: [0, -2, 0]
+    }, 460);
+  });
+
+  window.addEventListener("resize", () => {
+    resize3D();
+    if (tab === "3d") render3D();
+  });
+  if (window.ResizeObserver) {
+    new ResizeObserver(() => {
+      resize3D();
+      if (tab === "3d") render3D();
+    }).observe(stage);
+  }
+}
+
+function boot() {
+  cacheDom();
+  resize3D();
+  bind2D();
+  bind3D();
+  bindUI();
+
+  const restored = loadState();
+  syncForm();
+  const fixedN = holes.filter(h => h && (h[2] === "ffloor" || h[2] === "under")).length;
+  if (!restored || holes.length === 0 || fixedN !== 5) {
+    autoLayout();
+  } else {
+    // 兼容旧参数：拱高不能超过总高
+    const g = geom();
+    if (S.rise >= g.H - 20) S.rise = Math.max(20, g.H - 20);
+    syncForm();
+    refreshAll();
+  }
+
+  if (migratedCut && migratedCut.length) {
+    const idxs = [];
+    holes.forEach((h, i) => { if (h[2] === "cut") idxs.push(i); });
+    if (idxs.length === migratedCut.length) {
+      idxs.forEach((idx, k) => {
+        holes[idx][0] = migratedCut[k][0];
+        holes[idx][1] = migratedCut[k][1];
+      });
+      refreshAll();
+    }
+    migratedCut = null;
+  }
+
+  fit3D();
+  reset3D(false);
+  setTab("2d");
+  updatePanelStats();
+  window.addEventListener("resize", () => renderSequence());
+}
+
+boot();
+</script>
+</body>
+</html>

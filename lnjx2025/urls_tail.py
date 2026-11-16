@@ -33,12 +33,4 @@ def drill_layout_view(request):
     path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "钻孔布置图工具.html")
     return FileResponse(open(path, "rb"), content_type="text/html")
 
-# 隧道炮孔布置图工具
-def bukong_tunnel_view(request):
-    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "隧道布孔图.html")
-    return FileResponse(open(path, "rb"), content_type="text/html")
 
-# 隧道炮孔布置图工具 · 三维版
-def bukong_3d_view(request):
-    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "隧道布孔图_三维版.html")
-    return FileResponse(open(path, "rb"), content_type="text/html")

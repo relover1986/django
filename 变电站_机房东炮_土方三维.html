@@ -282,7 +282,7 @@
 
     <div class="scroll">
       <div class="upload" id="drop" role="button" tabindex="0" aria-label="上传 SCR 文件">
-        <input type="file" id="fileInput" accept=".scr,.dat,.txt,.csv" hidden>
+        <input type="file" id="fileInput" hidden>
         <div class="u-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 16V4m0 0L7.2 8.8M12 4l4.8 4.8"/>
@@ -618,6 +618,13 @@ function parseGenericText(text) {
       // CASS: 孔号, 编码, Y[东], X[北], Z
       label = parts[0];
       x = Number(parts[2]); y = Number(parts[3]); z = Number(parts[4]);
+    } else if (parts.length === 4 && !Number.isFinite(Number(parts[0]))) {
+      // CASS-DAT 变体: 标签, Y[东], X[北], Z  (第二个列常为空, 经多次逗号被压平成3列)
+      label = parts[0];
+      x = Number(parts[1]); y = Number(parts[2]); z = Number(parts[3]);
+    } else if (parts.length === 4 && Number.isFinite(Number(parts[0]))) {
+      // 4列纯数字: 点号, X, Y, Z
+      x = Number(parts[1]); y = Number(parts[2]); z = Number(parts[3]);
     } else if (parts.length === 3) {
       x = Number(parts[0]); y = Number(parts[1]); z = Number(parts[2]);
     } else {
