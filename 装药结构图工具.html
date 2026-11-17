@@ -3,17 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>装药结构示意图</title>
+<title>垂直孔装药结构示意图</title>
 <style>
   :root{--ink:#111;--muted:#666;--bg:#f5f6f7;--accent:#1f4e79}
   *{box-sizing:border-box}
   body{margin:0;font-family:"Microsoft YaHei","PingFang SC",system-ui,-apple-system,sans-serif;
        background:var(--bg);color:var(--ink);-webkit-text-size-adjust:100%}
-  .wrap{display:flex;gap:16px;padding:16px;align-items:flex-start;max-width:1180px;margin:0 auto}
-  .panel{width:292px;flex:0 0 292px;background:#fff;border-radius:12px;padding:16px;
+  .wrap{display:flex;gap:16px;padding:16px;align-items:flex-start;max-width:1320px;margin:0 auto}
+  .panel{width:300px;flex:0 0 300px;background:#fff;border-radius:12px;padding:16px;
          box-shadow:0 1px 8px rgba(0,0,0,.08)}
   .panel h1{font-size:16px;margin:0 0 6px}
-  .hint{font-size:11.5px;color:var(--muted);line-height:1.6;margin-bottom:10px}
+  .hint{font-size:11.5px;color:var(--muted);line-height:1.6;margin:0 0 12px}
+  .tabs{display:flex;gap:6px;background:#eef1f5;border-radius:9px;padding:3px;margin-bottom:14px}
+  .tab{flex:1;padding:7px 0;border:0;border-radius:7px;background:transparent;color:#334;
+       font-size:12.5px;cursor:pointer;font-family:inherit}
+  .tab.on{background:#fff;color:var(--accent);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .sect{font-size:12px;color:var(--accent);font-weight:600;margin:2px 0 8px;padding-bottom:5px;
+        border-bottom:1px solid #eef1f5}
   .field{display:flex;align-items:center;justify-content:space-between;margin:9px 0;font-size:13px}
   .field label{color:#333}
   .field input{width:118px;padding:7px 9px;border:1px solid #cfd6df;border-radius:7px;
@@ -49,13 +55,35 @@
 <body>
 <div class="wrap">
   <div class="panel">
-    <h1>装药结构示意</h1>
-    <div class="hint">固定值直接填数字（如 6）；范围用波浪号（如 4~8）。装药长度自动计算。</div>
+    <h1>垂直孔装药结构</h1>
+    <div class="hint">连续装药 / 间隔装药两种图式；固定值直接填数字（如 6），范围用波浪号（如 4~8）。<br>出图宽度默认 72 mm：A4 有页边距时左右各一张；两图模式自动按双倍宽（整页）。</div>
 
-    <div class="field"><label>孔径 (mm)</label><input id="dia" type="text" inputmode="decimal" value="90"></div>
-    <div class="field"><label>孔深 (m)</label><input id="depth" type="text" inputmode="decimal" value="4~8"></div>
-    <div class="field"><label>超深 (m)</label><input id="sub" type="text" inputmode="decimal" value="0.5"></div>
-    <div class="field"><label>填塞长度 (m)</label><input id="stem" type="text" inputmode="decimal" value="2.5"></div>
+    <div class="tabs">
+      <button class="tab on" data-tab="cont">连续装药</button>
+      <button class="tab" data-tab="inter">间隔装药</button>
+      <button class="tab" data-tab="both">两图</button>
+    </div>
+
+    <div class="pane" id="pane-cont">
+      <div class="sect">图一 · 连续装药</div>
+      <div class="field"><label>孔径 (mm)</label><input id="dia" type="text" inputmode="decimal" value="90"></div>
+      <div class="field"><label>孔深 (m)</label><input id="depth" type="text" inputmode="decimal" value="4~8"></div>
+      <div class="field"><label>超深 (m)</label><input id="sub" type="text" inputmode="decimal" value="0.5"></div>
+      <div class="field"><label>填塞长度 (m)</label><input id="stem" type="text" inputmode="decimal" value="2.5"></div>
+      <div class="calc" id="calc"></div>
+    </div>
+
+    <div class="pane" id="pane-inter" hidden>
+      <div class="sect">图二 · 间隔装药</div>
+      <div class="field"><label>孔深 (m)</label><input id="i_L" type="text" inputmode="decimal" value="3.5"></div>
+      <div class="field"><label>装药段数</label><input id="i_n" type="text" inputmode="numeric" value="3"></div>
+      <div class="field"><label>每段装药长 (m)</label><input id="i_ls" type="text" inputmode="decimal" value="0.3"></div>
+      <div class="field"><label>每段药量 (kg)</label><input id="i_q" type="text" inputmode="decimal" value="0.3"></div>
+      <div class="field"><label>填塞长度 (m)</label><input id="i_stem" type="text" inputmode="decimal" value="0.5"></div>
+      <div class="calc" id="i_calc"></div>
+    </div>
+
+    <div class="field"><label>出图宽度 (mm)</label><input id="outw" type="text" inputmode="decimal" value="72"></div>
     <div class="field"><label>图中字号</label>
       <div class="fsbox">
         <button class="mini" id="fsDown">A−</button>
@@ -63,7 +91,6 @@
         <button class="mini" id="fsUp">A+</button>
       </div>
     </div>
-    <div class="calc" id="calc"></div>
 
     <div class="row2">
       <button id="png">导出 PNG</button>
@@ -86,9 +113,20 @@
   const V = {W:620, H:760};
   const TOP = 170, PLOT = 520;
   const CX = 250;
-  const DEFAULTS = {dia:"90", depth:"4~8", sub:"0.5", stem:"2.5"};
+  const GAPX = 40;                 // 两图并排间距
+  const DEFAULTS = {dia:"90", depth:"4~8", sub:"0.5", stem:"2.5",
+                    i_L:"3.5", i_n:"3", i_ls:"0.3", i_q:"0.3", i_stem:"0.5", outw:"72"};
+  const CUR = {w:620, h:760};      // 当前 viewBox 尺寸（两图模式宽翻倍）
+
+  /* 出图宽度（mm）：默认 72 = A4 有页边距时左右各一张；两图模式按双倍 */
+  function outMm(){
+    const v = parseFloat($("outw").value);
+    const base = Math.min(400, Math.max(40, isFinite(v) ? v : 72));
+    return TAB === "both" ? base * 2 : base;
+  }
 
   let FS = 2;                      // 图中字号倍率 0.8~2.0
+  let TAB = "cont";
   try{
     const v = parseFloat(localStorage.getItem("zhuangyao_fs2"));
     if (v >= 0.8 && v <= 2.0) FS = v;
@@ -100,6 +138,18 @@
   const $ = id => document.getElementById(id);
   const f1 = v => (Math.round(v*100)/100).toFixed(2).replace(/\.?0+$/, "");
   const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+  const DEFS = `<defs>
+      <marker id="arw" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 Z" fill="#111"/>
+      </marker>
+      <pattern id="dots" width="11" height="11" patternUnits="userSpaceOnUse">
+        <circle cx="3" cy="3" r="1" fill="#9a9a9a"/><circle cx="8.5" cy="8.5" r="1" fill="#9a9a9a"/>
+      </pattern>
+      <pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="9" stroke="#4a4a4a" stroke-width="1.1"/>
+      </pattern>
+    </defs>`;
 
   // “4~8”“4-8”“4 至 8”“6” 都认
   function parseSpec(v){
@@ -138,7 +188,29 @@
     return "";
   }
 
-  function buildSVG(p){
+  /* ---------- 间隔装药参数 ---------- */
+  const num = id => { const v = parseFloat(String($(id).value).replace(/[,\s]/g,"")); return isFinite(v) ? v : NaN; };
+
+  function readInter(){
+    const L = num("i_L"), nRaw = num("i_n"), ls = num("i_ls"), q = num("i_q"), stem = num("i_stem");
+    const n = Math.round(nRaw);
+    const gap = (isFinite(L) && isFinite(ls) && isFinite(stem) && n > 1) ? (L - n*ls - stem) / (n - 1) : 0;
+    return {L, n, ls, q, stem, gap, qty: (isFinite(q) ? n*q : NaN)};
+  }
+
+  function validateInter(p){
+    if (!isFinite(p.L) || p.L <= 0) return "孔深要填大于 0 的数字";
+    if (!isFinite(p.n) || p.n < 2 || p.n > 10) return "装药段数请填 2~10 的整数（单段请用连续装药）";
+    if (!isFinite(p.ls) || p.ls <= 0) return "每段装药长要大于 0";
+    if (!isFinite(p.q) || p.q <= 0) return "每段药量要大于 0";
+    if (!isFinite(p.stem) || p.stem < 0) return "填塞长度不能为负";
+    if (p.n * p.ls + p.stem >= p.L) return "装药段 + 填塞已超过孔深，请减小装药或填塞";
+    if (p.n > 1 && p.gap < 0.02) return "间隔长度太小（＜0.02 m），请调整参数";
+    return "";
+  }
+
+  /* ---------- 图一：连续装药（原逻辑，坐标未改） ---------- */
+  function contBody(p){
     const Hmax = p.depth.max;                       // 图按最大孔深画
     const F    = Math.min(p.stem.max, Hmax * 0.995);
     const Lc   = Hmax - F;
@@ -152,18 +224,6 @@
 
     const xd1 = xR + 70, xd2 = xR + 158;
     const t = [];
-    t.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${V.W} ${V.H}" width="${V.W}" height="${V.H}">`);
-    t.push(`<defs>
-      <marker id="arw" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-        <path d="M0,0 L10,5 L0,10 Z" fill="#111"/>
-      </marker>
-      <pattern id="dots" width="11" height="11" patternUnits="userSpaceOnUse">
-        <circle cx="3" cy="3" r="1" fill="#9a9a9a"/><circle cx="8.5" cy="8.5" r="1" fill="#9a9a9a"/>
-      </pattern>
-      <pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-        <line x1="0" y1="0" x2="0" y2="9" stroke="#4a4a4a" stroke-width="1.1"/>
-      </pattern>
-    </defs>`);
 
     const titleTxt = "主爆孔装药结构图";
     t.push(`<text x="${V.W/2}" y="52" text-anchor="middle" font-size="${fit(titleTxt, 22*FS, V.W-60).toFixed(1)}" font-weight="700" fill="#111">${titleTxt}</text>`);
@@ -208,29 +268,184 @@
     vdim(xd1, yStem, yBot, `装药 ${fmtSpec(lc,'m')}`);
     vdim(xd2, yTop, yBot, `孔深 ${fmtSpec(p.depth,'m')}`);
 
-    t.push(`</svg>`);
     return t.join("");
+  }
+
+  /* ---------- 图二：间隔装药（竖直孔，参考水平孔图式） ---------- */
+  function interBody(pi){
+    const L = pi.L, n = pi.n, ls = pi.ls, q = pi.q, stem = pi.stem, gap = pi.gap;
+    const w  = 56;
+    const xL = CX - w/2, xR = CX + w/2;
+    const yTop = TOP, yBot = TOP + PLOT;
+    const s = PLOT / L;                             // px / m
+    const yStem = yTop + stem * s;
+
+    // 各装药段（自上而下）
+    const segs = [];
+    let off = 0;
+    for (let i = 0; i < n; i++){
+      const y0 = yStem + off * s;
+      segs.push([y0, y0 + ls * s]);
+      off += ls + (i < n - 1 ? gap : 0);
+    }
+    const chargeLen = n * ls + (n - 1) * gap;
+
+    const t = [];
+
+    const titleTxt = "间隔装药结构图";
+    t.push(`<text x="${V.W/2}" y="52" text-anchor="middle" font-size="${fit(titleTxt, 22*FS, V.W-60).toFixed(1)}" font-weight="700" fill="#111">${titleTxt}</text>`);
+    const subTxt = `孔深${f1(L)}m ｜ 填塞${f1(stem)}m ｜ ${n}段 × ${f1(ls)}m / ${f1(q)}kg ｜ 间隔${f1(gap)}m ｜ 总药量${f1(pi.qty)}kg`;
+    t.push(`<text x="${V.W/2}" y="78" text-anchor="middle" font-size="${fit(subTxt, 13*FS, V.W-60).toFixed(1)}" fill="#333">${esc(subTxt)}</text>`);
+
+    /* 炮孔 */
+    t.push(`<rect x="${xL}" y="${yTop}" width="${w}" height="${PLOT}" fill="#fff" stroke="#111" stroke-width="1.6"/>`);
+    /* 填塞段（点状，与连续装药一致） */
+    if (yStem > yTop)
+      t.push(`<rect x="${xL}" y="${yTop}" width="${w}" height="${(yStem-yTop).toFixed(1)}" fill="url(#dots)"/>`);
+    /* 药卷（网格剖面） */
+    segs.forEach(seg => {
+      const y0 = seg[0], hh = seg[1] - seg[0];
+      t.push(`<rect x="${xL}" y="${y0.toFixed(1)}" width="${w}" height="${hh.toFixed(1)}" fill="#fff" stroke="#111" stroke-width="1"/>`);
+      const rows = Math.max(2, Math.round(hh / 13)), cols = 4;
+      for (let r = 1; r < rows; r++){
+        const gy = y0 + hh * r / rows;
+        t.push(`<line x1="${xL}" y1="${gy.toFixed(1)}" x2="${xR}" y2="${gy.toFixed(1)}" stroke="#666" stroke-width="0.55"/>`);
+      }
+      for (let c = 1; c < cols; c++){
+        const gx = xL + w * c / cols;
+        t.push(`<line x1="${gx.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${gx.toFixed(1)}" y2="${(y0+hh).toFixed(1)}" stroke="#666" stroke-width="0.55"/>`);
+      }
+    });
+
+    /* 导爆索（孔内纵向，贯穿装药段） */
+    const xCord = CX + w*0.26;
+    t.push(`<line x1="${xCord.toFixed(1)}" y1="${(yTop+8).toFixed(1)}" x2="${xCord.toFixed(1)}" y2="${yBot}" stroke="#111" stroke-width="3.2"/>`);
+
+    /* 竹片（孔壁左侧纵向条，压在最上层才不被药卷盖住） */
+    t.push(`<rect x="${(xL+3).toFixed(1)}" y="${segs[0][0].toFixed(1)}" width="6" height="${(segs[n-1][1]-segs[0][0]).toFixed(1)}" fill="none" stroke="#555" stroke-width="1.6"/>`);
+
+    /* 电子雷管 + 导线（孔底起爆，与原图一致） */
+    const wireX = xL - 34;
+    t.push(`<path d="M ${CX} ${yBot-62} L ${CX} ${yTop+10} L ${xL+8} ${yTop+10} L ${xL+8} ${yTop-10} L ${wireX} ${yTop-10} L ${wireX} ${yTop-62}" fill="none" stroke="#111" stroke-width="1.4"/>`);
+    t.push(`<rect x="${CX-3.5}" y="${yBot-62}" width="7" height="24" rx="2" fill="#111"/>`);
+    t.push(`<rect x="${wireX-9}" y="${yTop-84}" width="18" height="22" fill="#fff" stroke="#111" stroke-width="1.4"/>`);
+
+    /* 左侧标注（阶梯排布，避免压字） */
+    const lab = (y, text, tx, ty) => {
+      t.push(`<text x="140" y="${y+4}" font-size="${fit(text, 13*FS, 132).toFixed(1)}" fill="#111" text-anchor="end">${esc(text)}</text>`);
+      t.push(`<line x1="146" y1="${y}" x2="${tx}" y2="${ty}" stroke="#111" stroke-width="1"/>`);
+      t.push(`<circle cx="${tx}" cy="${ty}" r="2.2" fill="#111"/>`);
+    };
+    const c1 = (segs[0][0] + segs[0][1]) / 2;
+    lab(yTop-73, "电子雷管导线", wireX+9, yTop-73);
+    if (yStem > yTop + 20) lab((yTop+yStem)/2, "填塞料", xL+w*0.36, (yTop+yStem)/2);
+    lab(c1+6, "药卷", xL+w*0.5, c1);
+    lab(c1+42, "竹片", xL+6, c1+18);
+    lab(c1+78, "导爆索", xCord, c1+34);
+    lab(yBot-40, "电子雷管", CX-7, yBot-50);
+
+    /* 右侧分段标注 */
+    const dimS = 11*FS;
+    segs.forEach(seg => {
+      const cy = (seg[0] + seg[1]) / 2 + 4;
+      const txt = `${f1(ls)}m·${f1(q)}kg`;
+      t.push(`<text x="${(xR+12).toFixed(1)}" y="${cy.toFixed(1)}" font-size="${fit(txt, dimS, 96).toFixed(1)}" fill="#111">${esc(txt)}</text>`);
+    });
+    for (let i = 0; i < n - 1; i++){
+      const g1 = segs[i][1], g2 = segs[i+1][0];
+      if (g2 - g1 < 22) continue;
+      const txt = `间隔${f1(gap)}m`;
+      t.push(`<text x="${(xR+12).toFixed(1)}" y="${((g1+g2)/2+4).toFixed(1)}" font-size="${fit(txt, dimS, 96).toFixed(1)}" fill="#555">${esc(txt)}</text>`);
+    }
+
+    /* 尺寸线 */
+    const xd1 = xR + 120, xd2 = xR + 200;
+    const vdim = (x, y1, y2, text, avail) => {
+      t.push(`<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="#111" stroke-width="1" marker-start="url(#arw)" marker-end="url(#arw)"/>`);
+      t.push(`<text x="${x+9}" y="${(y1+y2)/2+4}" font-size="${fit(text, 12.5*FS, avail || (V.W-(x+9)-6)).toFixed(1)}" fill="#111">${esc(text)}</text>`);
+      t.push(`<line x1="${xR+4}" y1="${y1}" x2="${x+5}" y2="${y1}" stroke="#999" stroke-width="0.7"/>`);
+      t.push(`<line x1="${xR+4}" y1="${y2}" x2="${x+5}" y2="${y2}" stroke="#999" stroke-width="0.7"/>`);
+    };
+    vdim(xd1, yStem, yBot, `装药 ${f1(chargeLen)} m`, xd2 - xd1 - 12);
+    vdim(xd2, yTop, yBot, `孔深 ${f1(L)} m`);
+
+    return t.join("");
+  }
+
+  /* ---------- 组装 ---------- */
+  function compose(){
+    const figs = [];
+    let err = "";
+    if (TAB === "cont" || TAB === "both"){
+      const p = readParams();
+      err = err || validate(p);
+      if (!err) figs.push(contBody(p));
+    }
+    if (TAB === "inter" || TAB === "both"){
+      const pi = readInter();
+      err = err || validateInter(pi);
+      if (!err) figs.push(interBody(pi));
+    }
+    if (err) return {err};
+
+    const parts = figs.map((body, i) =>
+      `<g transform="translate(${i ? V.W + GAPX : 0} 0)">${body}</g>`);
+    const W = figs.length > 1 ? V.W*2 + GAPX : V.W;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${V.H}" width="${W}" height="${V.H}">${DEFS}${parts.join("")}</svg>`;
+    return {svg, W, H:V.H};
   }
 
   function render(){
     const p = readParams();
-    const err = validate(p);
+    const errC = validate(p);
     const box = $("err"), cv = $("canvas"), calc = $("calc");
-    if (err){
+    const res = compose();
+    if (res.err){
       box.style.display = "block";
-      box.textContent = "⚠ " + err;
+      box.textContent = "⚠ " + res.err;
       cv.innerHTML = "";
-      calc.textContent = "";
-      return;
+    } else {
+      box.style.display = "none";
+      cv.innerHTML = res.svg;
+      CUR.w = res.W; CUR.h = res.H;
     }
-    box.style.display = "none";
-    cv.innerHTML = buildSVG(p);
-    const lc = lcSpec(p);
-    calc.innerHTML = "装药长度（自动）：<b>" + fmtSpec(lc, "m") + "</b>" +
-      (lc.range ? "<br><span style='color:#666'>按 孔深 − 填塞 的最大/最小组合</span>" : "");
+
+    /* 面板计算说明 */
+    if (errC) calc.textContent = "";
+    else {
+      const lc = lcSpec(p);
+      calc.innerHTML = "装药长度（自动）：<b>" + fmtSpec(lc, "m") + "</b>" +
+        (lc.range ? "<br><span style='color:#666'>按 孔深 − 填塞 的最大/最小组合</span>" : "");
+    }
+
+    const pi = readInter();
+    const ic = $("i_calc");
+    if (validateInter(pi)){
+      ic.innerHTML = "";
+    } else {
+      let s = `间隔长度（自动）：<b>${pi.gap > 0 ? f1(pi.gap) : 0} m</b>`;
+      s += `<br>总装药量：<b>${f1(pi.qty)} kg</b>（${pi.n} 段 × ${f1(pi.q)} kg）`;
+      s += `<br>装药合计 ${f1(pi.n * pi.ls)} m，填塞 ${f1(pi.stem)} m`;
+      ic.innerHTML = s;
+    }
   }
 
+  /* ---------- 交互 ---------- */
+  document.querySelectorAll(".tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      TAB = btn.getAttribute("data-tab");
+      document.querySelectorAll(".tab").forEach(b => b.classList.toggle("on", b === btn));
+      $("pane-cont").hidden = (TAB === "inter");
+      $("pane-inter").hidden = (TAB === "cont");
+      render();
+    });
+  });
+
   ["dia","depth","sub","stem"].forEach(id => {
+    $(id).addEventListener("input", render);
+    $(id).addEventListener("change", render);
+  });
+  ["i_L","i_n","i_ls","i_q","i_stem"].forEach(id => {
     $(id).addEventListener("input", render);
     $(id).addEventListener("change", render);
   });
@@ -248,10 +463,51 @@
   $("fsUp").addEventListener("click", () => setFS(FS + 0.1));
   $("fsDown").addEventListener("click", () => setFS(FS - 0.1));
 
-  function currentSVG(){
+  function currentSVG(mmW){
     const el = document.querySelector("#canvas svg");
     if (!el) return null;
-    return '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(el);
+    const node = el.cloneNode(true);
+    if (mmW){
+      node.setAttribute("width", mmW.toFixed(1) + "mm");
+      node.setAttribute("height", (mmW * CUR.h / CUR.w).toFixed(1) + "mm");
+    }
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(node);
+  }
+
+  /* 给 PNG 写入 pHYs（300 dpi），Word 插入时才按 72mm 显示而不是超大 */
+  const CRC_TABLE = (() => {
+    const tb = new Uint32Array(256);
+    for (let n = 0; n < 256; n++){
+      let c = n;
+      for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      tb[n] = c >>> 0;
+    }
+    return tb;
+  })();
+  function crc32(bytes){
+    let c = 0xFFFFFFFF;
+    for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+  function pngWithDpi(buf, dpi){
+    const src = new Uint8Array(buf);
+    if (src.length < 33 || src[0] !== 0x89 || src[1] !== 0x50) return buf;
+    const ihdrLen = (src[8] << 24 | src[9] << 16 | src[10] << 8 | src[11]) >>> 0;
+    const insertAt = 8 + 12 + ihdrLen;
+    const ppu = Math.round(dpi / 0.0254);
+    const chunk = new Uint8Array(4 + 4 + 9 + 4);
+    const dv = new DataView(chunk.buffer);
+    dv.setUint32(0, 9);
+    chunk.set([0x70, 0x48, 0x59, 0x73], 4);
+    dv.setUint32(8, ppu);
+    dv.setUint32(12, ppu);
+    chunk[16] = 1;
+    dv.setUint32(17, crc32(chunk.subarray(4, 17)));
+    const out = new Uint8Array(src.length + chunk.length);
+    out.set(src.subarray(0, insertAt), 0);
+    out.set(chunk, insertAt);
+    out.set(src.subarray(insertAt), insertAt + chunk.length);
+    return out.buffer;
   }
 
   function specText(sp, unit){
@@ -260,8 +516,16 @@
 
   function fileName(ext){
     const p = readParams();
-    const nm = "装药结构_φ" + (p.dia.range ? f1(p.dia.min) + "-" + f1(p.dia.max) : f1(p.dia.min)) +
-      "_孔深" + specText(p.depth, "m") + "_填塞" + specText(p.stem, "m") + "." + ext;
+    let nm;
+    if (TAB === "cont"){
+      nm = "装药结构_φ" + (p.dia.range ? f1(p.dia.min) + "-" + f1(p.dia.max) : f1(p.dia.min)) +
+        "_孔深" + specText(p.depth, "m") + "_填塞" + specText(p.stem, "m") + "." + ext;
+    } else if (TAB === "inter"){
+      const pi = readInter();
+      nm = "装药结构_间隔装药_孔深" + f1(pi.L) + "m_" + pi.n + "段." + ext;
+    } else {
+      nm = "装药结构_连续+间隔." + ext;
+    }
     return nm.replace(/[\\/:*?"<>|]/g, "-");
   }
 
@@ -275,7 +539,7 @@
   }
 
   $("svg").addEventListener("click", () => {
-    const s = currentSVG();
+    const s = currentSVG(outMm());
     if (!s) return;
     saveBlob(new Blob([s], {type: "image/svg+xml;charset=utf-8"}), fileName("svg"));
   });
@@ -283,20 +547,21 @@
   $("png").addEventListener("click", () => {
     const s = currentSVG();
     if (!s) return;
-    const el = document.querySelector("#canvas svg");
-    const vb = el.viewBox.baseVal;
-    const W = vb.width || 620, H = vb.height || 780;
-    const scale = 3;
+    const mmW = outMm();
+    const pxW = Math.round(mmW / 25.4 * 300);          // 300 dpi
+    const pxH = Math.round(pxW * CUR.h / CUR.w);
     const url = URL.createObjectURL(new Blob([s], {type: "image/svg+xml;charset=utf-8"}));
     const img = new Image();
     img.onload = () => {
       const c = document.createElement("canvas");
-      c.width = Math.round(W*scale); c.height = Math.round(H*scale);
+      c.width = pxW; c.height = pxH;
       const ctx = c.getContext("2d");
       ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
       ctx.drawImage(img, 0, 0, c.width, c.height);
       URL.revokeObjectURL(url);
-      c.toBlob(b => saveBlob(b, fileName("png")), "image/png");
+      c.toBlob(b => {
+        b.arrayBuffer().then(ab => saveBlob(new Blob([pngWithDpi(ab, 300)], {type: "image/png"}), fileName("png")));
+      }, "image/png");
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
@@ -312,12 +577,20 @@
 
   try{
     const q = new URLSearchParams(location.search);
-    ["dia","depth","sub","stem"].forEach(k => {
+    ["dia","depth","sub","stem","i_L","i_n","i_ls","i_q","i_stem","outw"].forEach(k => {
       if (q.has(k)) $(k).value = q.get(k);
     });
     if (q.has("fs")){
       const v = parseFloat(q.get("fs"));
       if (v >= 0.8 && v <= 2.0) FS = v;
+    }
+    const tb = q.get("tab");
+    if (tb === "inter" || tb === "both" || tb === "cont"){
+      TAB = tb;
+      document.querySelectorAll(".tab").forEach(b =>
+        b.classList.toggle("on", b.getAttribute("data-tab") === TAB));
+      $("pane-cont").hidden = (TAB === "inter");
+      $("pane-inter").hidden = (TAB === "cont");
     }
   }catch(e){}
 

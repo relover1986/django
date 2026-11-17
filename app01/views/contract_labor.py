@@ -37,7 +37,7 @@ from django.core.files.base import ContentFile
 from openpyxl import Workbook
 import time as _time_mod
 
-DESIGN_VER = 'design-v3-portrait-center'
+DESIGN_VER = 'design-v5-nameclean'
 
 
 def _eval_xlsx_formula(f):
@@ -291,7 +291,14 @@ def design_upload(request):
         for tf in tpls:
             tpl_data.append((tf.name, tf.read()))
         made = 0
-        for row in range(2, ws.max_row + 1):
+        # v4：只取数据区最后一条非空行生成文档（其余逻辑不变）
+        _last_row = None
+        for _r in range(2, ws.max_row + 1):
+            _rv = _cell_value(ws, ws_f, _r, code_col)
+            _cv = '' if _rv is None else str(_rv).strip()
+            if _cv and _cv.lower() != 'none':
+                _last_row = _r
+        for row in ([_last_row] if _last_row else []):
             raw = _cell_value(ws, ws_f, row, code_col)
             code = '' if raw is None else str(raw).strip()
             if not code or code.lower() == 'none':
@@ -341,7 +348,9 @@ def design_upload(request):
                 buf = io.BytesIO()
                 document.save(buf)
                 stem = tname.rsplit('.', 1)[0]
-                fname = '%s_%s_%s.docx' % (code, stem, _time_mod.strftime('%m%d_%H%M%S'))
+                # 生成命名去掉模板名前缀「模板-」/「模板_」/「模板」
+                stem_out = _re.sub(r'^模板[\-_－—\s]*', '', stem).strip() or stem
+                fname = '%s_%s_%s.docx' % (code, stem_out, _time_mod.strftime('%m%d_%H%M%S'))
                 models.DesignDoc.objects.create(
                     code=code, template_name=stem,
                     file=ContentFile(buf.getvalue(), name=fname))
