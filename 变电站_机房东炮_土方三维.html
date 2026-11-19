@@ -806,6 +806,78 @@ function delaunayXY(P) {
     .map(t => [t.a, t.b, t.c]);
 }
 
+function maxEdgeLen(P, t) {
+  const d = (i, j) => Math.hypot(P[i].x - P[j].x, P[i].y - P[j].y);
+  return Math.max(d(t[0], t[1]), d(t[1], t[2]), d(t[2], t[0]));
+}
+
+function avgNeighborSpacing(P) {
+  const n = P.length;
+  if (n < 2) return 0;
+  let sum = 0;
+  for (let i = 0; i < n; i++) {
+    let best = Infinity;
+    for (let j = 0; j < n; j++) {
+      if (i === j) continue;
+      const dx = P[i].x - P[j].x, dy = P[i].y - P[j].y;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < best) best = d2;
+    }
+    if (Number.isFinite(best)) sum += Math.sqrt(best);
+  }
+  return sum / n;
+}
+
+function boundaryLoop(tris) {
+  const key = (a, b) => (a < b ? a + "_" + b : b + "_" + a);
+  const cnt = new Map();
+  for (const t of tris) {
+    for (const e of [[t.a, t.b], [t.b, t.c], [t.c, t.a]]) {
+      const k = key(e[0], e[1]);
+      cnt.set(k, (cnt.get(k) || 0) + 1);
+    }
+  }
+  const adj = new Map();
+  let edgeCount = 0;
+  for (const [k, v] of cnt) {
+    if (v !== 1) continue;
+    const parts = k.split("_");
+    const a = Number(parts[0]), b = Number(parts[1]);
+    if (!adj.has(a)) adj.set(a, []);
+    if (!adj.has(b)) adj.set(b, []);
+    adj.get(a).push(b);
+    adj.get(b).push(a);
+    edgeCount++;
+  }
+  if (!edgeCount) return null;
+  const used = new Set();
+  let best = null;
+  for (const [start] of adj) {
+    for (const first of adj.get(start)) {
+      if (used.has(key(start, first))) continue;
+      const loop = [start];
+      let prev = start, cur = first;
+      used.add(key(start, first));
+      while (cur !== start) {
+        loop.push(cur);
+        let next = null;
+        for (const n of adj.get(cur) || []) {
+          if (n === prev) continue;
+          if (used.has(key(cur, n))) continue;
+          next = n;
+          break;
+        }
+        if (next === null) break;
+        used.add(key(cur, next));
+        prev = cur;
+        cur = next;
+      }
+      if (loop.length >= 3 && (!best || loop.length > best.length)) best = loop;
+    }
+  }
+  return best;
+}
+
 function buildGeometry(source, offset) {
   const clean = [];
   for (const p of source) {
@@ -830,50 +902,77 @@ function buildGeometry(source, offset) {
 
   const coreRaw = delaunayXY(P);
   if (!coreRaw.length) throw new Error("孔位点近似共线，无法建立有效三角网。");
+  // 外围修剪（仅影响显示）：丢弃「最长边 > 3 倍平均孔距」的三角，避免凸包外圈拉出长斜线；
+  // 体积/面积统计仍用完整三角网 core，数值口径保持不变。
+  const spAvg = avgNeighborSpacing(P);
+  let coreDispRaw = coreRaw;
+  if (spAvg > 0) {
+    const pruned = coreRaw.filter(t => maxEdgeLen(P, t) <= 3 * spAvg);
+    if (pruned.length >= 4) coreDispRaw = pruned;
+  }
   const core = coreRaw.map(t => ({ a: t[0], b: t[1], c: t[2] }));
+  const coreVis = coreDispRaw.map(t => ({ a: t[0], b: t[1], c: t[2] }));
   const hull = convexHull(P);
   if (hull.length < 3) throw new Error("孔位包络不足 3 个点，无法生成计算边界。");
 
   const hullPts = hull.map(i => P[i]);
   const dOff = Math.max(0, Math.min(5, Number(offset) || 0));
-  const round = roundedOffsetPolygon(hullPts, dOff);
-  const Q = round.points;
   const V = P.slice();
-  const qStart = V.length;
-  const qz = [];
-  for (let k = 0; k < Q.length; k++) {
-    const z = P[hull[round.owner[k]]].z;
-    qz.push(z);
-    V.push({ x: Q[k].x, y: Q[k].y, z });
-  }
 
-  const ring = [];
-  const addRing = (a, b, c) => {
-    const A = V[a], B = V[b], C = V[c];
-    const cr = (B.x - A.x) * (C.y - A.y) - (B.y - A.y) * (C.x - A.x);
-    if (Math.abs(cr) < 1e-9) return;
-    if (cr < 0) ring.push({ a, b: c, c: b });
-    else ring.push({ a, b, c });
-  };
-  for (let i = 0; i < hull.length; i++) {
-    const j = (i + 1) % hull.length;
-    const arcI = round.arcs[i];
-    const arcJ = round.arcs[j];
-    const bi = qStart + arcI[arcI.length - 1]; // 本角圆弧终点（下一条边的起点）
-    const aj = qStart + arcJ[0];               // 下一个角的圆弧起点
-    addRing(hull[i], hull[j], aj);
-    addRing(hull[i], aj, bi);
-    for (let k = 0; k < arcI.length - 1; k++) {
-      addRing(hull[i], qStart + arcI[k], qStart + arcI[k + 1]);
+  // 沿多边形外扩 dOff 并做圆角，返回环形三角带与对应顶点
+  const mkRing = (polyPts, polyIdx) => {
+    const round = roundedOffsetPolygon(polyPts, dOff);
+    const qStart = V.length;
+    const qz = [];
+    for (let k = 0; k < round.points.length; k++) {
+      const z = P[polyIdx[round.owner[k]]].z;
+      qz.push(z);
+      V.push({ x: round.points[k].x, y: round.points[k].y, z });
     }
+    const tris = [];
+    const add = (a, b, c) => {
+      const A = V[a], B = V[b], C = V[c];
+      const cr = (B.x - A.x) * (C.y - A.y) - (B.y - A.y) * (C.x - A.x);
+      if (Math.abs(cr) < 1e-9) return;
+      if (cr < 0) tris.push({ a, b: c, c: b });
+      else tris.push({ a, b, c });
+    };
+    const n = polyIdx.length;
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      const arcI = round.arcs[i];
+      const arcJ = round.arcs[j];
+      const bi = qStart + arcI[arcI.length - 1];
+      const aj = qStart + arcJ[0];
+      add(polyIdx[i], polyIdx[j], aj);
+      add(polyIdx[i], aj, bi);
+      for (let k = 0; k < arcI.length - 1; k++) {
+        add(polyIdx[i], qStart + arcI[k], qStart + arcI[k + 1]);
+      }
+    }
+    return { tris, Q: round.points, qz, arcs: round.arcs, extArea: Math.abs(polyArea(round.points)) };
+  };
+
+  // 统计口径：始终按孔位包络外扩（数值不变）
+  const ringStats = mkRing(hullPts, hull);
+  // 显示口径：外延带沿修剪后的真实边界走，不再按凸包横跨凹口
+  const bnd = boundaryLoop(coreVis);
+  let ringVis = ringStats;
+  if (bnd && bnd.length >= 3 && Math.abs(polyArea(bnd.map(i => P[i]))) > 1e-6) {
+    const bndPts = bnd.map(i => P[i]);
+    if (polyArea(bndPts) < 0) bnd.reverse();
+    ringVis = mkRing(bnd.map(i => P[i]), bnd);
   }
 
   const hullArea = Math.abs(polyArea(hullPts));
-  const extArea = Math.abs(polyArea(Q));
-  const all = core.concat(ring);
+  const extArea = Math.max(ringStats.extArea, hullArea);
+  const all = coreVis.concat(ringVis.tris);
 
   return {
-    P, V, core, ring, all, hull, hullPts, Q, qz, arcs: round.arcs,
+    P, V, core, coreVis,
+    ring: ringStats.tris, ringVis: ringVis.tris, all,
+    hull, hullPts,
+    Q: ringVis.Q, qz: ringVis.qz, arcs: ringVis.arcs,
     zMin, zMax, zPivot: (zMin + zMax) / 2,
     originX: ox, originY: oy,
     hullArea, extArea
