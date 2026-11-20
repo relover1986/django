@@ -11,6 +11,11 @@
     <p>4. 模板占位符写双花括号：{{编号}}、{{单元工程量}}……只替换花括号内内容，正文同名词不受影响</p>
     <p>5. 没被替换的 {{xxx}} 会原样留在文档里（未命中也会记入服务器日志）</p>
 {% endverbatim %}
+    <p style="color: #2c3e50; background: #f4f6f8; padding: 8px 10px; border-left: 4px solid #007bff;">
+        <strong>图（可选，5 个图位）</strong>：上传了就用你上传的；<strong>没上传则自动取后台图库</strong>里对应围岩级别的默认图。<br>
+        图1 装药结构图（掏槽+辅助+周边三段合成，传 1 张）／图2 掏槽孔刨面图／图3 钻孔布置平面图（单位cm）／图4 起爆顺序及起爆网络联接图／图5 警戒区域示意图。<br>
+        围岩级别取自数据 Excel 最后一行的「岩体地质特征」（如「Ⅲ级岩石方洞挖」→ 用Ⅲ类图库）。
+    </p>
 </div>
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
@@ -20,13 +25,38 @@
             <input type="file" name="file_data" accept=".xlsx" required>
         </div>
         <div style="margin: 14px 0;">
-            <label style="display:block; font-weight:bold; margin-bottom:6px;">② 爆破参数设计表 Excel（.xlsx，可选 —— 插入 {{table}}）</label>
+            <label style="display:block; font-weight:bold; margin-bottom:6px;">② 爆破参数设计表 Excel（.xlsx，可选 —— 插入 {% verbatim %}{{table}}{% endverbatim %}）</label>
             <input type="file" name="file_table" accept=".xlsx">
         </div>
         <div style="margin: 14px 0;">
             <label style="display:block; font-weight:bold; margin-bottom:6px;">③ Word 模板（.docx，可多选）</label>
             <input type="file" name="file" accept=".docx" multiple required>
         </div>
+
+        <hr style="margin: 18px 0; border: none; border-top: 1px dashed #bbb;">
+        <p style="font-weight:bold; margin: 6px 0;">④ 图片（可选，留空则用后台默认图库）</p>
+
+        <div style="margin: 12px 0;">
+            <label style="display:block; margin-bottom:6px;">图1 装药结构图（三段合成，1 张）</label>
+            <input type="file" name="file_fig1" accept=".png,.jpg,.jpeg">
+        </div>
+        <div style="margin: 12px 0;">
+            <label style="display:block; margin-bottom:6px;">图2 掏槽孔刨面图</label>
+            <input type="file" name="file_fig2" accept=".png,.jpg,.jpeg">
+        </div>
+        <div style="margin: 12px 0;">
+            <label style="display:block; margin-bottom:6px;">图3 钻孔布置平面图（单位cm）</label>
+            <input type="file" name="file_fig3" accept=".png,.jpg,.jpeg">
+        </div>
+        <div style="margin: 12px 0;">
+            <label style="display:block; margin-bottom:6px;">图4 起爆顺序及起爆网络联接图</label>
+            <input type="file" name="file_fig4" accept=".png,.jpg,.jpeg">
+        </div>
+        <div style="margin: 12px 0;">
+            <label style="display:block; margin-bottom:6px;">图5 警戒区域示意图</label>
+            <input type="file" name="file_fig5" accept=".png,.jpg,.jpeg">
+        </div>
+
         <input type="submit" value="开始生成"
                style="padding: 10px 20px; background: #007bff; color: white; border: none;">
         <a href="/home/kztqhp/" style="margin-left: 14px;">返回列表</a>

@@ -215,6 +215,133 @@ def design_list(request):
     return render(request, 'design_list.html', {'data': data})
 
 
+_ZY_FIGNAMES = {'fig1': 'fig1_zhuangyao.png', 'fig2': 'fig2_poumian.png',
+                'fig3': 'fig3_zhuankong.png', 'fig4': 'fig4_qibao.png',
+                'fig5': 'fig5_jingjie.png'}
+
+def _insert_figs(document, fig_map, total_holes=None):
+    """支洞设计文档插图：
+    ① 模板里写 {{图1}}~{{图5}}（或 {{图片1}}~{{图片5}}）占位符 → 精确插到该段；
+    ② 没写占位符的图位 → 按标题自动定位兜底；
+    装药标题合并（删 图1-1~1-4）、图4 孔数替换照旧。"""
+    import re as _re
+    from docx.oxml.ns import qn as _qn
+    from docx.oxml import OxmlElement as _OxmlElement
+    from docx.text.paragraph import Paragraph as _Paragraph
+    from docx.shared import Pt as _Pt, Mm
+
+    _FIG_CAPTIONS = {
+        'fig1': '图1  装药结构示意图',
+        'fig2': '图2  掏槽孔刨面图',
+        'fig3': '图3  钻孔布置平面图',
+        'fig4': '图4  起爆顺序及起爆网络联接图',
+        'fig5': '图5  警戒区域示意图',
+    }
+
+    # 插图宽度按模板各节实际可用宽度自适应（留 3mm 余量），不超过 160mm
+    _fig_mm = 160.0
+    try:
+        _usable = min(s.page_width.mm - s.left_margin.mm - s.right_margin.mm
+                      for s in document.sections)
+        _fig_mm = max(80.0, min(160.0, _usable - 3.0))
+    except Exception:
+        pass
+    _fig_w = Mm(_fig_mm)
+    print('=== 设计批量 插图宽度: %.1fmm (可用 %.1fmm)' % (_fig_mm, _fig_mm + 3.0), flush=True)
+
+    def _add_caption(p, key):
+        """图题并入图片同一段落（换行后居中），避免图与图题被分页拆开。"""
+        text = _FIG_CAPTIONS.get(key)
+        if not text or p is None:
+            return
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.add_run().add_break()          # 段内换行，图题落到图片下方
+        r = p.add_run(text)
+        r.font.size = _Pt(14)
+        r.font.name = '宋体'
+        r._element.get_or_add_rPr().rFonts.set(_qn('w:eastAsia'), '宋体')
+
+    ps = document.paragraphs
+    has_ph = any('{{图' in p.text or '{{图片' in p.text for p in ps)
+    _PROBE = ('{{图', '{{图片', '装药结构图（图1', '掏槽孔刨面图',
+              '钻孔布置平面图', '起爆顺序及起爆网络联接图', '警戒区域示意图')
+    if not (has_ph or any(any(a in p.text for a in _PROBE) for p in ps)):
+        return
+    from docx.shared import Mm
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    # 0) 占位符优先：{{图1}}~{{图5}} / {{图一}}~{{图五}} / {{图片1}} / {{图片一}} 等
+    done = set()
+    if has_ph:
+        for p in list(ps):
+            m = _re.search(r'\{\{(?:图|图片)([1-5一二三四五])\}\}', p.text)
+            if not m:
+                continue
+            label = m.group(1)
+            num = {'一': '1', '二': '2', '三': '3', '四': '4', '五': '5'}.get(label, label)
+            k = 'fig' + num
+            if k not in fig_map:
+                continue
+            try:
+                p.text = ''
+                p.paragraph_format.left_indent = Mm(0)
+                p.paragraph_format.first_line_indent = Mm(0)
+                p.paragraph_format.keep_with_next = True   # 图与下方图题同页
+                p.add_run().add_picture(fig_map[k], width=_fig_w)
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                _add_caption(p, k)
+                done.add(k)
+            except Exception as e:
+                print('=== 设计批量 占位符插图失败:', label, repr(e), flush=True)
+    # 1) 装药标题合并：删 图1-1~1-4
+    for p in list(ps):
+        t = p.text.strip()
+        if t.startswith('装药结构图（图1-'):
+            p._element.getparent().remove(p._element)
+    # 2) 图4 孔数
+    if total_holes:
+        for p in ps:
+            if '共88孔' in p.text:
+                for r in p.runs:
+                    r.text = r.text.replace('共88孔', '共%d孔' % total_holes)
+                if '共88孔' in p.text:
+                    p.text = p.text.replace('共88孔', '共%d孔' % total_holes)
+    # 3) 未用占位符的图位：按标题定位兜底
+    keys = [('装药结构图（图1）', 'fig1'),
+            ('掏槽孔刨面图（图2）', 'fig2'),
+            ('钻孔布置平面图（图3）', 'fig3'),
+            ('起爆顺序及起爆网络联接图', 'fig4'),
+            ('警戒区域示意图（图5）', 'fig5')]
+    for anchor, k in keys:
+        if k in done:
+            continue
+        data = fig_map.get(k)
+        if not data:
+            continue
+        idx = next((i for i, p in enumerate(ps) if anchor in p.text), None)
+        if idx is None:
+            print('=== 设计批量 未找到图位:', anchor, flush=True)
+            continue
+        target = None
+        for j in range(idx + 1, min(idx + 4, len(ps))):
+            if not ps[j].text.strip():
+                target = ps[j]
+                break
+        if target is None:
+            target = ps[idx].insert_paragraph_before('')
+        target.paragraph_format.left_indent = Mm(0)
+        target.paragraph_format.first_line_indent = Mm(0)
+        target.paragraph_format.keep_with_next = True   # 图与下方图题同页
+        run = target.add_run()
+        try:
+            run.add_picture(data, width=_fig_w)
+            target.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            _add_caption(target, k)
+            done.add(k)
+
+        except Exception as e:
+            print('=== 设计批量 插图失败:', anchor, repr(e), flush=True)
+
+
 def design_upload(request):
     """设计批量处理 — 按行出（每行 x 每个模板各一份）；
     第二个 Excel（爆破参数设计表）整表插入模板的 {{table}} 位置。"""
@@ -298,6 +425,46 @@ def design_upload(request):
             _cv = '' if _rv is None else str(_rv).strip()
             if _cv and _cv.lower() != 'none':
                 _last_row = _r
+        # ---- 支洞插图准备：上传优先，否则图库默认（_last_row 已确定） ----
+        import re as _zy_re
+        fig_bytes = {}
+        for _k in ['fig1', 'fig2', 'fig3', 'fig4', 'fig5']:
+            _f = request.FILES.get('file_' + _k)
+            fig_bytes[_k] = _f.read() if _f else None
+        _lib = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), '设计图库')
+        grade = 'Ⅲ类'
+        _gcol = None
+        for _c in range(1, ws.max_column + 1):
+            _hv = _cell_value(ws, ws_f, 1, _c)
+            if _hv and '岩体地质特征' in str(_hv):
+                _gcol = _c
+                break
+        if _gcol and _last_row:
+            _gv = str(_cell_value(ws, ws_f, _last_row, _gcol) or '')
+            _gm = _zy_re.search(r'[ⅡⅢⅣⅤ]', _gv)
+            if _gm:
+                grade = {'Ⅱ': 'Ⅱ类', 'Ⅲ': 'Ⅲ类', 'Ⅳ': 'Ⅳ类', 'Ⅴ': 'Ⅴ类'}[_gm.group()]
+        total_holes = None
+        for _c in range(1, ws.max_column + 1):
+            _hv = _cell_value(ws, ws_f, 1, _c)
+            if _hv and '炮孔总数' in str(_hv):
+                _rv = str(_cell_value(ws, ws_f, _last_row, _c) or '').strip()
+                if _rv.isdigit():
+                    total_holes = int(_rv)
+                break
+        if not total_holes:
+            total_holes = {'Ⅱ类': 132, 'Ⅲ类': 110, 'Ⅳ类': 146, 'Ⅴ类': 80}[grade]
+        fig_map = {}
+        for _k in ['fig1', 'fig2', 'fig3', 'fig4', 'fig5']:
+            if fig_bytes.get(_k):
+                fig_map[_k] = io.BytesIO(fig_bytes[_k])
+            else:
+                _p = os.path.join(_lib, grade, _ZY_FIGNAMES[_k])
+                if os.path.exists(_p):
+                    fig_map[_k] = _p
+                else:
+                    print('=== 设计批量 无图可插:', _p, flush=True)
+        print('=== 设计批量 图: grade=%s holes=%s figs=%s' % (grade, total_holes, sorted(fig_map)), flush=True)
         for row in ([_last_row] if _last_row else []):
             raw = _cell_value(ws, ws_f, row, code_col)
             code = '' if raw is None else str(raw).strip()
@@ -345,6 +512,73 @@ def design_upload(request):
                                 residual.discard('{{取整}}')
                 if residual:
                     print('=== 设计批量 未命中:', code, tname, sorted(residual), flush=True)
+                _insert_figs(document, fig_map, total_holes)
+                # —— 封面断页：正文标题段段前分页，封面独占第一页 ——
+                try:
+                    _ck = ('#1施工支洞爆破作业设计书', '#1 施工支洞爆破作业设计书',
+                           '#1施工支洞爆破方案作业设计书', '施工支洞爆破作业设计书')
+                    for _p in document.paragraphs:
+                        _pt = _p.text.strip()
+                        if any(_c in _pt for _c in _ck):
+                            _p.paragraph_format.page_break_before = True
+                            break
+                except Exception as _e:
+                    print('=== 设计批量 封面断页失败:', repr(_e), flush=True)
+                # —— 附表独立成页：爆破作业安全交底记录 ——
+                try:
+                    from docx.oxml.ns import qn as _qn
+                    from lxml import etree as _et
+                    _jt = None
+                    _bk = list(document.element.body)
+                    for _i, _el in enumerate(_bk):
+                        if _el.tag.split('}')[-1] == 'p' and '爆破作业安全交底记录' in ''.join(_el.itertext()):
+                            _jt = _i
+                            break
+                    if _jt is not None:
+                        _empty = []
+                        for _i in range(_jt - 1, 0, -1):
+                            _el = _bk[_i]
+                            if _el.tag.split('}')[-1] == 'p' and not ''.join(_el.itertext()).strip():
+                                _empty.insert(0, _i)
+                            else:
+                                break
+                        for _i in _empty:
+                            _el = _bk[_i]
+                            _pr = _el.find(_qn('w:pPr'))
+                            if _pr is None:
+                                _pr = _et.SubElement(_el, _qn('w:pPr'))
+                                _el.insert(0, _pr)
+                            for _sp in _pr.findall(_qn('w:spacing')):
+                                _pr.remove(_sp)
+                            _sp = _et.SubElement(_pr, _qn('w:spacing'))
+                            _sp.set(_qn('w:before'), '0')
+                            _sp.set(_qn('w:after'), '0')
+                            _sp.set(_qn('w:line'), '10')
+                            _sp.set(_qn('w:lineRule'), 'exact')
+                            _rp = _pr.find(_qn('w:rPr'))
+                            if _rp is None:
+                                _rp = _et.SubElement(_pr, _qn('w:rPr'))
+                            _sz = _rp.find(_qn('w:sz'))
+                            if _sz is None:
+                                _sz = _et.SubElement(_rp, _qn('w:sz'))
+                            _sz.set(_qn('w:val'), '2')
+                        for _p in document.paragraphs:
+                            if _p._element is _bk[_jt]:
+                                _p.paragraph_format.page_break_before = True
+                                _p.paragraph_format.keep_with_next = True
+                                break
+                        for _el in _bk[_jt + 1:]:
+                            if _el.tag.split('}')[-1] == 'tbl':
+                                for _tr in _el.findall(_qn('w:tr')):
+                                    _trp = _tr.find(_qn('w:trPr'))
+                                    if _trp is None:
+                                        _trp = _et.SubElement(_tr, _qn('w:trPr'))
+                                        _tr.insert(0, _trp)
+                                    if _trp.find(_qn('w:cantSplit')) is None:
+                                        _et.SubElement(_trp, _qn('w:cantSplit'))
+                                break
+                except Exception as _e:
+                    print('=== 设计批量 交底独立成页失败:', repr(_e), flush=True)
                 buf = io.BytesIO()
                 document.save(buf)
                 stem = tname.rsplit('.', 1)[0]

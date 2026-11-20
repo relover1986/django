@@ -1,0 +1,35 @@
+{% extends "home.html" %}
+{% block content %}
+<br><br>
+<div style="margin: 20px;">
+    <h4>设计批量处理 · 上传</h4>
+    {% if error %}<p style="color: #c0392b; font-weight: bold;">{{ error }}</p>{% endif %}
+{% verbatim %}
+    <p>1. <strong>数据 Excel</strong>：<strong>只取数据区最后一条非空行</strong>出文档（第 1 行表头，编号列表头写「编号」）</p>
+    <p>2. <strong>爆破参数设计表 Excel</strong>（可选）：整张表（含表头）插入 Word 模板里 <strong>{{table}}</strong> 的位置，横向 A4 一页</p>
+    <p>3. <strong>Word 模板</strong>：可上传多个；最后一行 x 每个模板各出一份</p>
+    <p>4. 模板占位符写双花括号：{{编号}}、{{单元工程量}}……只替换花括号内内容，正文同名词不受影响</p>
+    <p>5. 没被替换的 {{xxx}} 会原样留在文档里（未命中也会记入服务器日志）</p>
+{% endverbatim %}
+</div>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div style="margin: 20px;">
+        <div style="margin: 14px 0;">
+            <label style="display:block; font-weight:bold; margin-bottom:6px;">① 数据 Excel（.xlsx）</label>
+            <input type="file" name="file_data" accept=".xlsx" required>
+        </div>
+        <div style="margin: 14px 0;">
+            <label style="display:block; font-weight:bold; margin-bottom:6px;">② 爆破参数设计表 Excel（.xlsx，可选 —— 插入 {{table}}）</label>
+            <input type="file" name="file_table" accept=".xlsx">
+        </div>
+        <div style="margin: 14px 0;">
+            <label style="display:block; font-weight:bold; margin-bottom:6px;">③ Word 模板（.docx，可多选）</label>
+            <input type="file" name="file" accept=".docx" multiple required>
+        </div>
+        <input type="submit" value="开始生成"
+               style="padding: 10px 20px; background: #007bff; color: white; border: none;">
+        <a href="/home/kztqhp/" style="margin-left: 14px;">返回列表</a>
+    </div>
+</form>
+{% endblock %}
